@@ -414,10 +414,15 @@ alternative
     ;
 
 lexerCommand
-	:	^(LEXER_ACTION_CALL ID lexerCommandExpr)
-        {lexerCallCommand(currentOuterAltNumber, $ID, $lexerCommandExpr.start);}
-	|	ID
-        {lexerCommand(currentOuterAltNumber, $ID);}
+	:	^(LEXER_ACTION_CALL lexerCommandName lexerCommandExpr)
+		{lexerCallCommand(currentOuterAltNumber, $lexerCommandName.start, $lexerCommandExpr.start);}
+	|	lexerCommandName
+		{lexerCommand(currentOuterAltNumber, $lexerCommandName.start);}
+	;
+
+lexerCommandName
+	:	ID
+	|	MODE
 	;
 
 lexerCommandExpr

@@ -642,8 +642,13 @@ lexerCommands
 	;
 
 lexerCommand
-	:	id LPAREN lexerCommandExpr RPAREN -> ^(LEXER_ACTION_CALL id lexerCommandExpr)
-	|	id
+	:	lexerCommandName LPAREN lexerCommandExpr RPAREN -> ^(LEXER_ACTION_CALL lexerCommandName lexerCommandExpr)
+	|	lexerCommandName
+	;
+
+lexerCommandName
+	:	id
+	|	MODE
 	;
 
 lexerCommandExpr
