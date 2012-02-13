@@ -113,10 +113,15 @@ lexerCommands returns [ATNFactory.Handle p]
     ;
 
 lexerCommand returns [String cmd]
-	:	^(LEXER_ACTION_CALL ID lexerCommandExpr)
-        {$cmd = factory.lexerCallCommand($ID, $lexerCommandExpr.start);}
-	|	ID
-        {$cmd = factory.lexerCommand($ID);}
+	:	^(LEXER_ACTION_CALL lexerCommandName lexerCommandExpr)
+		{$cmd = factory.lexerCallCommand($lexerCommandName.start, $lexerCommandExpr.start);}
+	|	lexerCommandName
+		{$cmd = factory.lexerCommand($lexerCommandName.start);}
+	;
+
+lexerCommandName
+	:	ID
+	|	MODE
 	;
 
 lexerCommandExpr
