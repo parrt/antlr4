@@ -128,17 +128,23 @@ public class <parser.name> extends <superclass> {
 	public static final String[] ruleNames = {
 		<parser.ruleNames:{r | "<r>"}; separator=", ", wrap, anchor>
 	};
+
+	@Override
+	public String getGrammarFileName() { return "<parser.grammarFileName>"; }
+
+	@Override
+	public String[] getTokenNames() { return tokenNames; }
+
+	@Override
+	public String[] getRuleNames() { return ruleNames; }
+
+	@Override
+	public ATN getATN() { return _ATN; }
+
 	<namedActions.members>
 	<extras>
 	<parser:(ctor)()>
 	<funcs; separator="\n">
-
-	@Override
-	public String[] getTokenNames() { return tokenNames; }
-	@Override
-	public String[] getRuleNames() { return ruleNames; }
-	@Override
-	public ATN getATN() { return _ATN; }
 
 <if(sempredFuncs)>
 	public boolean sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
@@ -720,7 +726,8 @@ public class <lexer.name> extends Lexer {
 		_interp = new LexerATNSimulator(this,_ATN);
 	}
 
-	public String getGrammarFileName() { return "<lexerFile.fileName>"; }
+	@Override
+	public String getGrammarFileName() { return "<lexer.grammarFileName>"; }
 
 	@Override
 	public String[] getTokenNames() { return tokenNames; }
