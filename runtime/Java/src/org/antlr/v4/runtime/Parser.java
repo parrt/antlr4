@@ -53,6 +53,8 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator<Token>
 		}
 	}
 
+	protected ANTLRErrorStrategy _errHandler = new DefaultErrorStrategy();
+
 	protected TokenStream _input;
 
 	/** The RuleContext object for the currently executing rule. This
@@ -204,6 +206,14 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator<Token>
 		_errHandler.setTokenFactory(factory);
 	}
 
+	public ANTLRErrorStrategy getErrorHandler() {
+		return _errHandler;
+	}
+
+	public void setErrorHandler(ANTLRErrorStrategy handler) {
+		this._errHandler = handler;
+	}
+
 	@Override
 	public TokenStream getInputStream() { return getTokenStream(); }
 
@@ -255,12 +265,12 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator<Token>
 			line = ((Token) offendingToken).getLine();
 			charPositionInLine = ((Token) offendingToken).getCharPositionInLine();
 		}
-		ANTLRErrorListener<Token>[] listeners = getErrorListeners();
-		if ( listeners.length == 0 ) {
+		List<? extends ANTLRErrorListener<? super Token>> listeners = getErrorListeners();
+		if ( listeners.isEmpty() ) {
 			System.err.println("line "+line+":"+charPositionInLine+" "+msg);
 			return;
 		}
-		for (ANTLRErrorListener<Token> pl : listeners) {
+		for (ANTLRErrorListener<? super Token> pl : listeners) {
 			pl.error(this, offendingToken, line, charPositionInLine, msg, e);
 		}
 	}
