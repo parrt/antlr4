@@ -1,6 +1,6 @@
 /*
  [The "BSD license"]
-  Copyright (c) 2011 Terence Parr
+  Copyright (c) 2012 Terence Parr
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -26,22 +26,24 @@
   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+package org.antlr.v4.runtime;
 
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.DiagnosticErrorListener;
+/**
+ *
+ * @author Sam Harwell
+ */
+public class ConsoleErrorListener extends BaseErrorListener<Object> {
+	public static final ConsoleErrorListener INSTANCE = new ConsoleErrorListener();
 
-public class TestR {
-	public static void main(String[] args) throws Exception {
-		RLexer t = new RLexer(new ANTLRFileStream(args[0]));
-		CommonTokenStream tokens = new CommonTokenStream(t);
-//		tokens.fill();
-//		for (Object tok : tokens.getTokens()) {
-//			System.out.println(tok);
-//		}
-		RParser p = new RParser(tokens);
-		p.setBuildParseTree(true);
-		p.addErrorListener(new DiagnosticErrorListener());
-		p.prog();
+	@Override
+	public <T extends Object> void error(Recognizer<T, ?> recognizer,
+										T offendingSymbol,
+										int line,
+										int charPositionInLine,
+										String msg,
+										RecognitionException e)
+	{
+		System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
 	}
+
 }
