@@ -329,7 +329,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		int m = input.mark();
 		int index = input.index();
 		try {
-			alt = execATN(dfa, dfa.s0, input, index, outerContext);
+			alt = execATN(dfa.decision, s0_closure, input, index, outerContext);
 		}
 		catch (NoViableAltException nvae) {
 			if ( debug ) dumpDeadEndConfigs(nvae);
@@ -499,6 +499,45 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 TODO: greedy + those
 
 	 */
+
+	public int execATN(int decision, ATNConfigSet s0_closure,
+					   @NotNull SymbolStream<? extends Symbol> input, int startIndex,
+					   ParserRuleContext<?> outerContext)
+	{
+		DecisionState decState = atn.getDecisionState(decision);
+		boolean greedy = decState.isGreedy;
+
+		ATNConfigSet previous = s0_closure;
+		boolean loopsSimulateTailRecursion = true;
+
+		int t = input.LA(1);
+
+		while (true) { // while more work
+			ATNConfigSet reach = computeReachSet(previous, t, input.LA(2), greedy, loopsSimulateTailRecursion);
+			if ( reach==null ) throw noViableAlt(input, outerContext, previous, startIndex);
+			int predictedAlt = getUniqueAlt(reach);
+			if ( predictedAlt!=ATN.INVALID_ALT_NUMBER ) { // unique
+				// announce new valid prediction sequence for DFA
+				return predictedAlt;
+			}
+			else { // not unique prediction
+				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
+				closure(reach, closureBusy, true, greedy, loopsSimulateTailRecursion,
+						parser.getTokenStream().LA(2));
+				// if conflicting alts (s,i,ctx) and (s,j,ctx') where ctx=ctx'
+				//		report ambiguity, resolve to min alt, return it
+				// if pred predictions
+				//		eval preds
+				// 		0=>noviable, 1=>return predictedalt, n=>report ambig, return min alt
+				//		return
+			}
+			// keep going
+			previous = reach;
+			input.consume();
+			t = input.LA(1);
+		}
+	}
+
 	public int execATN(@NotNull DFA dfa, @NotNull DFAState s0,
 					   @NotNull SymbolStream<? extends Symbol> input, int startIndex,
 					   ParserRuleContext<?> outerContext)
