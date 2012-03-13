@@ -239,7 +239,7 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = false;
+	public static boolean debug = true;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -290,7 +290,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	{
 		predict_calls++;
 		DFA dfa = decisionToDFA[decision];
-		if ( dfa==null || dfa.s0==null ) {
+//		if ( dfa==null || dfa.s0==null ) {
+		if ( true ) {
 			DecisionState startState = atn.decisionToState.get(decision);
 			decisionToDFA[decision] = dfa = new DFA(startState, decision);
 			return predictATN(dfa, input, outerContext);
@@ -518,7 +519,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 		while (true) { // while more work
 			boolean loopsSimulateTailRecursion = false;
-			ATNConfigSet reach = computeReachSet(previous, t, greedy, loopsSimulateTailRecursion);
+			ATNConfigSet reach = computeReachSet(previous, t, input.LA(2), greedy, loopsSimulateTailRecursion);
 			if ( reach==null ) throw noViableAlt(input, outerContext, previous, startIndex);
 			D = addDFAEdge(dfa, previous, t, reach); // always adding edge even if to a conflict state
 			int predictedAlt = getUniqueAlt(reach);
@@ -597,12 +598,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					IntervalSet alts = evalSemanticContext(predPredictions, outerContext, reportAmbiguities);
 					D.prediction = ATN.INVALID_ALT_NUMBER;
 					switch (alts.size()) {
-					case 0:
-						throw noViableAlt(input, outerContext, D.configset, startIndex);
-
-					case 1:
-						return alts.getMinElement();
-
+					case 0: throw noViableAlt(input, outerContext, D.configset, startIndex);
+					case 1: return alts.getMinElement();
 					default:
 						// report ambiguity after predicate evaluation to make sure the correct
 						// set of ambig alts is reported.
@@ -641,7 +638,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		input.seek(startIndex);
 		int t = input.LA(1);
 		while (true) { // while more work
-			reach = computeReachSet(previous, t, greedy, true);
+			reach = computeReachSet(previous, t, input.LA(2), greedy, true);
 			if ( reach==null ) {
 				throw noViableAlt(input, outerContext, previous, startIndex);
 			}
@@ -697,7 +694,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return reach;
 	}
 
-	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean greedy, boolean loopsSimulateTailRecursion) {
+	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, int la,
+										   boolean greedy, boolean loopsSimulateTailRecursion)
+	{
 		if ( debug ) System.out.println("in computeReachSet, starting closure: " + closure);
 		ATNConfigSet reach = new ATNConfigSet();
 		Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
@@ -707,8 +706,29 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			for (int ti=0; ti<n; ti++) {               // for each transition
 				Transition trans = c.state.transition(ti);
 				ATNState target = getReachableTarget(trans, t);
+
 				if ( target!=null ) {
-					closure(new ATNConfig(c, target), reach, closureBusy, false, greedy, loopsSimulateTailRecursion);
+					// ---------------
+					// check if target has a transition for LA(2)
+					boolean include = true;
+//					if ( !target.onlyHasEpsilonTransitions() ) {
+//						include = false;
+//						int t2 = parser.getTokenStream().LA(2);
+//						if ( debug ) System.out.println("in computeReachSet, checking LA(2)=: " +
+//														parser.getTokenStream().LT(2).getText());
+//						int n2 = target.getNumberOfTransitions();
+//						for (int ti2=0; ti2<n2; ti2++) {      // for each transition of target
+//							Transition trans2 = target.transition(ti2);
+//							ATNState target2 = getReachableTarget(trans2, t2);
+//							if ( target2!=null ) { include=true; break; }
+//						}
+//					}
+					// ---------------
+
+					if ( include ) {
+						closure(new ATNConfig(c, target), reach, closureBusy,
+								false, greedy, loopsSimulateTailRecursion, la);
+					}
 				}
 			}
 		}
@@ -728,7 +748,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			ATNState target = p.transition(i).target;
 			ATNConfig c = new ATNConfig(target, i+1, initialContext);
 			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
-			closure(c, configs, closureBusy, true, greedy, loopsSimulateTailRecursion);
+			closure(c, configs, closureBusy, true, greedy, loopsSimulateTailRecursion,
+					parser.getTokenStream().LA(1));
 		}
 
 		return configs;
@@ -906,10 +927,12 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 						   @NotNull ATNConfigSet configs,
 						   @NotNull Set<ATNConfig> closureBusy,
 						   boolean collectPredicates,
-						   boolean greedy, boolean loopsSimulateTailRecursion)
+						   boolean greedy, boolean loopsSimulateTailRecursion,
+						   int la)
 	{
 		final int initialDepth = 0;
-		closure(config, configs, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion, initialDepth);
+		closure(config, configs, closureBusy, collectPredicates, greedy,
+				loopsSimulateTailRecursion, initialDepth, la);
 	}
 
 	protected void closure(@NotNull ATNConfig config,
@@ -917,7 +940,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 						   @NotNull Set<ATNConfig> closureBusy,
 						   boolean collectPredicates,
 						   boolean greedy, boolean loopsSimulateTailRecursion,
-						   int depth)
+						   int depth,
+						   int la)
 	{
 		if ( debug ) System.out.println("closure("+config.toString(parser,true)+")");
 
@@ -943,7 +967,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				// Make sure we track that we are now out of context.
 				c.reachesIntoOuterContext = config.reachesIntoOuterContext;
 				assert depth > Integer.MIN_VALUE;
-				closure(c, configs, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion, depth - 1);
+				closure(c, configs, closureBusy, collectPredicates, greedy,
+						loopsSimulateTailRecursion, depth - 1, la);
 				return;
 			}
 			else {
@@ -973,14 +998,41 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		ATNState p = config.state;
 		// optimization
 		if ( !p.onlyHasEpsilonTransitions() ) {
-            configs.add(config);
-			if ( config.semanticContext!=null && config.semanticContext!=SemanticContext.NONE ) {
-				configs.hasSemanticContext = true;
+			boolean include = false;
+			String tokenName;
+			if ( la==Token.EOF ) tokenName = "<EOF>";
+			else tokenName = parser.getTokenNames()[la];
+			if ( debug ) System.out.println("in computeReachSet, checking LA(1)=" +
+											tokenName);
+			int n = p.getNumberOfTransitions();
+			for (int i=0; i<n; i++) {      // for each transition of config.state
+				Transition trans = p.transition(i);
+				ATNState target = getReachableTarget(trans, la);
+				if ( target!=null ) { include=true; break; }
 			}
-			if ( config.reachesIntoOuterContext>0 ) {
-				configs.dipsIntoOuterContext = true;
+			if ( n==0 ) { // dead end; must be after EOF transition
+				include = true;
 			}
-            if ( debug ) System.out.println("added config "+configs);
+
+			if ( include ) {
+				configs.add(config);
+				if ( config.semanticContext!=null && config.semanticContext!=SemanticContext.NONE ) {
+					configs.hasSemanticContext = true;
+				}
+				if ( config.reachesIntoOuterContext>0 ) {
+					configs.dipsIntoOuterContext = true;
+				}
+				if ( debug ) System.out.println("added config to "+configs);
+			}
+			else {
+				if ( debug ) {
+					System.out.println("not adding config "+config+
+													" since "+ tokenName +
+													" not reachable from s"+config.state);
+				}
+				// don't pursue this one
+				return;
+			}
         }
 
         for (int i=0; i<p.getNumberOfTransitions(); i++) {
@@ -1009,7 +1061,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					}
 				}
 
-				closure(c, configs, closureBusy, continueCollecting, greedy, loopsSimulateTailRecursion, newDepth);
+				closure(c, configs, closureBusy, continueCollecting, greedy,
+						loopsSimulateTailRecursion, newDepth, la);
 			}
 		}
 	}
@@ -1380,11 +1433,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	/** See comment on LexerInterpreter.addDFAState. */
 	@NotNull
 	protected DFAState addDFAState(@NotNull DFA dfa, @NotNull ATNConfigSet configs) {
-		DFAState proposed = new DFAState(configs);
-		DFAState existing = dfa.states.get(proposed);
-		if ( existing!=null ) return existing;
-
-		DFAState newState = proposed;
+		DFAState newState = new DFAState(configs);
+//		DFAState existing = dfa.states.get(proposed);
+//		if ( existing!=null ) return existing;
 
 		newState.stateNumber = dfa.states.size();
 		newState.configset = new ATNConfigSet(configs);
