@@ -239,7 +239,7 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = true;
+	public static boolean debug = false;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -529,6 +529,10 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				D.prediction = predictedAlt;
 			}
 			else {
+				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
+				closure(reach, closureBusy, true, greedy, loopsSimulateTailRecursion,
+						parser.getTokenStream().LA(2));
+
 				boolean fullCtx = false;
 				D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
 				if ( D.configset.conflictingAlts!=null ) {
@@ -697,7 +701,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, int la,
 										   boolean greedy, boolean loopsSimulateTailRecursion)
 	{
-		if ( debug ) System.out.println("in computeReachSet, starting closure: " + closure);
+		if ( debug ) System.out.println("in computeReachSet with starting set: " + closure);
 		ATNConfigSet reach = new ATNConfigSet();
 		Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 		for (ATNConfig c : closure) {
@@ -708,6 +712,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				ATNState target = getReachableTarget(trans, t);
 
 				if ( target!=null ) {
+					if ( debug ) System.out.println("reached "+new ATNConfig(c, target));
+					reach.add(new ATNConfig(c, target));
 					// ---------------
 					// check if target has a transition for LA(2)
 					boolean include = true;
@@ -724,11 +730,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 //						}
 //					}
 					// ---------------
-
-					if ( include ) {
-						closure(new ATNConfig(c, target), reach, closureBusy,
-								false, greedy, loopsSimulateTailRecursion, la);
-					}
+// no closure here now
+//					if ( include ) {
+//						closure(new ATNConfig(c, target), reach, closureBusy,
+//								false, greedy, loopsSimulateTailRecursion, la);
+//					}
 				}
 			}
 		}
@@ -914,6 +920,20 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return predictions;
 	}
 
+	protected void closure(@NotNull ATNConfigSet configs,
+						   @NotNull Set<ATNConfig> closureBusy,
+						   boolean collectPredicates,
+						   boolean greedy, boolean loopsSimulateTailRecursion,
+						   int la)
+	{
+		if ( debug ) System.out.println("closure: "+configs);
+		final int initialDepth = 0;
+		ATNConfigSet clone = (ATNConfigSet)configs.clone();
+		for (ATNConfig config : clone) { // TODO: SLOW: copying data
+			closure(config, configs, closureBusy, collectPredicates, greedy,
+					loopsSimulateTailRecursion, initialDepth, la);
+		}
+	}
 
 	/* TODO: If we are doing predicates, there is no point in pursuing
 		 closure operations if we reach a DFA state that uniquely predicts
@@ -979,7 +999,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		}
 		else if ( loopsSimulateTailRecursion ) {
 			if ( config.state.getClass()==StarLoopbackState.class ||
-			config.state.getClass()==PlusLoopbackState.class )
+				 config.state.getClass()==PlusLoopbackState.class )
 			{
 				config.context = new RuleContext(config.context, config.state.stateNumber);
 				// alter config; it's ok, since all calls to closure pass in a fresh config for us to chase
@@ -1002,7 +1022,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			String tokenName;
 			if ( la==Token.EOF ) tokenName = "<EOF>";
 			else tokenName = parser.getTokenNames()[la];
-			if ( debug ) System.out.println("in computeReachSet, checking LA(1)=" +
+			if ( debug ) System.out.println("in closure, checking LA(1)=" +
 											tokenName);
 			int n = p.getNumberOfTransitions();
 			for (int i=0; i<n; i++) {      // for each transition of config.state
