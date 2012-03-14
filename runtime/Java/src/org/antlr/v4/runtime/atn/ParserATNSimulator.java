@@ -654,6 +654,12 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			}
 			reach.uniqueAlt = getUniqueAlt(reach);
 			if ( reach.uniqueAlt!=ATN.INVALID_ALT_NUMBER ) break;
+
+			boolean loopsSimulateTailRecursion = true;
+			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
+			closure(reach, closureBusy, true, greedy, loopsSimulateTailRecursion,
+					parser.getTokenStream().LA(2));
+
 			boolean fullCtx = true;
 			reach.conflictingAlts = getConflictingAlts(reach, fullCtx);
 			if ( reach.conflictingAlts!=null ) break;
@@ -662,11 +668,17 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			t = input.LA(1);
 		}
 
-		if ( reach.uniqueAlt != ATN.INVALID_ALT_NUMBER ) {
+		if ( reach.uniqueAlt != ATN.INVALID_ALT_NUMBER ) { // unique prediction
 			retry_with_context_indicates_no_conflict++;
 			reportContextSensitivity(dfa, reach, startIndex, input.index());
 			return reach;
 		}
+
+
+		boolean loopsSimulateTailRecursion = true;
+		Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
+		closure(reach, closureBusy, true, greedy, loopsSimulateTailRecursion,
+				parser.getTokenStream().LA(2));
 
 		if ( reach.hasSemanticContext ) {
 			SemanticContext[] altToPred = getPredsForAmbigAlts(reach.conflictingAlts, reach, nalts);
