@@ -239,7 +239,7 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = true;
+	public static boolean debug = false;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -524,6 +524,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 			// closure used to be done in computeReachSet, so set flags now manually
 			reach.hasSemanticContext = previous.hasSemanticContext;
+			reach.dipsIntoOuterContext = previous.dipsIntoOuterContext;
 
 			D = addDFAEdge(dfa, previous, t, reach); // always adding edge even if to a conflict state
 			int predictedAlt = getUniqueAlt(reach);
@@ -987,7 +988,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				// Make sure we track that we are now out of context.
 				c.reachesIntoOuterContext = config.reachesIntoOuterContext;
 				assert depth > Integer.MIN_VALUE;
-				closure(c, configs, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion, depth - 1);
+				closure(c, configs, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion, depth - 1, la);
 				return;
 			}
 			else {
@@ -1053,7 +1054,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					}
 				}
 
-				closure(c, configs, closureBusy, continueCollecting, greedy, loopsSimulateTailRecursion, newDepth);
+				closure(c, configs, closureBusy, continueCollecting, greedy, loopsSimulateTailRecursion, newDepth, la);
 			}
 		}
 	}
