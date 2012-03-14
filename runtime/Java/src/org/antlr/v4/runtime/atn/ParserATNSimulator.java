@@ -968,6 +968,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		if ( debug ) System.out.println("closure: "+configs);
 		final int initialDepth = 0;
 		ATNConfigSet clone = (ATNConfigSet)configs.clone();
+//		configs.clear();
 		for (ATNConfig config : clone) { // TODO: SLOW: copying data
 			closure(config, configs, closureBusy, collectPredicates, greedy,
 					loopsSimulateTailRecursion, initialDepth, la);
