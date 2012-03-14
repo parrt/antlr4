@@ -1412,8 +1412,6 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	/** See comment on LexerInterpreter.addDFAState. */
 	@NotNull
 	protected DFAState addDFAState(@NotNull DFA dfa, @NotNull ATNConfigSet configs) {
-		ATNConfigSet clone = (ATNConfigSet)configs.clone();
-		configs = clone;
 		DFAState proposed = new DFAState(configs);
 		DFAState existing = dfa.states.get(proposed);
 		if ( existing!=null ) return existing;
