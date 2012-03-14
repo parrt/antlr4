@@ -239,7 +239,7 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = false;
+	public static boolean debug = true;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -523,6 +523,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			if ( reach==null ) throw noViableAlt(input, outerContext, previous, startIndex);
 
 			// closure used to be done in computeReachSet, so set flags now manually
+			// hasSemanticContext only set when previous=s0, right?
 			reach.hasSemanticContext = previous.hasSemanticContext;
 			reach.dipsIntoOuterContext = previous.dipsIntoOuterContext;
 
@@ -537,8 +538,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 				boolean collectPredicates = false;
-				closure(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
-						parser.getTokenStream().LA(2));
+				closureOfSet(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
+							 parser.getTokenStream().LA(2));
+				D.configset = reach;
 
 				boolean fullCtx = false;
 				D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
@@ -663,8 +665,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			boolean loopsSimulateTailRecursion = true;
 			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 			boolean collectPredicates = false;
-			closure(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
-					parser.getTokenStream().LA(2));
+			closureOfSet(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
+						 parser.getTokenStream().LA(2));
 
 			boolean fullCtx = true;
 			reach.conflictingAlts = getConflictingAlts(reach, fullCtx);
@@ -919,19 +921,19 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return predictions;
 	}
 
-	protected void closure(@NotNull ATNConfigSet configs,
-						   @NotNull Set<ATNConfig> closureBusy,
-						   boolean collectPredicates,
-						   boolean greedy, boolean loopsSimulateTailRecursion,
-						   int la)
+	protected void closureOfSet(@NotNull ATNConfigSet configs,
+								@NotNull Set<ATNConfig> closureBusy,
+								boolean collectPredicates,
+								boolean greedy, boolean loopsSimulateTailRecursion,
+								int la)
 	{
 		if ( debug ) System.out.println("closure: "+configs);
 		final int initialDepth = 0;
 		ATNConfigSet clone = (ATNConfigSet)configs.clone();
 		configs.clear();
 		for (ATNConfig config : clone) { // TODO: SLOW: copying data
-			closure(config, configs, closureBusy, collectPredicates, greedy,
-					loopsSimulateTailRecursion, initialDepth, la);
+			closure_(config, configs, closureBusy, collectPredicates, greedy,
+					 loopsSimulateTailRecursion, initialDepth, la);
 		}
 	}
 
@@ -952,17 +954,17 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 						   int la)
 	{
 		final int initialDepth = 0;
-		closure(config, configs, closureBusy, collectPredicates, greedy,
-				loopsSimulateTailRecursion, initialDepth, la);
+		closure_(config, configs, closureBusy, collectPredicates, greedy,
+				 loopsSimulateTailRecursion, initialDepth, la);
 	}
 
-	protected void closure(@NotNull ATNConfig config,
-						   @NotNull ATNConfigSet configs,
-						   @NotNull Set<ATNConfig> closureBusy,
-						   boolean collectPredicates,
-						   boolean greedy, boolean loopsSimulateTailRecursion,
-						   int depth,
-						   int la)
+	protected void closure_(@NotNull ATNConfig config,
+							@NotNull ATNConfigSet configs,
+							@NotNull Set<ATNConfig> closureBusy,
+							boolean collectPredicates,
+							boolean greedy, boolean loopsSimulateTailRecursion,
+							int depth,
+							int la)
 	{
 		if ( debug ) System.out.println("closure("+config.toString(parser,true)+")");
 
@@ -988,7 +990,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				// Make sure we track that we are now out of context.
 				c.reachesIntoOuterContext = config.reachesIntoOuterContext;
 				assert depth > Integer.MIN_VALUE;
-				closure(c, configs, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion, depth - 1, la);
+				closure_(c, configs, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion, depth - 1, la);
 				return;
 			}
 			else {
@@ -1054,7 +1056,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					}
 				}
 
-				closure(c, configs, closureBusy, continueCollecting, greedy, loopsSimulateTailRecursion, newDepth, la);
+				closure_(c, configs, closureBusy, continueCollecting, greedy, loopsSimulateTailRecursion, newDepth, la);
 			}
 		}
 	}
