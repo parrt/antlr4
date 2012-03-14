@@ -239,7 +239,7 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = true;
+	public static boolean debug = false;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -290,8 +290,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	{
 		predict_calls++;
 		DFA dfa = decisionToDFA[decision];
-		if ( dfa==null || dfa.s0==null ) {
-//		if ( true ) {
+//		if ( dfa==null || dfa.s0==null ) {
+		if ( true ) {
 			DecisionState startState = atn.decisionToState.get(decision);
 			decisionToDFA[decision] = dfa = new DFA(startState, decision);
 			return predictATN(dfa, input, outerContext);
@@ -532,8 +532,10 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			else {
 
 				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
-							closure(reach, closureBusy, true, greedy, loopsSimulateTailRecursion,
-									parser.getTokenStream().LA(2));
+				closure(reach, closureBusy, true, greedy, loopsSimulateTailRecursion,
+						parser.getTokenStream().LA(2));
+				D.configset = reach;
+				if ( debug ) System.out.println("execATN updates dfa state to "+D.configset);
 
 				boolean fullCtx = false;
 				D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
@@ -927,7 +929,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		if ( debug ) System.out.println("closure: "+configs);
 		final int initialDepth = 0;
 		ATNConfigSet clone = (ATNConfigSet)configs.clone();
-//		configs.clear();
+		configs.clear();
 		for (ATNConfig config : clone) { // TODO: SLOW: copying data
 			closure(config, configs, closureBusy, collectPredicates, greedy,
 					loopsSimulateTailRecursion, initialDepth, la);
