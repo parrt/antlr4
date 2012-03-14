@@ -291,6 +291,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		predict_calls++;
 		DFA dfa = decisionToDFA[decision];
 		if ( dfa==null || dfa.s0==null ) {
+//		if ( true ) {
 			DecisionState startState = atn.decisionToState.get(decision);
 			decisionToDFA[decision] = dfa = new DFA(startState, decision);
 			return predictATN(dfa, input, outerContext);
@@ -520,14 +521,20 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			boolean loopsSimulateTailRecursion = false;
 			ATNConfigSet reach = computeReachSet(previous, t, greedy, loopsSimulateTailRecursion);
 			if ( reach==null ) throw noViableAlt(input, outerContext, previous, startIndex);
+
 			D = addDFAEdge(dfa, previous, t, reach); // always adding edge even if to a conflict state
 			int predictedAlt = getUniqueAlt(reach);
-			if ( predictedAlt!=ATN.INVALID_ALT_NUMBER ) {
+			if ( predictedAlt!=ATN.INVALID_ALT_NUMBER ) { // unique prediction
 				D.isAcceptState = true;
 				D.configset.uniqueAlt = predictedAlt;
 				D.prediction = predictedAlt;
 			}
 			else {
+
+				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
+							closure(reach, closureBusy, true, greedy, loopsSimulateTailRecursion,
+									parser.getTokenStream().LA(2));
+
 				boolean fullCtx = false;
 				D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
 				if ( D.configset.conflictingAlts!=null ) {
@@ -700,7 +707,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean greedy, boolean loopsSimulateTailRecursion) {
 		if ( debug ) System.out.println("in computeReachSet, starting closure: " + closure);
 		ATNConfigSet reach = new ATNConfigSet();
-		Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
+//		Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 		for (ATNConfig c : closure) {
 			if ( debug ) System.out.println("testing "+getTokenName(t)+" at "+c.toString());
 			int n = c.state.getNumberOfTransitions();
@@ -708,7 +715,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				Transition trans = c.state.transition(ti);
 				ATNState target = getReachableTarget(trans, t);
 				if ( target!=null ) {
-					closure(new ATNConfig(c, target), reach, closureBusy, false, greedy, loopsSimulateTailRecursion);
+					// always add target, we'll check closure later
+					reach.add(new ATNConfig(c, target));
+//					closure(new ATNConfig(c, target), reach, closureBusy,
+//							false, greedy, loopsSimulateTailRecursion,
+//							t);
 				}
 			}
 		}
@@ -728,7 +739,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			ATNState target = p.transition(i).target;
 			ATNConfig c = new ATNConfig(target, i+1, initialContext);
 			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
-			closure(c, configs, closureBusy, true, greedy, loopsSimulateTailRecursion);
+			closure(c, configs, closureBusy, true, greedy,
+					loopsSimulateTailRecursion,
+					parser.getTokenStream().LA(1));
 		}
 
 		return configs;
@@ -893,6 +906,21 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return predictions;
 	}
 
+	protected void closure(@NotNull ATNConfigSet configs,
+						   @NotNull Set<ATNConfig> closureBusy,
+						   boolean collectPredicates,
+						   boolean greedy, boolean loopsSimulateTailRecursion,
+						   int la)
+	{
+		if ( debug ) System.out.println("closure: "+configs);
+		final int initialDepth = 0;
+		ATNConfigSet clone = (ATNConfigSet)configs.clone();
+//		configs.clear();
+		for (ATNConfig config : clone) { // TODO: SLOW: copying data
+			closure(config, configs, closureBusy, collectPredicates, greedy,
+					loopsSimulateTailRecursion, initialDepth, la);
+		}
+	}
 
 	/* TODO: If we are doing predicates, there is no point in pursuing
 		 closure operations if we reach a DFA state that uniquely predicts
@@ -906,10 +934,13 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 						   @NotNull ATNConfigSet configs,
 						   @NotNull Set<ATNConfig> closureBusy,
 						   boolean collectPredicates,
-						   boolean greedy, boolean loopsSimulateTailRecursion)
+						   boolean greedy,
+						   boolean loopsSimulateTailRecursion,
+						   int la)
 	{
 		final int initialDepth = 0;
-		closure(config, configs, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion, initialDepth);
+		closure(config, configs, closureBusy, collectPredicates, greedy,
+				loopsSimulateTailRecursion, initialDepth, la);
 	}
 
 	protected void closure(@NotNull ATNConfig config,
@@ -917,7 +948,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 						   @NotNull Set<ATNConfig> closureBusy,
 						   boolean collectPredicates,
 						   boolean greedy, boolean loopsSimulateTailRecursion,
-						   int depth)
+						   int depth,
+						   int la)
 	{
 		if ( debug ) System.out.println("closure("+config.toString(parser,true)+")");
 
@@ -1380,6 +1412,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	/** See comment on LexerInterpreter.addDFAState. */
 	@NotNull
 	protected DFAState addDFAState(@NotNull DFA dfa, @NotNull ATNConfigSet configs) {
+		ATNConfigSet clone = (ATNConfigSet)configs.clone();
+		configs = clone;
 		DFAState proposed = new DFAState(configs);
 		DFAState existing = dfa.states.get(proposed);
 		if ( existing!=null ) return existing;
