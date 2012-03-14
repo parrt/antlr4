@@ -45,8 +45,8 @@ import java.util.*;
  *  This is not a subclass of UnbufferedTokenStream because I don't want
  *  to confuse small moving window of tokens it uses for the full buffer.
  */
-public class BufferedTokenStream<T extends Token> implements TokenStream {
-    protected TokenSource tokenSource;
+public class BufferedTokenStream<T extends Token> implements TokenStream<T> {
+    protected TokenSource<? extends T> tokenSource;
 
     /** Record every single token pulled from the source so we can reproduce
      *  chunks of it later.  The buffer in LookaheadStream overlaps sometimes
@@ -67,12 +67,12 @@ public class BufferedTokenStream<T extends Token> implements TokenStream {
 
     public BufferedTokenStream() { }
 
-    public BufferedTokenStream(TokenSource tokenSource) {
+    public BufferedTokenStream(TokenSource<? extends T> tokenSource) {
         this.tokenSource = tokenSource;
     }
 
     @Override
-    public TokenSource getTokenSource() { return tokenSource; }
+    public TokenSource<? extends T> getTokenSource() { return tokenSource; }
 
 	@Override
 	public int index() { return p; }
@@ -188,7 +188,7 @@ public class BufferedTokenStream<T extends Token> implements TokenStream {
     protected void setup() { sync(0); p = 0; }
 
     /** Reset this token stream by setting its token source. */
-    public void setTokenSource(TokenSource tokenSource) {
+    public void setTokenSource(TokenSource<? extends T> tokenSource) {
         this.tokenSource = tokenSource;
         tokens.clear();
         p = -1;
@@ -256,9 +256,9 @@ public class BufferedTokenStream<T extends Token> implements TokenStream {
     }
 
     @Override
-    public String toString(Token start, Token stop) {
-        if ( start!=null && stop!=null ) {
-            return toString(start.getTokenIndex(), stop.getTokenIndex());
+    public String toString(Object start, Object stop) {
+        if ( start instanceof Token && stop instanceof Token ) {
+            return toString(((Token)start).getTokenIndex(), ((Token)stop).getTokenIndex());
         }
         return null;
     }

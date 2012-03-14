@@ -58,9 +58,9 @@ import java.io.IOException;
  *
  *  @see ParserRuleContext
  */
-public class RuleContext implements ParseTree.RuleNode {
+public class RuleContext<Symbol> implements ParseTree.RuleNode<Symbol> {
 	/** What context invoked this rule? */
-	public RuleContext parent;
+	public RuleContext<Symbol> parent;
 
 	/** What state invoked the rule associated with this context?
 	 *  The "return address" is the followState of invokingState
@@ -81,7 +81,7 @@ public class RuleContext implements ParseTree.RuleNode {
 
 	public RuleContext() {}
 
-	public RuleContext(RuleContext parent, int invokingState) {
+	public RuleContext(RuleContext<Symbol> parent, int invokingState) {
 		this.parent = parent;
 		//if ( parent!=null ) System.out.println("invoke "+stateNumber+" from "+parent);
 		this.invokingState = invokingState;
@@ -92,6 +92,10 @@ public class RuleContext implements ParseTree.RuleNode {
 		}
 	}
 
+	public static <T> RuleContext<T> getChildContext(RuleContext<T> parent, int invokingState) {
+		return new RuleContext<T>(parent, invokingState);
+	}
+
 	@Override
 	public int hashCode() {
 		return cachedHashCode; // works with tests; don't recompute.
@@ -99,7 +103,7 @@ public class RuleContext implements ParseTree.RuleNode {
 
 	public int depth() {
 		int n = 0;
-		RuleContext p = this;
+		RuleContext<?> p = this;
 		while ( p!=null ) {
 			p = p.parent;
 			n++;
@@ -118,17 +122,17 @@ public class RuleContext implements ParseTree.RuleNode {
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
-		} else if (!(o instanceof RuleContext)) {
+		} else if (!(o instanceof RuleContext<?>)) {
 			return false;
 		}
 
-		RuleContext other = (RuleContext)o;
+		RuleContext<?> other = (RuleContext<?>)o;
 		if ( this.hashCode() != other.hashCode() ) {
 			return false; // can't be same if hash is different
 		}
 
 		// System.out.println("comparing "+this+" with "+other);
-		RuleContext sp = this;
+		RuleContext<?> sp = this;
 		while ( sp!=null && other!=null ) {
 			if ( sp == other ) return true;
 			if ( sp.invokingState != other.invokingState) return false;
@@ -163,7 +167,7 @@ public class RuleContext implements ParseTree.RuleNode {
 	 *  discussed with Sriram Srinivasan Feb 28, 2005 about not terminating
 	 *  fast enough upon nondeterminism.
 	 */
-	public boolean conflictsWith(RuleContext other) {
+	public boolean conflictsWith(RuleContext<?> other) {
 		return this.suffix(other) || this.equals(other);
 	}
 
@@ -187,8 +191,8 @@ public class RuleContext implements ParseTree.RuleNode {
 	 *  another, then it will still degenerate to the simple empty stack
 	 *  comparison case.
 	 */
-	protected boolean suffix(RuleContext other) {
-		RuleContext sp = this;
+	protected boolean suffix(RuleContext<?> other) {
+		RuleContext<?> sp = this;
 		// if one of the contexts is empty, it never enters loop and returns true
 		while ( sp.parent!=null && other.parent!=null ) {
 			if ( sp.invokingState != other.invokingState ) {
@@ -211,18 +215,18 @@ public class RuleContext implements ParseTree.RuleNode {
 	// satisfy the ParseTree interface
 
 	@Override
-	public RuleContext getRuleContext() { return this; }
+	public RuleContext<Symbol> getRuleContext() { return this; }
 
 	@Override
-	public RuleContext getParent() { return parent; }
+	public RuleContext<Symbol> getParent() { return parent; }
 
 	@Override
-	public RuleContext getPayload() { return this; }
+	public RuleContext<Symbol> getPayload() { return this; }
 
 	public int getRuleIndex() { return -1; }
 
 	@Override
-	public ParseTree getChild(int i) {
+	public ParseTree<Symbol> getChild(int i) {
 		return null;
 	}
 
@@ -240,20 +244,20 @@ public class RuleContext implements ParseTree.RuleNode {
 	}
 
 	@Override
-	public <T> T accept(ParseTreeVisitor<? extends T> visitor) { return visitor.visitChildren(this); }
+	public <Result> Result accept(ParseTreeVisitor<? super Symbol, ? extends Result> visitor) { return visitor.visitChildren(this); }
 
-	public void inspect(Parser parser) {
+	public void inspect(Parser<?> parser) {
 		TreeViewer viewer = new TreeViewer(parser, this);
 		viewer.open();
 	}
 
-	public void save(Parser parser, String fileName)
+	public void save(Parser<?> parser, String fileName)
 		throws IOException, PrintException
 	{
 		Trees.writePS(this, parser, fileName);
 	}
 
-	public void save(Parser parser, String fileName,
+	public void save(Parser<?> parser, String fileName,
 					 String fontName, int fontSize)
 		throws IOException
 	{
@@ -264,7 +268,8 @@ public class RuleContext implements ParseTree.RuleNode {
 	 *  (root child1 .. childN). Print just a node if this is a leaf.
 	 *  We have to know the recognizer so we can get rule names.
 	 */
-	public String toStringTree(Parser recog) {
+	@Override
+	public String toStringTree(Parser<?> recog) {
 		return Trees.toStringTree(this, recog);
 	}
 
@@ -276,14 +281,14 @@ public class RuleContext implements ParseTree.RuleNode {
 		return toString(null);
 	}
 
-	public String toString(@Nullable Recognizer<?,?> recog) {
-		return toString(recog, ParserRuleContext.EMPTY);
+	public String toString(@Nullable Recognizer<?, ?> recog) {
+		return toString(recog, ParserRuleContext.emptyContext());
 	}
 
 	// recog null unless ParserRuleContext, in which case we use subclass toString(...)
-	public String toString(@Nullable Recognizer<?,?> recog, RuleContext stop) {
+	public String toString(@Nullable Recognizer<?,?> recog, RuleContext<?> stop) {
 		StringBuilder buf = new StringBuilder();
-		RuleContext p = this;
+		RuleContext<?> p = this;
 		buf.append("[");
 		while ( p != null && p != stop ) {
 			if ( !p.isEmpty() ) buf.append(p.invokingState);

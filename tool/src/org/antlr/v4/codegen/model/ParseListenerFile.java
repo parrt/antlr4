@@ -1,7 +1,7 @@
 package org.antlr.v4.codegen.model;
 
 import org.antlr.v4.codegen.OutputModelFactory;
-import org.antlr.v4.runtime.misc.Triple;
+import org.antlr.v4.runtime.misc.Tuple3;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.LeftRecursiveRule;
 import org.antlr.v4.tool.Rule;
@@ -26,14 +26,14 @@ public class ParseListenerFile extends OutputFile {
 		parserName = g.getRecognizerName();
 		grammarName = g.name;
 		for (Rule r : g.rules.values()) {
-			List<Triple<Integer,AltAST,String>> labels = r.getAltLabels();
+			List<Tuple3<Integer,AltAST,String>> labels = r.getAltLabels();
 			// EXIT RULES
 			if ( labels!=null ) {
 				// add exit rules for alt labels
-				for (Triple<Integer,AltAST,String> pair : labels) {
-					listenerExitNames.add(pair.c);
+				for (Tuple3<Integer,AltAST,String> pair : labels) {
+					listenerExitNames.add(pair.getItem3());
 					if ( !(r instanceof LeftRecursiveRule) ) {
-						listenerEnterNames.add(pair.c);
+						listenerEnterNames.add(pair.getItem3());
 					}
 				}
 			}

@@ -1,6 +1,7 @@
 package org.antlr.v4.runtime.tree;
 
-import java.util.*;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 /** Associate a property with a parse tree node. Useful with parse tree
  *  listeners that need to associate values with particular tree nodes,
@@ -16,9 +17,9 @@ import java.util.*;
     times in your event methods.
  */
 public class ParseTreeProperty<V> {
-	protected Map<ParseTree, V> annotations = new IdentityHashMap<ParseTree, V>();
+	protected Map<ParseTree<?>, V> annotations = new IdentityHashMap<ParseTree<?>, V>();
 
-	public V get(ParseTree node) { return annotations.get(node); }
-	public void put(ParseTree node, V value) { annotations.put(node, value); }
-	public V removeFrom(ParseTree node) { return annotations.remove(node); }
+	public V get(ParseTree<?> node) { return annotations.get(node); }
+	public void put(ParseTree<?> node, V value) { annotations.put(node, value); }
+	public V removeFrom(ParseTree<?> node) { return annotations.remove(node); }
 }

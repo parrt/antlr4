@@ -72,6 +72,7 @@ public abstract class BaseTest {
 	public static final String pathSep = System.getProperty("path.separator");
 
 	public static final boolean TEST_IN_SAME_PROCESS = Boolean.parseBoolean(System.getProperty("antlr.testinprocess"));
+	public static final boolean STRICT_COMPILE_CHECKS = Boolean.parseBoolean(System.getProperty("antlr.strictcompile"));
 
     /**
      * Build up the full classpath we need, including the surefire path (if present)
@@ -291,8 +292,15 @@ public abstract class BaseTest {
 		Iterable<? extends JavaFileObject> compilationUnits =
 			fileManager.getJavaFileObjectsFromFiles(files);
 
-		Iterable<String> compileOptions =
-			Arrays.asList("-g", "-d", tmpdir, "-cp", tmpdir+pathSep+CLASSPATH);
+		List<String> compileOptions = new ArrayList<String>();
+		compileOptions.add("-g");
+		if (STRICT_COMPILE_CHECKS) {
+			compileOptions.add("-Xlint");
+			compileOptions.add("-Xlint:-serial");
+			compileOptions.add("-Werror");
+		}
+
+		compileOptions.addAll(Arrays.asList("-d", tmpdir, "-cp", tmpdir+pathSep+CLASSPATH));
 
 		JavaCompiler.CompilationTask task =
 			compiler.getTask(null, fileManager, null, compileOptions, null,
@@ -835,7 +843,7 @@ public abstract class BaseTest {
 	}
 
     public static class FilteringTokenStream extends CommonTokenStream {
-        public FilteringTokenStream(TokenSource src) { super(src); }
+        public FilteringTokenStream(TokenSource<? extends Token> src) { super(src); }
         Set<Integer> hide = new HashSet<Integer>();
         @Override
         protected void sync(int i) {
@@ -895,7 +903,7 @@ public abstract class BaseTest {
 			createParserST =
 				new ST(
 				"        <parserName> parser = new <parserName>(tokens);\n" +
-                "        parser.setErrorHandler(new DiagnosticErrorStrategy());\n");
+                "        parser.setErrorHandler(new DiagnosticErrorStrategy\\<Token>());\n");
 		}
 		outputFileST.add("createParser", createParserST);
 		outputFileST.add("parserName", parserName);
@@ -1027,7 +1035,7 @@ public abstract class BaseTest {
     public void assertNull(String message, Object object) { try {Assert.assertNull(message, object);} catch (Error e) {lastTestFailed=true; throw e;} }
     public void assertNull(Object object) { try {Assert.assertNull(object);} catch (Error e) {lastTestFailed=true; throw e;} }
 
-	public static class IntTokenStream implements TokenStream {
+	public static class IntTokenStream implements TokenStream<Token> {
 		List<Integer> types;
 		int p=0;
 		public IntTokenStream(List<Integer> types) { this.types = types; }
@@ -1082,7 +1090,7 @@ public abstract class BaseTest {
 		}
 
 		@Override
-		public TokenSource getTokenSource() {
+		public TokenSource<? extends Token> getTokenSource() {
 			return null;
 		}
 
@@ -1092,7 +1100,7 @@ public abstract class BaseTest {
 		}
 
 		@Override
-		public String toString(Token start, Token stop) {
+		public String toString(Object start, Object stop) {
 			return null;
 		}
 	}

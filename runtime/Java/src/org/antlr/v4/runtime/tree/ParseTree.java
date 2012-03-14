@@ -41,51 +41,57 @@ import org.antlr.v4.runtime.misc.Interval;
  *
  *  The payload is either a token or a context object.
  */
-public interface ParseTree extends SyntaxTree {
-	public interface RuleNode extends ParseTree {
-		RuleContext getRuleContext();
+public interface ParseTree<Symbol> extends SyntaxTree {
+	public interface RuleNode<Symbol> extends ParseTree<Symbol> {
+		RuleContext<Symbol> getRuleContext();
+
+		@Override
+		RuleNode<Symbol> getParent();
 	}
 
-	public interface TerminalNode<Symbol extends Token> extends ParseTree {
+	public interface TerminalNode<Symbol> extends ParseTree<Symbol> {
 		Symbol getSymbol();
+
+		@Override
+		RuleNode<Symbol> getParent();
 	}
 
-	public static class TerminalNodeImpl<Symbol extends Token> implements TerminalNode<Symbol> {
+	public static class TerminalNodeImpl<Symbol> implements TerminalNode<Symbol> {
 		public Symbol symbol;
-		public ParseTree parent;
+		public RuleNode<Symbol> parent;
 		/** Which ATN node matched this token? */
 		public int s;
 		public TerminalNodeImpl(Symbol symbol) {	this.symbol = symbol;	}
 
 		@Override
-		public ParseTree getChild(int i) {return null;}
+		public ParseTree<Symbol> getChild(int i) {return null;}
 
 		@Override
 		public Symbol getSymbol() {return symbol;}
 
 		@Override
-		public ParseTree getParent() { return parent; }
+		public RuleNode<Symbol> getParent() { return parent; }
 
 		@Override
 		public Symbol getPayload() { return symbol; }
 
 		@Override
 		public Interval getSourceInterval() {
-			if ( symbol ==null ) return Interval.INVALID;
+			if ( !(symbol instanceof Token) ) return Interval.INVALID;
 
-			return new Interval(symbol.getStartIndex(), symbol.getStopIndex());
+			return new Interval(((Token)symbol).getStartIndex(), ((Token)symbol).getStopIndex());
 		}
 
 		@Override
 		public int getChildCount() { return 0; }
 
 		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+		public <Result> Result accept(ParseTreeVisitor<? super Symbol, ? extends Result> visitor) {
 			return visitor.visitTerminal(this);
 		}
 
 		@Override
-		public String toStringTree(Parser parser) {
+		public String toStringTree(Parser<?> parser) {
 			return toString();
 		}
 
@@ -93,8 +99,13 @@ public interface ParseTree extends SyntaxTree {
 
 		@Override
 		public String toString() {
-				if ( symbol.getType() == Token.EOF ) return "<EOF>";
-				return symbol.getText();
+			if (symbol instanceof Token) {
+				if ( ((Token)symbol).getType() == Token.EOF ) return "<EOF>";
+				return ((Token)symbol).getText();
+			}
+			else {
+				return symbol != null ? symbol.toString() : "<null>";
+			}
 		}
 
 		@Override
@@ -103,7 +114,7 @@ public interface ParseTree extends SyntaxTree {
 		}
 	}
 
-	public interface ErrorNode<Symbol extends Token> extends TerminalNode<Symbol> {
+	public interface ErrorNode<Symbol> extends TerminalNode<Symbol> {
 	}
 
 	/** Represents a token that was consumed during resynchronization
@@ -112,7 +123,7 @@ public interface ParseTree extends SyntaxTree {
 	 *  and deletion as well as during "consume until error recovery set"
 	 *  upon no viable alternative exceptions.
 	 */
-	public static class ErrorNodeImpl<Symbol extends Token> extends
+	public static class ErrorNodeImpl<Symbol> extends
 		TerminalNodeImpl<Symbol>
 		implements ErrorNode<Symbol>
 	{
@@ -121,22 +132,22 @@ public interface ParseTree extends SyntaxTree {
 		}
 
 		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+		public <Result> Result accept(ParseTreeVisitor<? super Symbol, ? extends Result> visitor) {
 			return visitor.visitErrorNode(this);
 		}
 	}
 
 	// the following methods narrow the return type; they are not additional methods
 	@Override
-	ParseTree getParent();
+	ParseTree<Symbol> getParent();
 	@Override
-	ParseTree getChild(int i);
+	ParseTree<Symbol> getChild(int i);
 
 	/** The ParseTreeVisitor needs a double dispatch method */
-	public <T> T accept(ParseTreeVisitor<? extends T> visitor);
+	public <Result> Result accept(ParseTreeVisitor<? super Symbol, ? extends Result> visitor);
 
 	/** Specialize toStringTree so that it can print out more information
 	 * 	based upon the parser.
 	 */
-	public String toStringTree(Parser parser);
+	public String toStringTree(Parser<?> parser);
 }

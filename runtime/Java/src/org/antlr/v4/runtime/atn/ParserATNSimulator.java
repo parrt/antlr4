@@ -33,15 +33,16 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.SymbolStream;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.misc.IntervalSet;
+import org.antlr.v4.runtime.misc.MultiMap;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
-import org.stringtemplate.v4.misc.MultiMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -249,7 +250,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	public static int retry_with_context_indicates_no_conflict = 0;
 
 	@Nullable
-	protected final Parser parser;
+	protected final Parser<Symbol> parser;
 
 	@NotNull
 	public final DFA[] decisionToDFA;
@@ -270,7 +271,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		this(null, atn);
 	}
 
-	public ParserATNSimulator(@Nullable Parser parser, @NotNull ATN atn) {
+	public ParserATNSimulator(@Nullable Parser<Symbol> parser, @NotNull ATN atn) {
 		super(atn);
 		this.parser = parser;
 //		ctxToDFAs = new HashMap<RuleContext, DFA[]>();
@@ -286,7 +287,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	}
 
 	public int adaptivePredict(@NotNull SymbolStream<? extends Symbol> input, int decision,
-							   @Nullable ParserRuleContext<?> outerContext)
+							   @Nullable ParserRuleContext<Symbol> outerContext)
 	{
 		predict_calls++;
 		DFA dfa = decisionToDFA[decision];
@@ -312,16 +313,16 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	}
 
 	public int predictATN(@NotNull DFA dfa, @NotNull SymbolStream<? extends Symbol> input,
-						  @Nullable ParserRuleContext<?> outerContext)
+						  @Nullable ParserRuleContext<Symbol> outerContext)
 	{
-		if ( outerContext==null ) outerContext = ParserRuleContext.EMPTY;
+		if ( outerContext==null ) outerContext = ParserRuleContext.emptyContext();
 		if ( debug ) System.out.println("ATN decision "+dfa.decision+
 										" exec LA(1)=="+ getLookaheadName(input) +
 										", outerContext="+outerContext.toString(parser));
 		DecisionState decState = atn.getDecisionState(dfa.decision);
 		boolean greedy = decState.isGreedy;
 		boolean loopsSimulateTailRecursion = false;
-		ATNConfigSet s0_closure = computeStartState(dfa.atnStartState, ParserRuleContext.EMPTY, greedy, loopsSimulateTailRecursion);
+		ATNConfigSet s0_closure = computeStartState(dfa.atnStartState, ParserRuleContext.emptyContext(), greedy, loopsSimulateTailRecursion);
 		dfa.s0 = addDFAState(dfa, s0_closure);
 
 		int alt = 0;
@@ -344,9 +345,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 	public int execDFA(@NotNull DFA dfa, @NotNull DFAState s0,
 					   @NotNull SymbolStream<? extends Symbol> input, int startIndex,
-                       @Nullable ParserRuleContext<?> outerContext)
+                       @Nullable ParserRuleContext<Symbol> outerContext)
     {
-		if ( outerContext==null ) outerContext = ParserRuleContext.EMPTY;
+		if ( outerContext==null ) outerContext = ParserRuleContext.emptyContext();
 		if ( dfa_debug ) System.out.println("DFA decision "+dfa.decision+
 											" exec LA(1)=="+ getLookaheadName(input) +
 											", outerContext="+outerContext.toString(parser));
@@ -500,7 +501,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 */
 	public int execATN(@NotNull DFA dfa, @NotNull DFAState s0,
 					   @NotNull SymbolStream<? extends Symbol> input, int startIndex,
-					   ParserRuleContext<?> outerContext)
+					   ParserRuleContext<Symbol> outerContext)
 	{
 		if ( debug ) System.out.println("execATN decision "+dfa.decision+" exec LA(1)=="+ getLookaheadName(input));
 		ATN_failover++;
@@ -534,7 +535,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					if ( greedy ) {
 						int k = input.index() - startIndex + 1; // how much input we used
 //						System.out.println("used k="+k);
-						if ( outerContext == ParserRuleContext.EMPTY || // in grammar start rule
+						if ( outerContext.isEmpty() || // in grammar start rule
 							 !D.configset.dipsIntoOuterContext ||
 							 k == 1 ) // SLL(1) == LL(1)
 						{
@@ -628,7 +629,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 											   DFAState D, // how far we got before failing over
 											   @NotNull ATNConfigSet s0,
 											   @NotNull SymbolStream<? extends Symbol> input, int startIndex,
-											   ParserRuleContext<?> outerContext,
+											   ParserRuleContext<Symbol> outerContext,
 											   int nalts,
 											   boolean greedy)
 	{
@@ -718,10 +719,10 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 	@NotNull
 	public ATNConfigSet computeStartState(@NotNull ATNState p,
-										  @Nullable RuleContext ctx,
+										  @Nullable RuleContext<?> ctx,
 										  boolean greedy, boolean loopsSimulateTailRecursion)
 	{
-		RuleContext initialContext = ctx; // always at least the implicit call to start rule
+		RuleContext<?> initialContext = ctx; // always at least the implicit call to start rule
 		ATNConfigSet configs = new ATNConfigSet();
 
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
@@ -762,7 +763,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	/** collect and set D's semantic context */
 	public List<DFAState.PredPrediction> predicateDFAState(DFAState D,
 														   ATNConfigSet configs,
-														   RuleContext outerContext,
+														   RuleContext<?> outerContext,
 														   int nalts)
 	{
 		IntervalSet conflictingAlts = getConflictingAltsFromConfigSet(configs);
@@ -862,7 +863,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 *  unpredicated config which behaves as "always true."
 	 */
 	public IntervalSet evalSemanticContext(List<DFAState.PredPrediction> predPredictions,
-										   ParserRuleContext<?> outerContext,
+										   ParserRuleContext<Symbol> outerContext,
 										   boolean complete)
 	{
 		IntervalSet predictions = new IntervalSet();
@@ -933,7 +934,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			}
 			// We hit rule end. If we have context info, use it
 			if ( config.context!=null && !config.context.isEmpty() ) {
-				RuleContext newContext = config.context.parent; // "pop" invoking state
+				RuleContext<?> newContext = config.context.parent; // "pop" invoking state
 				ATNState invokingState = atn.states.get(config.context.invokingState);
 				RuleTransition rt = (RuleTransition)invokingState.transition(0);
 				ATNState retState = rt.followState;
@@ -956,13 +957,13 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			if ( config.state.getClass()==StarLoopbackState.class ||
 			config.state.getClass()==PlusLoopbackState.class )
 			{
-				config.context = new RuleContext(config.context, config.state.stateNumber);
+				config.context = RuleContext.getChildContext(config.context, config.state.stateNumber);
 				// alter config; it's ok, since all calls to closure pass in a fresh config for us to chase
 				if ( debug ) System.out.println("Loop back; push "+config.state.stateNumber+", stack="+config.context);
 			}
 			else if ( config.state.getClass()==LoopEndState.class ) {
 				if ( debug ) System.out.println("Loop end; pop, stack="+config.context);
-				RuleContext p = config.context;
+				RuleContext<?> p = config.context;
 				LoopEndState end = (LoopEndState) config.state;
 				while ( !p.isEmpty() && p.invokingState == end.loopBackStateNumber ) {
 					p = config.context = config.context.parent; // "pop"
@@ -1081,8 +1082,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 							   ", ctx="+config.context);
 		}
 		ATNState p = config.state;
-		RuleContext newContext =
-			new RuleContext(config.context, p.stateNumber);
+		RuleContext<?> newContext =
+			RuleContext.getChildContext(config.context, p.stateNumber);
 		return new ATNConfig(config, t.target, newContext);
 	}
 
@@ -1320,11 +1321,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 	@NotNull
 	public NoViableAltException noViableAlt(@NotNull SymbolStream<? extends Symbol> input,
-											@NotNull ParserRuleContext<?> outerContext,
+											@NotNull ParserRuleContext<Symbol> outerContext,
 											@NotNull ATNConfigSet configs,
 											int startIndex)
 	{
-		return new NoViableAltException(parser, input,
+		return new NoViableAltException((Recognizer<Symbol, ?>)parser, input,
 											input.get(startIndex),
 											input.LT(1),
 											configs, outerContext);

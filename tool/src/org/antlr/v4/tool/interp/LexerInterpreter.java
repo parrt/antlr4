@@ -34,10 +34,11 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.tool.LexerGrammar;
 
-public class LexerInterpreter implements TokenSource {
+public class LexerInterpreter implements TokenSource<Token> {
 	protected LexerGrammar g;
 	protected LexerATNSimulator interp;
 	protected CharStream input;
+	protected TokenFactory<? extends Token> tokenFactory = CommonTokenFactory.DEFAULT;
 
 	public LexerInterpreter(LexerGrammar g, String inputString) {
 		this(g);
@@ -62,8 +63,13 @@ public class LexerInterpreter implements TokenSource {
 	public String getSourceName() {	return g.name; }
 
 	@Override
-	public void setTokenFactory(TokenFactory<?> factory) {
-			// TODO: use TokenFactory
+	public TokenFactory<? extends Token> getTokenFactory() {
+		return tokenFactory;
+	}
+
+	@Override
+	public void setTokenFactory(TokenFactory<? extends Token> factory) {
+		tokenFactory = factory != null ? factory : CommonTokenFactory.DEFAULT;
 	}
 
 	@Override
@@ -89,11 +95,7 @@ public class LexerInterpreter implements TokenSource {
 		int tokenStartLine = interp.getLine();
 		int ttype = interp.match(input, Lexer.DEFAULT_MODE);
 		int stop = input.index()-1;
-		// TODO: use TokenFactory
-		WritableToken t = new CommonToken(this, ttype, Token.DEFAULT_CHANNEL, start, stop);
-		t.setLine(tokenStartLine);
-		t.setCharPositionInLine(tokenStartCharPositionInLine);
-		return t;
+		return tokenFactory.create(this, ttype, null, Token.DEFAULT_CHANNEL, start, stop, tokenStartLine, tokenStartCharPositionInLine);
 
 		/*
 		outer:

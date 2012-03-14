@@ -1,32 +1,47 @@
+/*
+ [The "BSD license"]
+  Copyright (c) 2012 Terence Parr
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  3. The name of the author may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package org.antlr.v4.runtime.tree;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
-/** {@code T} is return type of {@code visit} methods. Use {@link Void} for no return type.
+/**
+ *
+ * @author Sam Harwell
  */
-public class ParseTreeVisitor<T> {
-	public T visit(ParseTree tree) {
-		return tree.accept(this);
-	}
+public interface ParseTreeVisitor<Symbol extends Token, Result> {
 
-	/** Visit all rule, non-leaf children. This returns value returned from last
-	 *  child visited, losing all computations from first n-1 children.  Works
-	 *  fine for contexts with one child then.
-	 *  Handy if you are just walking the tree with a visitor and only
-	 *  care about some nodes.  The {@link ParserRuleContext#accept} method
-	 *  walks all children by default; i.e., calls this method.
-	 */
-	public T visitChildren(ParseTree.RuleNode node) {
-		T result = null;
-		int n = node.getChildCount();
-		for (int i=0; i<n; i++) {
-			ParseTree c = node.getChild(i);
-			result = c.accept(this);
-		}
-		return result;
-	}
+	Result visit(ParseTree<? extends Symbol> ctx);
 
-	public T visitTerminal(ParseTree.TerminalNode<? extends Token> node) { return null; }
-	public T visitErrorNode(ParseTree.ErrorNode<? extends Token> node) { return null; }
+	Result visitChildren(ParseTree.RuleNode<? extends Symbol> ctx);
+
+	Result visitTerminal(ParseTree.TerminalNode<? extends Symbol> node);
+
+	Result visitErrorNode(ParseTree.ErrorNode<? extends Symbol> node);
+
 }

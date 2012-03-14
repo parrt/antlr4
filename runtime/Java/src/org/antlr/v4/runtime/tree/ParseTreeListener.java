@@ -33,8 +33,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 
 public interface ParseTreeListener<Symbol extends Token> {
-	void visitTerminal(ParseTree.TerminalNode<Symbol> node);
-	void visitErrorNode(ParseTree.ErrorNode<Symbol> node);
-    void enterEveryRule(ParserRuleContext<Symbol> ctx);
-    void exitEveryRule(ParserRuleContext<Symbol> ctx);
+	void visitTerminal(ParseTree.TerminalNode<? extends Symbol> node);
+	void visitErrorNode(ParseTree.ErrorNode<? extends Symbol> node);
+    void enterEveryRule(ParserRuleContext<? extends Symbol> ctx);
+    void exitEveryRule(ParserRuleContext<? extends Symbol> ctx);
 }

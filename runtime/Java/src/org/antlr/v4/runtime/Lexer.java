@@ -40,7 +40,7 @@ import java.util.List;
  *  of speed.
  */
 public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
-	implements TokenSource
+	implements TokenSource<Token>
 {
 	public static final int DEFAULT_MODE = 0;
 	public static final int MORE = -2;
@@ -197,13 +197,18 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 	}
 
 	@Override
-	public void setTokenFactory(TokenFactory<?> factory) {
+	public TokenFactory<?> getTokenFactory() {
+		return _factory;
+	}
+
+	@Override
+	public void setTokenFactory(TokenFactory<? extends Token> factory) {
 		this._factory = factory;
 	}
 
 	/** Set the char stream and reset the lexer */
 	@Override
-	public void setInputStream(IntStream input) {
+	public void setInputStream(IntStream<? extends Integer> input) {
 		this._input = null;
 		reset();
 		this._input = (CharStream)input;
