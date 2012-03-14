@@ -1,8 +1,9 @@
 grammar T;
-s : a a a;
-a : {false}? ID 
-  | {true}?  ID
-  | INT       
+s : b[2] ';' |  b[2] '.' ;
+b[int i] : a[i] ;
+a[int i]
+  : {$i==1}? ID {System.out.println("alt 1");}
+  | {$i==2}? ID {System.out.println("alt 2");}
   ;
 ID : 'a'..'z'+ ;
 INT : '0'..'9'+;

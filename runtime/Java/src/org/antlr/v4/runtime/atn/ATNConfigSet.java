@@ -48,6 +48,11 @@ public class ATNConfigSet extends OrderedHashSet<ATNConfig> {
 
 	public ATNConfigSet() { }
 
+	@Override
+	public Object clone() {
+		return new ATNConfigSet(this);
+	}
+
 	public ATNConfigSet(ATNConfigSet old) {
 		addAll(old);
 		this.uniqueAlt = old.uniqueAlt;
