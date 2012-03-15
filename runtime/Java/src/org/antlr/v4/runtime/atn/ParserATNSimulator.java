@@ -538,8 +538,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 				boolean collectPredicates = false;
-				closureOfSet(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
-							 parser.getTokenStream().LA(2));
+				reach = closureOfSet(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
+									 parser.getTokenStream().LA(2));
 				D.configset = reach;
 
 				boolean fullCtx = false;
@@ -668,8 +668,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			boolean loopsSimulateTailRecursion = true;
 			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 			boolean collectPredicates = false;
-			closureOfSet(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
-						 parser.getTokenStream().LA(2));
+			reach = closureOfSet(reach, closureBusy, collectPredicates, greedy, loopsSimulateTailRecursion,
+								 parser.getTokenStream().LA(2));
 
 			boolean fullCtx = true;
 			reach.conflictingAlts = getConflictingAlts(reach, fullCtx);
@@ -924,20 +924,20 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return predictions;
 	}
 
-	protected void closureOfSet(@NotNull ATNConfigSet configs,
-								@NotNull Set<ATNConfig> closureBusy,
-								boolean collectPredicates,
-								boolean greedy, boolean loopsSimulateTailRecursion,
-								int la)
+	protected ATNConfigSet closureOfSet(@NotNull ATNConfigSet configs,
+										@NotNull Set<ATNConfig> closureBusy,
+										boolean collectPredicates,
+										boolean greedy, boolean loopsSimulateTailRecursion,
+										int la)
 	{
 		if ( debug ) System.out.println("closure: "+configs);
 		final int initialDepth = 0;
-		ATNConfigSet clone = (ATNConfigSet)configs.clone();
-		configs.clear();
-		for (ATNConfig config : clone) { // TODO: SLOW: copying data
-			closure_(config, configs, closureBusy, collectPredicates, greedy,
+		ATNConfigSet targetsWithClosure = (ATNConfigSet)configs.clone();
+		for (ATNConfig config : configs) {
+			closure_(config, targetsWithClosure, closureBusy, collectPredicates, greedy,
 					 loopsSimulateTailRecursion, initialDepth, la);
 		}
+		return targetsWithClosure;
 	}
 
 	/* TODO: If we are doing predicates, there is no point in pursuing
