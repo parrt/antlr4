@@ -133,7 +133,8 @@ public class ATNConfig {
 	public boolean equals(ATNConfig other) {
 		if (this == other) {
 			return true;
-		} else if (other == null) {
+		}
+		else if (other == null) {
 			return false;
 		}
 

@@ -79,6 +79,8 @@ public class RuleContext implements ParseTree.RuleNode {
 	 */
 	protected int cachedHashCode;
 
+	protected int depth = 0;
+
 	public RuleContext() {}
 
 	public RuleContext(RuleContext parent, int invokingState) {
@@ -89,6 +91,8 @@ public class RuleContext implements ParseTree.RuleNode {
 		this.cachedHashCode = invokingState;
 		if ( parent!=null ) {
 			this.cachedHashCode += parent.cachedHashCode;
+			depth = parent.depth + 1;
+			cachedHashCode += depth;
 		}
 	}
 
@@ -118,7 +122,8 @@ public class RuleContext implements ParseTree.RuleNode {
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
-		} else if (!(o instanceof RuleContext)) {
+		}
+		else if (!(o instanceof RuleContext)) {
 			return false;
 		}
 
@@ -126,8 +131,6 @@ public class RuleContext implements ParseTree.RuleNode {
 		if ( this.hashCode() != other.hashCode() ) {
 			return false; // can't be same if hash is different
 		}
-
-		// TODO: try checking depth as quick check; why is hash not a good one?
 
 		// System.out.println("comparing "+this+" with "+other);
 		RuleContext sp = this;
