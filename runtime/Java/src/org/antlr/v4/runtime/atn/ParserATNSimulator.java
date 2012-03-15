@@ -239,7 +239,7 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = true;
+	public static boolean debug = false;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -561,7 +561,10 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 						else {
 							if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
 							loopsSimulateTailRecursion = true;
-							ATNConfigSet s0_closure = computeStartState(dfa.atnStartState, outerContext, greedy, loopsSimulateTailRecursion);
+							input.seek(startIndex);
+							ATNConfigSet s0_closure = computeStartState(dfa.atnStartState,
+																		outerContext, greedy,
+																		loopsSimulateTailRecursion);
 							fullCtxSet = execATNWithFullContext(dfa, D, s0_closure,
 																input, startIndex,
 																outerContext,
@@ -652,7 +655,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		if ( debug ) System.out.println("execATNWithFullContext "+s0+", greedy="+greedy);
 		ATNConfigSet reach = null;
 		ATNConfigSet previous = s0;
-		input.seek(startIndex);
+//		input.seek(startIndex);  done now above in execATN for computestartstate
 		int t = input.LA(1);
 		while (true) { // while more work
 			reach = computeReachSet(previous, t, greedy, true);
@@ -719,7 +722,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	}
 
 	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean greedy, boolean loopsSimulateTailRecursion) {
-		if ( debug ) System.out.println("in computeReachSet, starting closure: " + closure);
+		if ( debug ) System.out.println("in computeReachSet, starting with: " + closure);
 		ATNConfigSet reach = new ATNConfigSet();
 //		Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 		for (ATNConfig c : closure) {
@@ -1017,19 +1020,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			}
 		}
 
-		ATNState p = config.state;
-		// optimization
-		if ( !p.onlyHasEpsilonTransitions() ) {
-            configs.add(config);
-			if ( config.semanticContext!=null && config.semanticContext!=SemanticContext.NONE ) {
-				configs.hasSemanticContext = true;
-			}
-			if ( config.reachesIntoOuterContext>0 ) {
-				configs.dipsIntoOuterContext = true;
-			}
-            if ( debug ) System.out.println("added config "+configs);
-        }
+		addToClosure(configs, config, la);
 
+		ATNState p = config.state;
         for (int i=0; i<p.getNumberOfTransitions(); i++) {
             Transition t = p.transition(i);
             boolean continueCollecting =
@@ -1059,6 +1052,69 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				closure_(c, configs, closureBusy, continueCollecting, greedy, loopsSimulateTailRecursion, newDepth, la);
 			}
 		}
+	}
+
+	/** Add config to closure set unless we can optimize away.
+	 *
+	 *  The first optimization is that we don't need to add a configuration
+	 *  if the associated state only has epsilon transitions emanating from
+	 *  it. we can simply chase those epsilon transitions. At the end of
+	 *  the closure, then, we will only have configurations for states that
+	 *  have non-epsilon edges.  States either have all epsilon transitions
+	 *  or a single non-epsilon transitions. Actions and predicates are
+	 *  considered epsilon transitions syntactically.
+	 *
+	 *  The second optimization allows us to add these non-epsilon states
+	 *  only when the next symbol of lookahead supports the transition
+	 *  across that edge. This lets us chase only those states in the
+	 *  ATN that are associated with the current input sequence for a
+	 *  particular decision. There is no point to including states that
+	 *  lead to the input we have not seen before. We may never see that
+	 *  input and so it's a waste of time. It also requires a huge amount
+	 *  of memory sometimes to include the states. We also would have to walk
+	 *  them unnecessarily.
+	 */
+	protected void addToClosure(ATNConfigSet configs, ATNConfig config, int la) {
+		ATNState p = config.state;
+		if ( p.onlyHasEpsilonTransitions() ) return; // optimization
+		// if not only epsilon edges, must be single non-epsilon edge.
+		// if no edges, must be EOF target state.
+
+		String tokenName;
+		if ( la==Token.EOF ) tokenName = "<EOF>";
+		else tokenName = parser.getTokenNames()[la];
+		if ( debug ) System.out.println("in closure, checking LA(1)="+tokenName);
+
+		boolean include = true; // include if no edges or an edge we can traverse
+		if ( p.getNumberOfTransitions()==1 ) {
+			Transition trans = p.transition(0); // must be single non-epsilon edge
+			ATNState target = getReachableTarget(trans, la);
+			// config should be added if we can get somewhere on lookahead
+			if ( target!=null ) {
+				include = true;
+			}
+			else {
+				if ( debug ) {
+					System.out.println("not adding config "+config+
+									   " since "+ tokenName +
+									   " not reachable from s"+config.state);
+				}
+				include = false;
+			}
+		}
+
+		if ( include ) addToClosure_(configs, config);
+	}
+
+	protected void addToClosure_(ATNConfigSet configs, ATNConfig config) {
+		configs.add(config);
+		if ( config.semanticContext!=null && config.semanticContext!= SemanticContext.NONE ) {
+			configs.hasSemanticContext = true;
+		}
+		if ( config.reachesIntoOuterContext>0 ) {
+			configs.dipsIntoOuterContext = true;
+		}
+		if ( debug ) System.out.println("added config "+configs);
 	}
 
 	@NotNull
