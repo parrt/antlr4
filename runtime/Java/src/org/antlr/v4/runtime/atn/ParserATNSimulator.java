@@ -1189,6 +1189,116 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return new ATNConfig(config, t.target, newContext);
 	}
 
+	/** Walk each NFA configuration in this DFA state looking for a conflict
+	 *  where (s|i|ctx) and (s|j|ctx) exist, indicating that state s with
+	 *  context conflicting ctx predicts alts i and j.  Return an Integer set
+	 *  of the alternative numbers that conflict.  Two contexts conflict if
+	 *  they are equal or one is a stack suffix of the other or one is
+	 *  the empty context.
+	 *
+	 *  Use a hash table to record the lists of configs for each state
+	 *  as they are encountered.  We need only consider states for which
+	 *  there is more than one configuration.  The configurations' predicted
+	 *  alt must be different or must have different contexts to avoid a
+	 *  conflict.
+	 *
+	 *  Don't report conflicts for DFA states that have conflicting Tokens
+	 *  rule NFA states; they will be resolved in favor of the first rule.
+	 */
+	public IntervalSet getConflictingAlts(@NotNull ATNConfigSet configs, boolean fullCtx) {
+		IntervalSet ambigAlts = new IntervalSet();
+
+		// If only 1 NFA conf then no way it can be nondeterministic;
+		// save the overhead.  There are many o-a->o NFA transitions
+		// and so we save a hash map and iterator creation for each
+		// state.
+		int numConfigs = configs.size();
+		if ( numConfigs <=1 ) {
+			return null;
+		}
+
+		// First get a list of configurations for each state.
+		// Most of the time, each state will have one associated configuration.
+		MultiMap<Integer, ATNConfig> stateToConfigListMap =
+		new MultiMap<Integer, ATNConfig>();
+		for (int i = 0; i < numConfigs; i++) {
+			ATNConfig configuration = configs.get(i);
+			stateToConfigListMap.map(configuration.state.stateNumber, configuration);
+		}
+		// potential conflicts are states with > 1 configuration and diff alts
+		Set<Integer> states = stateToConfigListMap.keySet();
+		int numPotentialConflicts = 0;
+		for (Integer stateI : states) {
+			boolean thisStateHasPotentialProblem = false;
+			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
+			int alt=0;
+			int numConfigsForState = configsForState.size();
+			for (int i = 0; i < numConfigsForState && numConfigsForState>1 ; i++) {
+				ATNConfig c = configsForState.get(i);
+				if ( alt==0 ) {
+					alt = c.alt;
+				}
+				else if ( c.alt!=alt ) {
+						numPotentialConflicts++;
+						thisStateHasPotentialProblem = true;
+				}
+			}
+			if ( !thisStateHasPotentialProblem ) {
+				// remove NFA state's configurations from
+				// further checking; no issues with it
+				// (can't remove as it's concurrent modification; set to null)
+				stateToConfigListMap.put(stateI, null);
+			}
+		}
+
+		// a fast check for potential issues; most states have none
+		if ( numPotentialConflicts==0 ) {
+			return null;
+		}
+
+		// we have a potential problem, so now go through config lists again
+		// looking for different alts (only states with potential issues
+		// are left in the states set).  Now we will check context.
+		// For example, the list of configs for NFA state 3 in some DFA
+		// state might be:
+		//   [3|2|[28 18 $], 3|1|[28 $], 3|1, 3|2]
+		// I want to create a map from context to alts looking for overlap:
+		//   [28 18 $] -> 2
+		//   [28 $] -> 1
+		//   [$] -> 1,2
+		// Indeed a conflict exists as same state 3, same context [$], predicts
+		// alts 1 and 2.
+		// walk each state with potential conflicting configurations
+		for (Integer stateI : states) {
+			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
+			// compare each configuration pair s, t to ensure:
+			// s.ctx different than t.ctx if s.alt != t.alt
+			int numConfigsForState = 0;
+			if ( configsForState!=null ) {
+				numConfigsForState = configsForState.size();
+			}
+			for (int i = 0; i < numConfigsForState; i++) {
+				ATNConfig s = configsForState.get(i);
+				for (int j = i+1; j < numConfigsForState; j++) {
+					ATNConfig t = configsForState.get(j);
+					// conflicts means s.ctx==t.ctx or s.ctx is a stack
+					// suffix of t.ctx or vice versa (if alts differ).
+					// Also a conflict if s.ctx or t.ctx is empty
+					if ( s.alt != t.alt && s.context.conflictsWith(t.context)) {
+						ambigAlts.add(s.alt);
+						ambigAlts.add(t.alt);
+					}
+				}
+			}
+		}
+
+		if ( ambigAlts.isNil() ) {
+			return null;
+		}
+		return ambigAlts;
+	}
+
+
 	/**
 	 * From grammar:
 
@@ -1258,7 +1368,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 functions
 	 */
 	@Nullable
-	public IntervalSet getConflictingAlts(@NotNull ATNConfigSet configs, boolean fullCtx) {
+	public IntervalSet getConflictingAlts___(@NotNull ATNConfigSet configs, boolean fullCtx) {
 		if ( debug ) System.out.println("### check ambiguous  "+configs);
 		// First get a list of configurations for each state.
 		// Most of the time, each state will have one associated configuration.
