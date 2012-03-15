@@ -79,8 +79,6 @@ public class RuleContext implements ParseTree.RuleNode {
 	 */
 	protected int cachedHashCode;
 
-	protected int depth = 0;
-
 	public RuleContext() {}
 
 	public RuleContext(RuleContext parent, int invokingState) {
@@ -88,11 +86,12 @@ public class RuleContext implements ParseTree.RuleNode {
 		//if ( parent!=null ) System.out.println("invoke "+stateNumber+" from "+parent);
 		this.invokingState = invokingState;
 
+		this.cachedHashCode = parent != null ? parent.cachedHashCode : 1;
+		this.cachedHashCode = 31 * cachedHashCode ^ invokingState;
+
 		this.cachedHashCode = invokingState;
 		if ( parent!=null ) {
-			this.cachedHashCode += parent.cachedHashCode;
-			depth = parent.depth + 1;
-			cachedHashCode += depth;
+			this.cachedHashCode += parent.cachedHashCode*5;
 		}
 	}
 
