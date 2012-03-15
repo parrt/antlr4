@@ -1421,7 +1421,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			List<ATNConfig> configsPerState = stateToConfigListMap.get(state);
 			if (configsPerState == null) continue;
 			IntervalSet alts = stateToAltListMap.get(state);
-// Sam's correction to ambig def is here:
+			// Sam's correction to ambig def is here:
 			if ( !altsToIgnore.isNil() && alts.and(altsToIgnore).size()<=1 ) {
 //				System.err.println("ignoring alt since "+alts+"&"+altsToIgnore+
 //								   ".size is "+alts.and(altsToIgnore).size());
@@ -1593,29 +1593,23 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	/** See comment on LexerInterpreter.addDFAState. */
 	@NotNull
 	protected DFAState addDFAState(@NotNull DFA dfa, @NotNull ATNConfigSet configs) {
-		DFAState proposed = new DFAState(configs);
-		DFAState existing = dfa.states.get(proposed);
-		if ( existing!=null ) return existing;
-
-		DFAState newState = proposed;
-
+		DFAState newState = new DFAState(configs);
 		newState.stateNumber = dfa.states.size();
-		newState.configset = new ATNConfigSet(configs);
-		dfa.states.put(newState, newState);
-        if ( debug ) System.out.println("adding new DFA state: "+newState);
+		if ( debug ) System.out.println("adding new DFA state: "+newState);
 		return newState;
-	}
 
-//	public void reportConflict(int startIndex, int stopIndex,
-//							   @NotNull IntervalSet alts,
-//							   @NotNull ATNConfigSet configs)
-//	{
-//		if ( debug || retry_debug ) {
-//			System.out.println("reportConflict "+alts+":"+configs+
-//							   ", input="+parser.getInputString(startIndex, stopIndex));
-//		}
-//		if ( parser!=null ) parser.getErrorHandler().reportConflict(parser, startIndex, stopIndex, alts, configs);
-//	}
+//		DFAState proposed = new DFAState(configs);
+//		DFAState existing = dfa.states.get(proposed);
+//		if ( existing!=null ) return existing;
+//
+//		DFAState newState = proposed;
+//
+//		newState.stateNumber = dfa.states.size();
+//		newState.configset = new ATNConfigSet(configs);
+//		dfa.states.put(newState, newState);
+//        if ( debug ) System.out.println("adding new DFA state: "+newState);
+//		return newState;
+	}
 
 	public void reportAttemptingFullContext(DFA dfa, ATNConfigSet configs, int startIndex, int stopIndex) {
         if ( debug || retry_debug ) {
