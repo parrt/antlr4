@@ -88,7 +88,7 @@ public class RuleContext implements ParseTree.RuleNode {
 
 		this.cachedHashCode = invokingState;
 		if ( parent!=null ) {
-			this.cachedHashCode += parent.cachedHashCode*5;
+			this.cachedHashCode ^= parent.cachedHashCode * 31;
 		}
 	}
 

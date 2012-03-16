@@ -931,12 +931,17 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 										int la)
 	{
 		if ( debug ) System.out.println("closure: "+configs);
+		System.out.print("closure size "+configs.size());
+		long start = System.currentTimeMillis();
+
 		final int initialDepth = 0;
 		ATNConfigSet targetsWithClosure = new ATNConfigSet();
 		for (ATNConfig config : configs) {
 			closure_(config, targetsWithClosure, closureBusy, collectPredicates, greedy,
 					 loopsSimulateTailRecursion, initialDepth, la);
 		}
+		long stop = System.currentTimeMillis();
+		System.out.println(", took "+(stop-start)+"ms, target size "+targetsWithClosure.size());
 		return targetsWithClosure;
 	}
 
@@ -1205,7 +1210,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 *  Don't report conflicts for DFA states that have conflicting Tokens
 	 *  rule NFA states; they will be resolved in favor of the first rule.
 	 */
-	public IntervalSet getConflictingAlts(@NotNull ATNConfigSet configs, boolean fullCtx) {
+	public IntervalSet getConflictingAlts_v3(@NotNull ATNConfigSet configs, boolean fullCtx) {
 		IntervalSet ambigAlts = new IntervalSet();
 
 		// If only 1 NFA conf then no way it can be nondeterministic;
@@ -1317,8 +1322,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 8  -> (8,1,1), (8,2)
 	 11 -> (11,1,4), (11,2,8), (11,1,8 1)
 
-	 Walk and find state config lists with > 1 alt. If none, no conflict. return null. Here, states 11
-	 and 8 have lists with both alts 1 and 2. Must check these config lists for conflicting configs.
+	 Walk and find state config lists with > 1 alt. If none, no conflict,
+	 return null. Here, states 11 and 8 have lists with both alts 1 and 2.
+	 Must check these config lists for conflicting configs.
 
 	 Sam pointed out a problem with the previous definition, v3, of
 	 ambiguous states. If we have another state associated with conflicting
@@ -1329,7 +1335,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 When the ATN simulation reaches the state before ';', it has a DFA
 	 state that looks like: [12|1|[], 6|2|[], 12|2|[]]. Naturally
 	 12|1|[] and 12|2|[] conflict, but we cannot stop processing this node
-	 because alternative to has another way to continue, via [6|2|[]].
+	 because alternative 2 has another way to continue, via [6|2|[]].
 	 The key is that we have a single state that has config's only associated
 	 with a single alternative, 2, and crucially the state transitions
 	 among the configurations are all non-epsilon transitions. That means
@@ -1368,7 +1374,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 functions
 	 */
 	@Nullable
-	public IntervalSet getConflictingAlts___(@NotNull ATNConfigSet configs, boolean fullCtx) {
+	public IntervalSet getConflictingAlts(@NotNull ATNConfigSet configs, boolean fullCtx) {
 		if ( debug ) System.out.println("### check ambiguous  "+configs);
 		// First get a list of configurations for each state.
 		// Most of the time, each state will have one associated configuration.
