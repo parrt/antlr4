@@ -237,7 +237,7 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = true;
+	public static boolean debug = false;
 	public static boolean optdebug = false;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
@@ -510,8 +510,6 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
         DecisionState decState = atn.getDecisionState(dfa.decision);
 
-		int crank = 1;
-
 		while (true) { // while more work
 			boolean loopsSimulateTailRecursion = false;
 			ATNConfigSet reach = computeReachSet(previous, t, loopsSimulateTailRecursion);
@@ -536,41 +534,36 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 									 parser.getTokenStream().LA(2));
 				D.configset = reach;
 
-//				crank++;
-//				System.out.println("crank="+crank);
-//				if ( crank % 80 == 0 ) {
-					boolean fullCtx = false;
-					D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
-					if ( D.configset.conflictingAlts!=null ) {
-//						System.out.println("used k="+k);
-						if ( outerContext == ParserRuleContext.EMPTY || // in grammar start rule
-							 !D.configset.dipsIntoOuterContext )
-						{
-							if ( reportAmbiguities && !D.configset.hasSemanticContext ) {
-								reportAmbiguity(dfa, D, startIndex, input.index(), D.configset.conflictingAlts, D.configset);
-							}
-							D.isAcceptState = true;
-							predictedAlt = resolveToMinAlt(D, D.configset.conflictingAlts);
+				boolean fullCtx = false;
+				D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
+				if ( D.configset.conflictingAlts!=null ) {
+					if ( outerContext == ParserRuleContext.EMPTY || // in grammar start rule
+						 !D.configset.dipsIntoOuterContext )
+					{
+						if ( reportAmbiguities && !D.configset.hasSemanticContext ) {
+							reportAmbiguity(dfa, D, startIndex, input.index(), D.configset.conflictingAlts, D.configset);
 						}
-						else {
-							if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
-							loopsSimulateTailRecursion = true;
-							input.seek(startIndex);
-							ATNConfigSet s0_closure = computeStartState(dfa.atnStartState,
-																		outerContext,
-																		loopsSimulateTailRecursion);
-							fullCtxSet = execATNWithFullContext(dfa, D, s0_closure,
-																input, startIndex,
-																outerContext,
-																decState.getNumberOfTransitions()
-															   );
-							// not accept state: isCtxSensitive
-							D.isCtxSensitive = true; // always force DFA to ATN simulate
-							D.prediction = predictedAlt = fullCtxSet.uniqueAlt;
-							return predictedAlt; // all done with preds, etc...
-						}
+						D.isAcceptState = true;
+						predictedAlt = resolveToMinAlt(D, D.configset.conflictingAlts);
 					}
-//				}
+					else {
+						if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
+						loopsSimulateTailRecursion = true;
+						input.seek(startIndex);
+						ATNConfigSet s0_closure = computeStartState(dfa.atnStartState,
+																	outerContext,
+																	loopsSimulateTailRecursion);
+						fullCtxSet = execATNWithFullContext(dfa, D, s0_closure,
+															input, startIndex,
+															outerContext,
+															decState.getNumberOfTransitions()
+														   );
+						// not accept state: isCtxSensitive
+						D.isCtxSensitive = true; // always force DFA to ATN simulate
+						D.prediction = predictedAlt = fullCtxSet.uniqueAlt;
+						return predictedAlt; // all done with preds, etc...
+					}
+				}
 			}
 
 			if ( D.isAcceptState && D.configset.hasSemanticContext ) {
@@ -1150,69 +1143,69 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return new ATNConfig(config, t.target, newContext);
 	}
 
-	public boolean hasConflict(@NotNull ATNConfigSet configs, boolean fullCtx) {
-		IntervalSet ambigAlts = new IntervalSet();
-
-		// If only 1 NFA conf then no way it can be nondeterministic;
-		// save the overhead.  There are many o-a->o NFA transitions
-		// and so we save a hash map and iterator creation for each
-		// state.
-		int numConfigs = configs.size();
-		if ( numConfigs<=1 ) {
-			return false;
-		}
-
-		// First get a list of configurations for each state.
-		// Most of the time, each state will have one associated configuration.
-		MultiMap<Integer, ATNConfig> stateToConfigListMap =
-		new MultiMap<Integer, ATNConfig>();
-		for (int i = 0; i < numConfigs; i++) {
-			ATNConfig configuration = configs.get(i);
-			stateToConfigListMap.map(configuration.state.stateNumber, configuration);
-		}
-
-		// potential conflicts are states with > 1 configuration and diff alts
-		Set<Integer> states = stateToConfigListMap.keySet();
-		// wow. i removed this and no change in speed
-
-		// we have a potential problem, so now go through config lists again
-		// looking for different alts (only states with potential issues
-		// are left in the states set).  Now we will check context.
-		if ( optdebug ) System.out.print("hasConflict "+states+" states");
-		long start = System.currentTimeMillis();
-
-		for (Integer stateI : states) {
-			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
-			// compare each configuration pair s, t to ensure:
-			// s.ctx different than t.ctx if s.alt != t.alt
-			int numConfigsForState = 0;
-			if ( configsForState!=null ) {
-				numConfigsForState = configsForState.size();
-			}
-			for (int i = 0; i < numConfigsForState; i++) {
-				ATNConfig s = configsForState.get(i);
-				for (int j = i+1; j < numConfigsForState; j++) {
-					ATNConfig t = configsForState.get(j);
-					// conflicts means s.ctx==t.ctx or s.ctx is a stack
-					// suffix of t.ctx or vice versa (if alts differ).
-					// Also a conflict if s.ctx or t.ctx is empty
-					if ( s.alt != t.alt &&
-						 !(ambigAlts.contains(s.alt)||ambigAlts.contains(t.alt)) )
-					{
-//						System.out.println("diff alts: "+s.context.depth()+", "+t.context.depth());
-						if ( s.context.conflictsWith(t.context)) {
-							return true;
-						}
-					}
-				}
-			}
-		}
-
-		long stop = System.currentTimeMillis();
-		if ( optdebug ) System.out.println(", took "+(stop-start)+"ms");
-
-		return false;
-	}
+//	public boolean hasConflict(@NotNull ATNConfigSet configs, boolean fullCtx) {
+//		IntervalSet ambigAlts = new IntervalSet();
+//
+//		// If only 1 NFA conf then no way it can be nondeterministic;
+//		// save the overhead.  There are many o-a->o NFA transitions
+//		// and so we save a hash map and iterator creation for each
+//		// state.
+//		int numConfigs = configs.size();
+//		if ( numConfigs<=1 ) {
+//			return false;
+//		}
+//
+//		// First get a list of configurations for each state.
+//		// Most of the time, each state will have one associated configuration.
+//		MultiMap<Integer, ATNConfig> stateToConfigListMap =
+//		new MultiMap<Integer, ATNConfig>();
+//		for (int i = 0; i < numConfigs; i++) {
+//			ATNConfig configuration = configs.get(i);
+//			stateToConfigListMap.map(configuration.state.stateNumber, configuration);
+//		}
+//
+//		// potential conflicts are states with > 1 configuration and diff alts
+//		Set<Integer> states = stateToConfigListMap.keySet();
+//		// wow. i removed this and no change in speed
+//
+//		// we have a potential problem, so now go through config lists again
+//		// looking for different alts (only states with potential issues
+//		// are left in the states set).  Now we will check context.
+//		if ( optdebug ) System.out.print("hasConflict "+states+" states");
+//		long start = System.currentTimeMillis();
+//
+//		for (Integer stateI : states) {
+//			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
+//			// compare each configuration pair s, t to ensure:
+//			// s.ctx different than t.ctx if s.alt != t.alt
+//			int numConfigsForState = 0;
+//			if ( configsForState!=null ) {
+//				numConfigsForState = configsForState.size();
+//			}
+//			for (int i = 0; i < numConfigsForState; i++) {
+//				ATNConfig s = configsForState.get(i);
+//				for (int j = i+1; j < numConfigsForState; j++) {
+//					ATNConfig t = configsForState.get(j);
+//					// conflicts means s.ctx==t.ctx or s.ctx is a stack
+//					// suffix of t.ctx or vice versa (if alts differ).
+//					// Also a conflict if s.ctx or t.ctx is empty
+//					if ( s.alt != t.alt &&
+//						 !(ambigAlts.contains(s.alt)||ambigAlts.contains(t.alt)) )
+//					{
+////						System.out.println("diff alts: "+s.context.depth()+", "+t.context.depth());
+//						if ( s.context.conflictsWith(t.context)) {
+//							return true;
+//						}
+//					}
+//				}
+//			}
+//		}
+//
+//		long stop = System.currentTimeMillis();
+//		if ( optdebug ) System.out.println(", took "+(stop-start)+"ms");
+//
+//		return false;
+//	}
 
 
 	/** Walk each NFA configuration in this DFA state looking for a conflict
