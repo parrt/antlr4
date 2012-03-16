@@ -544,7 +544,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					if ( D.configset.conflictingAlts!=null ) {
 //						System.out.println("used k="+k);
 						if ( outerContext == ParserRuleContext.EMPTY || // in grammar start rule
-							!D.configset.dipsIntoOuterContext )
+							 !D.configset.dipsIntoOuterContext )
 						{
 							if ( reportAmbiguities && !D.configset.hasSemanticContext ) {
 								reportAmbiguity(dfa, D, startIndex, input.index(), D.configset.conflictingAlts, D.configset);
