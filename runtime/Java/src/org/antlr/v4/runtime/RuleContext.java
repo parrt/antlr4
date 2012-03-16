@@ -194,7 +194,7 @@ public class RuleContext implements ParseTree.RuleNode {
 	 *  another, then it will still degenerate to the simple empty stack
 	 *  comparison case.
 	 */
-	protected boolean suffix(RuleContext other) {
+	public boolean suffix(RuleContext other) {
 		// TODO: check size or something as quick check?
 		RuleContext sp = this;
 		// if one of the contexts is empty, it never enters loop and returns true

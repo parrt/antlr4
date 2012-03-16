@@ -66,11 +66,7 @@ public class DFAState {
 	public int stateNumber = -1;
 
 	/** The set of ATN configurations (state,alt,context) for this DFA state */
-//	@Nullable
-//	public OrderedHashSet<ATNConfig> configs = new OrderedHashSet<ATNConfig>();
-
-	// TODO: rename to configs after flipping to new ATN sim
-	public ATNConfigSet configset = new ATNConfigSet();
+	public ATNConfigSet configset = new ATNConfigSet(true);
 
 	/** edges[symbol] points to target of symbol */
 	@Nullable

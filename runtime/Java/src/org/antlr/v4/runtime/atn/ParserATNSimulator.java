@@ -320,7 +320,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 										", outerContext="+outerContext.toString(parser));
 		DecisionState decState = atn.getDecisionState(dfa.decision);
 		boolean loopsSimulateTailRecursion = false;
-		ATNConfigSet s0_closure = computeStartState(dfa.atnStartState, ParserRuleContext.EMPTY, loopsSimulateTailRecursion);
+		boolean fullCtx = false;
+		ATNConfigSet s0_closure =
+			computeStartState(dfa.atnStartState, ParserRuleContext.EMPTY,
+							  loopsSimulateTailRecursion,
+							  fullCtx);
 		dfa.s0 = addDFAState(dfa, s0_closure);
 
 		int alt = 0;
@@ -362,7 +366,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			if ( s.isCtxSensitive ) {
 				if ( dfa_debug ) System.out.println("ctx sensitive state "+outerContext+" in "+s);
 				boolean loopsSimulateTailRecursion = true;
-				ATNConfigSet s0_closure = computeStartState(dfa.atnStartState, outerContext, loopsSimulateTailRecursion);
+				boolean fullCtx = false;
+				ATNConfigSet s0_closure =
+					computeStartState(dfa.atnStartState, outerContext,
+									  loopsSimulateTailRecursion,
+									  fullCtx);
 				ATNConfigSet fullCtxSet =
 					execATNWithFullContext(dfa, s, s0_closure,
 										   input, startIndex,
@@ -510,9 +518,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
         DecisionState decState = atn.getDecisionState(dfa.decision);
 
+		boolean fullCtx = false;
+
 		while (true) { // while more work
 			boolean loopsSimulateTailRecursion = false;
-			ATNConfigSet reach = computeReachSet(previous, t, loopsSimulateTailRecursion);
+			ATNConfigSet reach = computeReachSet(previous, t, loopsSimulateTailRecursion, fullCtx);
 			if ( reach==null ) throw noViableAlt(input, outerContext, previous, startIndex);
 
 			// closure used to be done in computeReachSet, so set flags now manually
@@ -530,11 +540,12 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			else  {
 				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 				boolean collectPredicates = false;
-				reach = closureOfSet(reach, closureBusy, collectPredicates, loopsSimulateTailRecursion,
+				reach = closureOfSet(reach, closureBusy, collectPredicates,
+									 loopsSimulateTailRecursion,
+									 fullCtx,
 									 parser.getTokenStream().LA(2));
 				D.configset = reach;
 
-				boolean fullCtx = false;
 				D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
 				if ( D.configset.conflictingAlts!=null ) {
 					if ( outerContext == ParserRuleContext.EMPTY || // in grammar start rule
@@ -550,9 +561,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 						if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
 						loopsSimulateTailRecursion = true;
 						input.seek(startIndex);
-						ATNConfigSet s0_closure = computeStartState(dfa.atnStartState,
-																	outerContext,
-																	loopsSimulateTailRecursion);
+						ATNConfigSet s0_closure =
+							computeStartState(dfa.atnStartState,
+											  outerContext,
+											  loopsSimulateTailRecursion,
+											  fullCtx);
 						fullCtxSet = execATNWithFullContext(dfa, D, s0_closure,
 															input, startIndex,
 															outerContext,
@@ -619,7 +632,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 //		input.seek(startIndex);  done now above in execATN for computestartstate
 		int t = input.LA(1);
 		while (true) { // while more work
-			reach = computeReachSet(previous, t, true);
+			reach = computeReachSet(previous, t, true, true);
 			if ( reach==null ) {
 				throw noViableAlt(input, outerContext, previous, startIndex);
 			}
@@ -629,7 +642,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			boolean loopsSimulateTailRecursion = true;
 			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 			boolean collectPredicates = false;
-			reach = closureOfSet(reach, closureBusy, collectPredicates, loopsSimulateTailRecursion,
+			reach = closureOfSet(reach, closureBusy, collectPredicates,
+								 loopsSimulateTailRecursion,
+								 true,
 								 parser.getTokenStream().LA(2));
 
 			boolean fullCtx = true;
@@ -682,9 +697,12 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return reach;
 	}
 
-	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean loopsSimulateTailRecursion) {
+	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t,
+										   boolean loopsSimulateTailRecursion,
+										   boolean fullCtx)
+	{
 		if ( debug ) System.out.println("in computeReachSet, starting with: " + closure);
-		ATNConfigSet reach = new ATNConfigSet();
+		ATNConfigSet reach = new ATNConfigSet(fullCtx);
 		for (ATNConfig c : closure) {
 			if ( debug ) System.out.println("testing "+getTokenName(t)+" at "+c.toString());
 			int n = c.state.getNumberOfTransitions();
@@ -704,10 +722,11 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	@NotNull
 	public ATNConfigSet computeStartState(@NotNull ATNState p,
 										  @Nullable RuleContext ctx,
-										  boolean loopsSimulateTailRecursion)
+										  boolean loopsSimulateTailRecursion,
+										  boolean fullCtx)
 	{
 		RuleContext initialContext = ctx; // always at least the implicit call to start rule
-		ATNConfigSet configs = new ATNConfigSet();
+		ATNConfigSet configs = new ATNConfigSet(fullCtx);
 
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			ATNState target = p.transition(i).target;
@@ -885,6 +904,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 										@NotNull Set<ATNConfig> closureBusy,
 										boolean collectPredicates,
 										boolean loopsSimulateTailRecursion,
+										boolean fullCtx,
 										int la)
 	{
 		if ( debug ) System.out.println("closure: "+configs);
@@ -892,7 +912,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		long start = System.currentTimeMillis();
 
 		final int initialDepth = 0;
-		ATNConfigSet targetsWithClosure = new ATNConfigSet();
+		ATNConfigSet targetsWithClosure = new ATNConfigSet(fullCtx);
 		for (ATNConfig config : configs) {
 			closure_(config, targetsWithClosure, closureBusy, collectPredicates,
 					 loopsSimulateTailRecursion, initialDepth, la);
