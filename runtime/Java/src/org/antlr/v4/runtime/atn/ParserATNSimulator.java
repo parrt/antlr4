@@ -237,7 +237,8 @@ import java.util.Set;
  	 *  holds the decision were evaluating
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
-	public static boolean debug = false;
+	public static boolean debug = true;
+	public static boolean optdebug = false;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -509,6 +510,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
         DecisionState decState = atn.getDecisionState(dfa.decision);
 
+		int crank = 1;
+
 		while (true) { // while more work
 			boolean loopsSimulateTailRecursion = false;
 			ATNConfigSet reach = computeReachSet(previous, t, loopsSimulateTailRecursion);
@@ -526,47 +529,48 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				D.configset.uniqueAlt = predictedAlt;
 				D.prediction = predictedAlt;
 			}
-			else {
-
+			else  {
 				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 				boolean collectPredicates = false;
 				reach = closureOfSet(reach, closureBusy, collectPredicates, loopsSimulateTailRecursion,
 									 parser.getTokenStream().LA(2));
 				D.configset = reach;
 
-				boolean fullCtx = false;
-				D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
-				if ( D.configset.conflictingAlts!=null ) {
-					int k = input.index() - startIndex + 1; // how much input we used
+//				crank++;
+//				System.out.println("crank="+crank);
+//				if ( crank % 80 == 0 ) {
+					boolean fullCtx = false;
+					D.configset.conflictingAlts = getConflictingAlts(reach, fullCtx);
+					if ( D.configset.conflictingAlts!=null ) {
 //						System.out.println("used k="+k);
-					if ( outerContext == ParserRuleContext.EMPTY || // in grammar start rule
-					!D.configset.dipsIntoOuterContext ||
-					k == 1 ) // SLL(1) == LL(1)
-					{
-						if ( reportAmbiguities && !D.configset.hasSemanticContext ) {
-							reportAmbiguity(dfa, D, startIndex, input.index(), D.configset.conflictingAlts, D.configset);
+						if ( outerContext == ParserRuleContext.EMPTY || // in grammar start rule
+							!D.configset.dipsIntoOuterContext )
+						{
+							if ( reportAmbiguities && !D.configset.hasSemanticContext ) {
+								reportAmbiguity(dfa, D, startIndex, input.index(), D.configset.conflictingAlts, D.configset);
+							}
+							D.isAcceptState = true;
+							predictedAlt = resolveToMinAlt(D, D.configset.conflictingAlts);
 						}
-						D.isAcceptState = true;
-						predictedAlt = resolveToMinAlt(D, D.configset.conflictingAlts);
+						else {
+							if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
+							loopsSimulateTailRecursion = true;
+							input.seek(startIndex);
+							ATNConfigSet s0_closure = computeStartState(dfa.atnStartState,
+																		outerContext,
+																		loopsSimulateTailRecursion);
+							fullCtxSet = execATNWithFullContext(dfa, D, s0_closure,
+																input, startIndex,
+																outerContext,
+																decState.getNumberOfTransitions()
+															   );
+							// not accept state: isCtxSensitive
+							D.isCtxSensitive = true; // always force DFA to ATN simulate
+							D.prediction = predictedAlt = fullCtxSet.uniqueAlt;
+							return predictedAlt; // all done with preds, etc...
+						}
 					}
-					else {
-						if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
-						loopsSimulateTailRecursion = true;
-						input.seek(startIndex);
-						ATNConfigSet s0_closure = computeStartState(dfa.atnStartState,
-																	outerContext,
-																	loopsSimulateTailRecursion);
-						fullCtxSet = execATNWithFullContext(dfa, D, s0_closure,
-															input, startIndex,
-															outerContext,
-															decState.getNumberOfTransitions()
-														   );
-						// not accept state: isCtxSensitive
-						D.isCtxSensitive = true; // always force DFA to ATN simulate
-						D.prediction = predictedAlt = fullCtxSet.uniqueAlt;
-						return predictedAlt; // all done with preds, etc...
-					}
-				}
+//				}
 			}
 
 			if ( D.isAcceptState && D.configset.hasSemanticContext ) {
@@ -891,7 +895,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 										int la)
 	{
 		if ( debug ) System.out.println("closure: "+configs);
-//		System.out.print("closure size "+configs.size());
+		if ( optdebug ) System.out.print("closure size "+configs.size());
 		long start = System.currentTimeMillis();
 
 		final int initialDepth = 0;
@@ -901,7 +905,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					 loopsSimulateTailRecursion, initialDepth, la);
 		}
 		long stop = System.currentTimeMillis();
-//		System.out.println(", took "+(stop-start)+"ms, target size "+targetsWithClosure.size());
+		if ( optdebug ) System.out.println(", took "+(stop-start)+"ms, target size "+targetsWithClosure.size());
 		return targetsWithClosure;
 	}
 
@@ -1146,6 +1150,71 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return new ATNConfig(config, t.target, newContext);
 	}
 
+	public boolean hasConflict(@NotNull ATNConfigSet configs, boolean fullCtx) {
+		IntervalSet ambigAlts = new IntervalSet();
+
+		// If only 1 NFA conf then no way it can be nondeterministic;
+		// save the overhead.  There are many o-a->o NFA transitions
+		// and so we save a hash map and iterator creation for each
+		// state.
+		int numConfigs = configs.size();
+		if ( numConfigs<=1 ) {
+			return false;
+		}
+
+		// First get a list of configurations for each state.
+		// Most of the time, each state will have one associated configuration.
+		MultiMap<Integer, ATNConfig> stateToConfigListMap =
+		new MultiMap<Integer, ATNConfig>();
+		for (int i = 0; i < numConfigs; i++) {
+			ATNConfig configuration = configs.get(i);
+			stateToConfigListMap.map(configuration.state.stateNumber, configuration);
+		}
+
+		// potential conflicts are states with > 1 configuration and diff alts
+		Set<Integer> states = stateToConfigListMap.keySet();
+		// wow. i removed this and no change in speed
+
+		// we have a potential problem, so now go through config lists again
+		// looking for different alts (only states with potential issues
+		// are left in the states set).  Now we will check context.
+		if ( optdebug ) System.out.print("hasConflict "+states+" states");
+		long start = System.currentTimeMillis();
+
+		for (Integer stateI : states) {
+			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
+			// compare each configuration pair s, t to ensure:
+			// s.ctx different than t.ctx if s.alt != t.alt
+			int numConfigsForState = 0;
+			if ( configsForState!=null ) {
+				numConfigsForState = configsForState.size();
+			}
+			for (int i = 0; i < numConfigsForState; i++) {
+				ATNConfig s = configsForState.get(i);
+				for (int j = i+1; j < numConfigsForState; j++) {
+					ATNConfig t = configsForState.get(j);
+					// conflicts means s.ctx==t.ctx or s.ctx is a stack
+					// suffix of t.ctx or vice versa (if alts differ).
+					// Also a conflict if s.ctx or t.ctx is empty
+					if ( s.alt != t.alt &&
+						 !(ambigAlts.contains(s.alt)||ambigAlts.contains(t.alt)) )
+					{
+//						System.out.println("diff alts: "+s.context.depth()+", "+t.context.depth());
+						if ( s.context.conflictsWith(t.context)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		long stop = System.currentTimeMillis();
+		if ( optdebug ) System.out.println(", took "+(stop-start)+"ms");
+
+		return false;
+	}
+
+
 	/** Walk each NFA configuration in this DFA state looking for a conflict
 	 *  where (s|i|ctx) and (s|j|ctx) exist, indicating that state s with
 	 *  context conflicting ctx predicts alts i and j.  Return an Integer set
@@ -1162,7 +1231,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 *  Don't report conflicts for DFA states that have conflicting Tokens
 	 *  rule NFA states; they will be resolved in favor of the first rule.
 	 */
-	public IntervalSet getConflictingAlts_v3(@NotNull ATNConfigSet configs, boolean fullCtx) {
+	public IntervalSet getConflictingAlts(@NotNull ATNConfigSet configs, boolean fullCtx) {
 		IntervalSet ambigAlts = new IntervalSet();
 
 		// If only 1 NFA conf then no way it can be nondeterministic;
@@ -1182,50 +1251,50 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			ATNConfig configuration = configs.get(i);
 			stateToConfigListMap.map(configuration.state.stateNumber, configuration);
 		}
+
 		// potential conflicts are states with > 1 configuration and diff alts
 		Set<Integer> states = stateToConfigListMap.keySet();
-		int numPotentialConflicts = 0;
-		for (Integer stateI : states) {
-			boolean thisStateHasPotentialProblem = false;
-			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
-			int alt=0;
-			int numConfigsForState = configsForState.size();
-			for (int i = 0; i < numConfigsForState && numConfigsForState>1 ; i++) {
-				ATNConfig c = configsForState.get(i);
-				if ( alt==0 ) {
-					alt = c.alt;
-				}
-				else if ( c.alt!=alt ) {
-						numPotentialConflicts++;
-						thisStateHasPotentialProblem = true;
-				}
-			}
-			if ( !thisStateHasPotentialProblem ) {
-				// remove NFA state's configurations from
-				// further checking; no issues with it
-				// (can't remove as it's concurrent modification; set to null)
-				stateToConfigListMap.put(stateI, null);
-			}
-		}
+		// wow. i removed this and no change in speed
 
-		// a fast check for potential issues; most states have none
-		if ( numPotentialConflicts==0 ) {
-			return null;
-		}
+		// compute numPotentialConflicts
+//		int numPotentialConflicts = 0;
+//		for (Integer stateI : states) {
+//			boolean thisStateHasPotentialProblem = false;
+//			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
+//			int alt=0;
+//			// Walk all configs for state, looking for different alts
+//			int numConfigsForState = configsForState.size();
+//			if ( numConfigsForState>1 ) {
+//				for (ATNConfig c : configsForState) {
+//					if ( alt==0 ) {
+//						alt = c.alt;
+//					}
+//					else if ( c.alt!=alt ) {
+//						numPotentialConflicts++;
+//						thisStateHasPotentialProblem = true;
+//						break; // found problem we're done
+//					}
+//				}
+//			}
+//			if ( !thisStateHasPotentialProblem ) {
+//				// remove NFA state's configurations from
+//				// further checking; no issues with it
+//				// (can't remove as it's concurrent modification; set to null)
+//				stateToConfigListMap.put(stateI, null);
+//			}
+//		}
+//
+//		// a fast check for potential issues; most states have none
+//		if ( numPotentialConflicts==0 ) {
+//			return null;
+//		}
 
 		// we have a potential problem, so now go through config lists again
 		// looking for different alts (only states with potential issues
 		// are left in the states set).  Now we will check context.
-		// For example, the list of configs for NFA state 3 in some DFA
-		// state might be:
-		//   [3|2|[28 18 $], 3|1|[28 $], 3|1, 3|2]
-		// I want to create a map from context to alts looking for overlap:
-		//   [28 18 $] -> 2
-		//   [28 $] -> 1
-		//   [$] -> 1,2
-		// Indeed a conflict exists as same state 3, same context [$], predicts
-		// alts 1 and 2.
-		// walk each state with potential conflicting configurations
+		if ( optdebug ) System.out.print("chk "+states+" states");
+		long start = System.currentTimeMillis();
+
 		for (Integer stateI : states) {
 			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
 			// compare each configuration pair s, t to ensure:
@@ -1241,13 +1310,22 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					// conflicts means s.ctx==t.ctx or s.ctx is a stack
 					// suffix of t.ctx or vice versa (if alts differ).
 					// Also a conflict if s.ctx or t.ctx is empty
-					if ( s.alt != t.alt && s.context.conflictsWith(t.context)) {
-						ambigAlts.add(s.alt);
-						ambigAlts.add(t.alt);
+					if ( s.alt != t.alt &&
+						 !(ambigAlts.contains(s.alt)||ambigAlts.contains(t.alt)) )
+					{
+//						System.out.println("diff alts: "+s.context.depth()+", "+t.context.depth());
+						if ( s.context.conflictsWith(t.context)) {
+//						if ( s.context.equals(t.context)) {
+							ambigAlts.add(s.alt);
+							ambigAlts.add(t.alt);
+						}
 					}
 				}
 			}
 		}
+
+		long stop = System.currentTimeMillis();
+		if ( optdebug ) System.out.println(", took "+(stop-start)+"ms");
 
 		if ( ambigAlts.isNil() ) {
 			return null;
@@ -1326,7 +1404,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 functions
 	 */
 	@Nullable
-	public IntervalSet getConflictingAlts(@NotNull ATNConfigSet configs, boolean fullCtx) {
+	public IntervalSet getConflictingAlts_sam(@NotNull ATNConfigSet configs, boolean fullCtx) {
 		if ( debug ) System.out.println("### check ambiguous  "+configs);
 		// First get a list of configurations for each state.
 		// Most of the time, each state will have one associated configuration.
