@@ -128,11 +128,9 @@ public abstract class ATNSimulator {
 		int ndecisions = toInt(data[p++]);
 		for (int i=1; i<=ndecisions; i++) {
 			int s = toInt(data[p++]);
-			int isGreedy = toInt(data[p++]);
 			DecisionState decState = (DecisionState)atn.states.get(s);
 			atn.decisionToState.add(decState);
 			decState.decision = i-1;
-			decState.isGreedy = isGreedy==1;
 		}
 		return atn;
 	}

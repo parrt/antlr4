@@ -175,7 +175,7 @@ public class TestATNSerialization extends BaseTest {
 			"8->2 EPSILON 0,0,0\n" +
 			"8->4 EPSILON 0,0,0\n" +
 			"9->1 EPSILON 0,0,0\n" +
-			"0:8 1\n";
+			"0:8\n";
 		ATN atn = createATN(g);
 		String result = ATNSerializer.getDecoded(g, atn);
 		assertEquals(expecting, result);
@@ -211,7 +211,7 @@ public class TestATNSerialization extends BaseTest {
 			"14->4 EPSILON 0,0,0\n" +
 			"14->8 EPSILON 0,0,0\n" +
 			"15->1 EPSILON 0,0,0\n" +
-			"0:14 1\n";
+			"0:14\n";
 		ATN atn = createATN(g);
 		String result = ATNSerializer.getDecoded(g, atn);
 		assertEquals(expecting, result);
@@ -244,7 +244,7 @@ public class TestATNSerialization extends BaseTest {
 			"7->8 EPSILON 0,0,0\n" +
 			"8->9 ATOM 4,0,0\n" +
 			"9->1 EPSILON 0,0,0\n" +
-			"0:6 1\n";
+			"0:6\n";
 		ATN atn = createATN(g);
 		String result = ATNSerializer.getDecoded(g, atn);
 		assertEquals(expecting, result);
@@ -308,7 +308,7 @@ public class TestATNSerialization extends BaseTest {
 			"6->2 EPSILON 0,0,0\n" +
 			"7->8 ATOM 98,0,0\n" +
 			"8->4 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -331,7 +331,7 @@ public class TestATNSerialization extends BaseTest {
 			"1->3 EPSILON 0,0,0\n" +
 			"3->4 RANGE 48,57,0\n" +
 			"4->2 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -356,7 +356,7 @@ public class TestATNSerialization extends BaseTest {
 			"3->5 ATOM 97,0,0\n" +
 			"5->6 ATOM -1,0,0\n" +
 			"6->2 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -386,8 +386,8 @@ public class TestATNSerialization extends BaseTest {
 			"9->5 EPSILON 0,0,0\n" +
 			"9->7 EPSILON 0,0,0\n" +
 			"10->2 EPSILON 0,0,0\n" +
-			"0:0 1\n" +
-			"1:9 1\n";
+			"0:0\n" +
+			"1:9\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -417,8 +417,8 @@ public class TestATNSerialization extends BaseTest {
 			"7->5 EPSILON 0,0,0\n" +
 			"7->8 EPSILON 0,0,0\n" +
 			"8->2 EPSILON 0,0,0\n" +
-			"0:0 1\n" +
-			"1:7 1\n";
+			"0:0\n" +
+			"1:7\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -465,7 +465,7 @@ public class TestATNSerialization extends BaseTest {
 			"13->15 ATOM 99,0,0\n" +
 			"15->16 ACTION 2,1,0\n" +
 			"16->6 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -489,7 +489,7 @@ public class TestATNSerialization extends BaseTest {
 			"1->3 EPSILON 0,0,0\n" +
 			"3->4 NOT_SET 0,0,0\n" +
 			"4->2 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -513,7 +513,7 @@ public class TestATNSerialization extends BaseTest {
 			"1->3 EPSILON 0,0,0\n" +
 			"3->4 SET 0,0,0\n" +
 			"4->2 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -537,7 +537,7 @@ public class TestATNSerialization extends BaseTest {
 			"1->3 EPSILON 0,0,0\n" +
 			"3->4 NOT_SET 0,0,0\n" +
 			"4->2 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -598,9 +598,9 @@ public class TestATNSerialization extends BaseTest {
 			"19->21 WILDCARD 0,0,0\n" +
 			"21->22 ACTION 2,1,0\n" +
 			"22->7 EPSILON 0,0,0\n" +
-			"0:0 1\n" +
-			"1:1 1\n" +
-			"2:12 1\n";
+			"0:0\n" +
+			"1:1\n" +
+			"2:12\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -627,7 +627,7 @@ public class TestATNSerialization extends BaseTest {
 			"3->5 NOT_SET 0,0,0\n" +
 			"5->6 NOT_SET 1,0,0\n" +
 			"6->2 EPSILON 0,0,0\n" +
-			"0:0 1\n";
+			"0:0\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -683,8 +683,8 @@ public class TestATNSerialization extends BaseTest {
 			"15->7 EPSILON 0,0,0\n" +
 			"16->17 ATOM 100,0,0\n" +
 			"17->9 EPSILON 0,0,0\n" +
-			"0:0 1\n" +
-			"1:1 1\n";
+			"0:0\n" +
+			"1:1\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
@@ -733,9 +733,9 @@ public class TestATNSerialization extends BaseTest {
 			"12->6 EPSILON 0,0,0\n" +
 			"13->14 ATOM 99,0,0\n" +
 			"14->8 EPSILON 0,0,0\n" +
-			"0:0 1\n" +
-			"1:1 1\n" +
-			"2:2 1\n";
+			"0:0\n" +
+			"1:1\n" +
+			"2:2\n";
 		ATN atn = createATN(lg);
 		String result = ATNSerializer.getDecoded(lg, atn);
 		assertEquals(expecting, result);
