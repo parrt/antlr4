@@ -1599,22 +1599,22 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	/** See comment on LexerInterpreter.addDFAState. */
 	@NotNull
 	protected DFAState addDFAState(@NotNull DFA dfa, @NotNull ATNConfigSet configs) {
-		DFAState newState = new DFAState(configs);
-		newState.stateNumber = dfa.states.size();
-		if ( debug ) System.out.println("adding new DFA state: "+newState);
-		return newState;
-
-//		DFAState proposed = new DFAState(configs);
-//		DFAState existing = dfa.states.get(proposed);
-//		if ( existing!=null ) return existing;
-//
-//		DFAState newState = proposed;
-//
+//		DFAState newState = new DFAState(configs);
 //		newState.stateNumber = dfa.states.size();
-//		newState.configset = new ATNConfigSet(configs);
-//		dfa.states.put(newState, newState);
-//        if ( debug ) System.out.println("adding new DFA state: "+newState);
+//		if ( debug ) System.out.println("adding new DFA state: "+newState);
 //		return newState;
+
+		DFAState proposed = new DFAState(configs);
+		DFAState existing = dfa.states.get(proposed);
+		if ( existing!=null ) return existing;
+
+		DFAState newState = proposed;
+
+		newState.stateNumber = dfa.states.size();
+		newState.configset = new ATNConfigSet(configs);
+		dfa.states.put(newState, newState);
+        if ( debug ) System.out.println("adding new DFA state: "+newState);
+		return newState;
 	}
 
 	public void reportAttemptingFullContext(DFA dfa, ATNConfigSet configs, int startIndex, int stopIndex) {
