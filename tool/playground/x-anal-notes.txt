@@ -1,0 +1,70 @@
+---------- BASELINE ---------------------
+Lexer total time 159ms.
+Total time 187953ms.
+finished parsing OK
+999 lexer failovers
+301981 lexer match calls
+1035968 parser failovers
+1035968 parser predict calls
+2726 retry_with_context after SLL conflict
+0 retry sees no conflict
+real	3m8.191s
+user	4m1.206s
+sys	0m8.366s
+
+----------- MOVE CLOSURE TO DO ALL AT ONCE ------------
+Lexer total time 154ms.
+Total time 154346ms.
+finished parsing OK
+999 lexer failovers
+302371 lexer match calls
+1037366 parser failovers
+1037366 parser predict calls
+0 retry_with_context after SLL conflict
+0 retry sees no conflict
+real	2m34.577s
+user	3m6.229s
+sys	0m6.369s
+
+----------- DON'T DO CLOSURE UPON UNIQUE PREDICTION ----------
+Lexer total time 156ms.
+Total time 48713ms.
+finished parsing OK
+999 lexer failovers
+302371 lexer match calls
+1037366 parser failovers
+1037366 parser predict calls
+0 retry_with_context after SLL conflict
+0 retry sees no conflict
+
+real	0m48.941s
+user	0m58.762s
+sys	0m2.059s
+
+--------- WITH INPUT RESTRICTED CLOSURE SETS and better rulecontext hash? --------
+Lexer total time 176ms.
+Total time 31585ms.
+finished parsing OK
+999 lexer failovers
+302041 lexer match calls
+1035978 parser failovers
+1035978 parser predict calls
+2734 retry_with_context after SLL conflict
+0 retry sees no conflict
+
+real    0m31.808s
+user    0m37.972s
+sys     0m1.419s
+
+----
+tried returning no conflict until EOF. made it much slower.
+seems that we fail over to full ctx a LOT in old parser.  When k==1 conflict assumed ambig w/o doing full ctx attempt, it was 31s vs 52s.  
+
+Forcing always to abort upon any ambig in local ctx, gives same result. 31s vs 52s.  on complexType, it is back to 80-90% suffix().
+
+we get wedged in decision 147. slowly crawls along the 1300 char line with IF expr.   
+execATN decision 147 exec LA(1)==[@885,6200:6200='(',<44>,218:19]
+
+With full ctx back in, we wedge earlier at:
+execATN decision 119 exec LA(1)==[@747,5115:5118='case',<67>,190:8]
+

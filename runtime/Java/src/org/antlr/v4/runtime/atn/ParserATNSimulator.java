@@ -500,6 +500,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		if ( debug ) System.out.println("execATN decision "+dfa.decision+" exec LA(1)=="+ getLookaheadName(input));
 		ATN_failover++;
 
+		System.out.println("execATN decision "+dfa.decision+" exec LA(1)=="+ input.LT(1));
+
+
 		ATNConfigSet previous = s0.configset;
 		DFAState D;
 		ATNConfigSet fullCtxSet;
@@ -633,7 +636,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 								 parser.getTokenStream().LA(2));
 
 			boolean fullCtx = true;
-			reach.conflictingAlts = getConflictingAlts(reach, fullCtx);
+			reach.conflictingAlts = getConflictingAlts_sam(reach, fullCtx);
 			if ( reach.conflictingAlts!=null ) break;
 			previous = reach;
 			input.consume();
@@ -1236,6 +1239,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			return null;
 		}
 
+		System.out.println("LA(1)=="+parser.getTokenStream().LT(1));
+
 		// First get a list of configurations for each state.
 		// Most of the time, each state will have one associated configuration.
 		MultiMap<Integer, ATNConfig> stateToConfigListMap =
@@ -1247,40 +1252,6 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 		// potential conflicts are states with > 1 configuration and diff alts
 		Set<Integer> states = stateToConfigListMap.keySet();
-		// wow. i removed this and no change in speed
-
-		// compute numPotentialConflicts
-//		int numPotentialConflicts = 0;
-//		for (Integer stateI : states) {
-//			boolean thisStateHasPotentialProblem = false;
-//			List<ATNConfig> configsForState = stateToConfigListMap.get(stateI);
-//			int alt=0;
-//			// Walk all configs for state, looking for different alts
-//			int numConfigsForState = configsForState.size();
-//			if ( numConfigsForState>1 ) {
-//				for (ATNConfig c : configsForState) {
-//					if ( alt==0 ) {
-//						alt = c.alt;
-//					}
-//					else if ( c.alt!=alt ) {
-//						numPotentialConflicts++;
-//						thisStateHasPotentialProblem = true;
-//						break; // found problem we're done
-//					}
-//				}
-//			}
-//			if ( !thisStateHasPotentialProblem ) {
-//				// remove NFA state's configurations from
-//				// further checking; no issues with it
-//				// (can't remove as it's concurrent modification; set to null)
-//				stateToConfigListMap.put(stateI, null);
-//			}
-//		}
-//
-//		// a fast check for potential issues; most states have none
-//		if ( numPotentialConflicts==0 ) {
-//			return null;
-//		}
 
 		// we have a potential problem, so now go through config lists again
 		// looking for different alts (only states with potential issues
@@ -1398,7 +1369,10 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 */
 	@Nullable
 	public IntervalSet getConflictingAlts_sam(@NotNull ATNConfigSet configs, boolean fullCtx) {
-		if ( debug ) System.out.println("### check ambiguous  "+configs);
+		if ( debug ) System.out.println("### check ambiguous  "+configs+
+										"LA(1)=="+parser.getTokenStream().LT(1));
+//		System.out.println("Full ctx LA(1)=="+parser.getTokenStream().LT(1));
+
 		// First get a list of configurations for each state.
 		// Most of the time, each state will have one associated configuration.
 		MultiMap<Integer, ATNConfig> stateToConfigListMap = new MultiMap<Integer, ATNConfig>();
@@ -1443,6 +1417,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			return null;
 		}
 
+		if ( optdebug ) System.out.print("chk "+stateToConfigListMap.keySet()+" states");
+		long start = System.currentTimeMillis();
+
 		// compare each pair of configs in sets for states with > 1 alt in config list, looking for
 		// (s, i, ctx) and (s, j, ctx') where ctx==ctx' or one is suffix of the other.
 		IntervalSet ambigAlts = new IntervalSet();
@@ -1480,6 +1457,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				}
 			}
 		}
+
+		long stop = System.currentTimeMillis();
+		if ( optdebug ) System.out.println(", took "+(stop-start)+"ms");
 
 		if ( debug ) System.out.println("### ambigAlts="+ambigAlts);
 
@@ -1603,7 +1583,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		if ( p.edges==null ) {
 			p.edges = new DFAState[atn.maxTokenType+1+1]; // TODO: make adaptive
 		}
-		p.edges[t+1] = q; // connect
+		//p.edges[t+1] = q; // connect
 	}
 
 	/** See comment on LexerInterpreter.addDFAState. */
