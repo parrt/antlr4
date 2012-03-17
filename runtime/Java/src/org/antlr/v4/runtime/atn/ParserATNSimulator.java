@@ -238,7 +238,7 @@ import java.util.Set;
 */
 public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	public static boolean debug = false;
-	public static boolean optdebug = false;
+	public static boolean optdebug = true;
 	public static boolean dfa_debug = false;
 	public static boolean retry_debug = false;
 
@@ -513,6 +513,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
         DecisionState decState = atn.getDecisionState(dfa.decision);
 
+		Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 		while (true) { // while more work
 			boolean loopsSimulateTailRecursion = false;
 			ATNConfigSet reach = computeReachSet(previous, t, loopsSimulateTailRecursion);
@@ -531,8 +532,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				D.prediction = predictedAlt;
 			}
 			else  {
-				Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 				boolean collectPredicates = false;
+				closureBusy.clear();
 				reach = closureOfSet(reach, closureBusy, collectPredicates, loopsSimulateTailRecursion,
 									 parser.getTokenStream().LA(2));
 				D.configset = reach;
@@ -1417,7 +1418,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			return null;
 		}
 
-		if ( optdebug ) System.out.print("chk "+stateToConfigListMap.keySet()+" states");
+		if ( optdebug ) System.out.print("sam conflict chk "+stateToConfigListMap.keySet()+" states");
 		long start = System.currentTimeMillis();
 
 		// compare each pair of configs in sets for states with > 1 alt in config list, looking for

@@ -62,9 +62,13 @@ seems that we fail over to full ctx a LOT in old parser.  When k==1 conflict ass
 
 Forcing always to abort upon any ambig in local ctx, gives same result. 31s vs 52s.  on complexType, it is back to 80-90% suffix().
 
+With no-conflict-til-EOF in local ctx:
+  if ( parser.getTokenStream().LA(1)!=-1 ) return null;
 we get wedged in decision 147. slowly crawls along the 1300 char line with IF expr.   
 execATN decision 147 exec LA(1)==[@885,6200:6200='(',<44>,218:19]
 
-With full ctx back in, we wedge earlier at:
+Without no-conflict-til-EOF in local ctx, we wedge earlier at:
 execATN decision 119 exec LA(1)==[@747,5115:5118='case',<67>,190:8]
+Hotspots are closure_() 35%, full ctx getConflictingAlts_sam 25%, ATNConfig.hashCode() 17%, getEptarget 11%. no mention of suffix(). still super wedged.
 
+mem still huge. must be previous, reach, closure sets and computing ambig. If we let run, closure builds up like crazy.
