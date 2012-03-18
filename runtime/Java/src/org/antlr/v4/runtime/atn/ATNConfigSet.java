@@ -37,6 +37,52 @@ import java.util.Set;
 
 /** Specialized OrderedHashSet that can track info about the set.
  *  Might be able to optimize later w/o affecting code that uses this set.
+ *  Track configs by alt so we can compress those context trees.
+ *
+ *  Sam's sharing: 2 configs that have same state, same alt, same sem ctx:
+ *  that's one atn config.  ATNConfig is node in graph. context graph ptr is
+ *  what you share.
+ *
+ *  equals: must remember comparing two nodes, save true/false to avoid
+ *  recomputing lest even graph is same cost to compare as tree. graph
+ *  enum of paths is same cost of tree.
+ *
+ *  in full ctx, cannot trim suffixes but we still share.
+ *  merge case that looks like suffix:
+ *    start at s with [] then can get [10] [10 4]. graph looks like
+ *    10->4, 10 also points to EMPTY.
+ *
+ *  example.
+ *  a b d
+ *  a b c
+ *  what if a's are different nodes? must join
+ *  what if we want to add e c d?
+ *
+ *  might be merging two graphs. crap:
+ *  a b d
+ e b d
+ a c d
+ e c d
+
+ another case:
+ a b d
+ e b d
+ a b d d
+ e b d d
+
+ think about a map that is adjacency list
+
+ ours is more complciated due to local ctx. tomita is always doing full ctx
+ so no worries about suffix.
+
+ merge on graph is the key so that we can call rule and have graph as parent:
+ c calls b calls a, etc...
+
+ a->b->c
+  |->b->d
+  |->b->e
+
+ now with this config, we call another, it just points at a.
  */
 public class ATNConfigSet extends OrderedHashSet<ATNConfig> {
 	// TODO: these fields make me pretty uncomfortable but nice to pack up info together, saves recomputation
@@ -59,6 +105,16 @@ public class ATNConfigSet extends OrderedHashSet<ATNConfig> {
 		this.conflictingAlts = old.conflictingAlts;
 		this.hasSemanticContext = old.hasSemanticContext;
 		this.dipsIntoOuterContext = old.dipsIntoOuterContext;
+	}
+
+	/** Share common subtrees.
+	 *
+	 * when i add suffix, just don't add it.
+	 *
+	 */
+	@Override
+	public boolean add(ATNConfig value) {
+		return super.add(value);
 	}
 
 	public Set<ATNState> getStates() {

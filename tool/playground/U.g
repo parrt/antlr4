@@ -1,3 +1,8 @@
 grammar U;
-s : A ;
+s : a ;
+a : b | c ;
+b : d ;
+c : d ;
+d : A ;
+
 A : 'a';
