@@ -31,7 +31,18 @@ package org.antlr.v4.automata;
 
 import org.antlr.v4.misc.Utils;
 import org.antlr.v4.parse.ANTLRParser;
-import org.antlr.v4.runtime.atn.*;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNSimulator;
+import org.antlr.v4.runtime.atn.ATNState;
+import org.antlr.v4.runtime.atn.ActionTransition;
+import org.antlr.v4.runtime.atn.AtomTransition;
+import org.antlr.v4.runtime.atn.DecisionState;
+import org.antlr.v4.runtime.atn.LoopEndState;
+import org.antlr.v4.runtime.atn.PredicateTransition;
+import org.antlr.v4.runtime.atn.RangeTransition;
+import org.antlr.v4.runtime.atn.RuleTransition;
+import org.antlr.v4.runtime.atn.SetTransition;
+import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.tool.Grammar;
@@ -185,7 +196,6 @@ public class ATNSerializer {
 		data.add(ndecisions);
 		for (DecisionState decStartState : atn.decisionToState) {
 			data.add(decStartState.stateNumber);
-			data.add(decStartState.isGreedy?1:0);
 		}
 		return data;
 	}
@@ -255,8 +265,7 @@ public class ATNSerializer {
 		int ndecisions = ATNSimulator.toInt(data[p++]);
 		for (int i=1; i<=ndecisions; i++) {
 			int s = ATNSimulator.toInt(data[p++]);
-			int isGreedy = ATNSimulator.toInt(data[p++]);
-			buf.append((i-1)+":"+s+" "+isGreedy+"\n");
+			buf.append((i-1)+":"+s+"\n");
 		}
 		return buf.toString();
 	}

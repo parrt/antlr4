@@ -30,8 +30,15 @@
 package org.antlr.v4.tool.interp;
 
 import org.antlr.v4.Tool;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.atn.*;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.SymbolStream;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNState;
+import org.antlr.v4.runtime.atn.DecisionState;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
@@ -68,6 +75,7 @@ public class ParserInterpreter {
 
 	protected Grammar g;
 	protected ParserATNSimulator<Token> atnSimulator;
+	protected Parser parser;
 	protected TokenStream input;
 
 	public ParserInterpreter(@NotNull Grammar g) {
@@ -77,7 +85,8 @@ public class ParserInterpreter {
 	public ParserInterpreter(@NotNull Grammar g, @NotNull TokenStream input) {
 		Tool antlr = new Tool();
 		antlr.process(g,false);
-		atnSimulator = new ParserATNSimulator<Token>(new DummyParser(g, input), g.atn);
+		parser = new DummyParser(g, input);
+		atnSimulator = new ParserATNSimulator<Token>(parser, g.atn);
 	}
 
 	public int predictATN(@NotNull DFA dfa, @NotNull SymbolStream<Token> input,
@@ -114,4 +123,7 @@ public class ParserInterpreter {
 		return atnSimulator;
 	}
 
+	public Parser getParser() {
+		return parser;
+	}
 }

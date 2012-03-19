@@ -88,7 +88,7 @@ public class RuleContext implements ParseTree.RuleNode {
 
 		this.cachedHashCode = invokingState;
 		if ( parent!=null ) {
-			this.cachedHashCode += parent.cachedHashCode;
+			this.cachedHashCode ^= parent.cachedHashCode * 31;
 		}
 	}
 
@@ -118,7 +118,8 @@ public class RuleContext implements ParseTree.RuleNode {
 	public boolean equals(Object o) {
 		if (this == o) {
 			return true;
-		} else if (!(o instanceof RuleContext)) {
+		}
+		else if (!(o instanceof RuleContext)) {
 			return false;
 		}
 
@@ -164,7 +165,7 @@ public class RuleContext implements ParseTree.RuleNode {
 	 *  fast enough upon nondeterminism.
 	 */
 	public boolean conflictsWith(RuleContext other) {
-		return this.suffix(other) || this.equals(other);
+		return this.equals(other) || this.suffix(other);
 	}
 
 	/** [$] suffix any context
@@ -188,6 +189,7 @@ public class RuleContext implements ParseTree.RuleNode {
 	 *  comparison case.
 	 */
 	protected boolean suffix(RuleContext other) {
+		// TODO: check size or something as quick check?
 		RuleContext sp = this;
 		// if one of the contexts is empty, it never enters loop and returns true
 		while ( sp.parent!=null && other.parent!=null ) {

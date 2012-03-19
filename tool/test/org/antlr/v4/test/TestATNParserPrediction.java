@@ -35,7 +35,10 @@ import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
-import org.antlr.v4.runtime.atn.*;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.DecisionState;
+import org.antlr.v4.runtime.atn.LexerATNSimulator;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.tool.DOTGenerator;
 import org.antlr.v4.tool.Grammar;
@@ -548,8 +551,6 @@ public class TestATNParserPrediction extends BaseTest {
 		try {
 			DecisionState startState = atn.decisionToState.get(0);
 			DFA dfa = new DFA(startState);
-//			Rule r = g.getRule(ruleName);
-			//ATNState startState = atn.ruleToStartState.get(r);
 			interp.predictATN(dfa, input, ctx);
 		}
 		catch (NoViableAltException nvae) {
@@ -575,6 +576,7 @@ public class TestATNParserPrediction extends BaseTest {
 			List<Integer> types = getTokenTypesViaATN(inputString[i], lexInterp);
 			System.out.println(types);
 			TokenStream input = new IntTokenStream(types);
+			interp.getParser().setInputStream(input);
 			try {
 				interp.adaptivePredict(input, decision, ParserRuleContext.EMPTY);
 			}

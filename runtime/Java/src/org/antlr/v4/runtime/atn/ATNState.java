@@ -31,7 +31,12 @@ package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.misc.IntervalSet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ATNState {
 	public static final int INITIAL_NUM_TRANSITIONS = 4;
@@ -142,6 +147,9 @@ public class ATNState {
 	}
 
 	public final boolean onlyHasEpsilonTransitions() {
+		// TODO: can we redo with a computation rather than "state"?
+		// if > 1 edge, must be epsilon only then if single, can ask
+		// if epsilon edge
 		return epsilonOnlyTransitions;
 	}
 
