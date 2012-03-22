@@ -79,6 +79,8 @@ public class RuleContext implements ParseTree.RuleNode {
 	 */
 	protected int cachedHashCode;
 
+	public RuleContext root;
+
 	public RuleContext() {}
 
 	public RuleContext(RuleContext parent, int invokingState) {
@@ -89,6 +91,10 @@ public class RuleContext implements ParseTree.RuleNode {
 		this.cachedHashCode = invokingState;
 		if ( parent!=null ) {
 			this.cachedHashCode ^= parent.cachedHashCode * 31;
+			this.root = parent.root;
+		}
+		else {
+			root = this;
 		}
 	}
 
@@ -182,8 +188,8 @@ public class RuleContext implements ParseTree.RuleNode {
 	 *  that they are now going to track perfectly together.  Once they
 	 *  converged on state 21, there is no way they can separate.  In other
 	 *  words, the prior stack state is not consulted when computing where to
-	 *  go in the closure operation.  ?$ and ??$ are considered the same stack.
-	 *  If ? is popped off then $ and ?$ remain; they are now an empty and
+	 *  go in the closure operation.  x$ and xy$ are considered the same stack.
+	 *  If x is popped off then $ and y$ remain; they are now an empty and
 	 *  nonempty context comparison.  So, if one stack is a suffix of
 	 *  another, then it will still degenerate to the simple empty stack
 	 *  comparison case.
@@ -199,7 +205,6 @@ public class RuleContext implements ParseTree.RuleNode {
 			sp = sp.parent;
 			other = other.parent;
 		}
-		//System.out.println("suffix");
 		return true;
 	}
 
