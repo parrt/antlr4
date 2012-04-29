@@ -1,7 +1,7 @@
 grammar T;
 s : r=e ;
-e : e '(' INT ')'
-  | INT 
+e : e '(' INT ')' # F
+  | INT 	  # anInt
   ;     
 MULT: '*' ;
 ADD : '+' ;
