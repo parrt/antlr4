@@ -220,15 +220,16 @@ public class LexerATNSimulator extends ATNSimulator {
 			}
 
 			// if no edge, pop over to ATN interpreter, update DFA and return
-			if ( s.edges == null || t >= s.edges.length || t <= CharStream.EOF ||
-				 s.edges[t] == null )
+			DFAState target = s.getTarget(t);
+			if ( target == null )
 			{
 				ATN_failover++;
 				return failOverToATN(input, s);
 			}
+			else if ( target == ERROR ) {
+				break;
+			}
 
-			DFAState target = s.edges[t];
-			if ( target == ERROR ) break;
 			s = target;
 
 			if ( s.isAcceptState ) {
@@ -288,15 +289,13 @@ public class LexerATNSimulator extends ATNSimulator {
 			DFAState target = null;
 			ATNConfigSet reach = null;
 			if (s != null) {
-				if ( s.edges != null && t < s.edges.length && t > CharStream.EOF ) {
+				target = s.getTarget(t);
+				if (target == ERROR) {
+					break;
+				}
+				else if (target != null) {
 					closure = s.configset;
-					target = s.edges[t];
-					if (target == ERROR) {
-						break;
-					}
-					else if (target != null) {
-						reach = target.configset;
-					}
+					reach = target.configset;
 				}
 			}
 
@@ -640,16 +639,9 @@ public class LexerATNSimulator extends ATNSimulator {
 	}
 
 	protected void addDFAEdge(@NotNull DFAState p, int t, @NotNull DFAState q) {
-		if (t < 0 || t > MAX_DFA_EDGE) return; // Only track edges within the DFA bounds
-		if ( p.edges==null ) {
-			//  make room for tokens 1..n and -1 masquerading as index 0
-			p.edges = new DFAState[MAX_DFA_EDGE+1]; // TODO: make adaptive
+		if ( p!=null ) {
+			p.setTarget(t, q);
 		}
-//		if ( t==Token.EOF ) {
-//			System.out.println("state "+p+" has EOF edge");
-//			t = 0;
-//		}
-		p.edges[t] = q; // connect
 	}
 
 	/** Add a new DFA state if there isn't one with this set of
@@ -676,7 +668,7 @@ public class LexerATNSimulator extends ATNSimulator {
 	 */
 	@Nullable
 	protected DFAState addDFAState(@NotNull ATNConfigSet configs) {
-		DFAState proposed = new DFAState(configs);
+		DFAState proposed = new DFAState(configs, 0, MAX_DFA_EDGE);
 		DFAState existing = dfa[mode].states.get(proposed);
 		if ( existing!=null ) return existing;
 
