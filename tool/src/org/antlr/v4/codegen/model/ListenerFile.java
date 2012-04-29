@@ -1,7 +1,7 @@
 package org.antlr.v4.codegen.model;
 
 import org.antlr.v4.codegen.OutputModelFactory;
-import org.antlr.v4.runtime.misc.Triple;
+import org.antlr.v4.runtime.misc.Tuple3;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.Rule;
 import org.antlr.v4.tool.ast.ActionAST;
@@ -27,10 +27,10 @@ public class ListenerFile extends OutputFile {
 		parserName = g.getRecognizerName();
 		grammarName = g.name;
 		for (Rule r : g.rules.values()) {
-			List<Triple<Integer,AltAST,String>> labels = r.getAltLabels();
+			List<Tuple3<Integer,AltAST,String>> labels = r.getAltLabels();
 			if ( labels!=null ) {
-				for (Triple<Integer,AltAST,String> pair : labels) {
-					listenerNames.add(pair.c);
+				for (Tuple3<Integer,AltAST,String> pair : labels) {
+					listenerNames.add(pair.getItem3());
 				}
 			}
 			else {

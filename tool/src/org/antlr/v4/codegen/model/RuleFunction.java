@@ -44,7 +44,7 @@ import org.antlr.v4.misc.Utils;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.OrderedHashSet;
-import org.antlr.v4.runtime.misc.Triple;
+import org.antlr.v4.runtime.misc.Tuple3;
 import org.antlr.v4.tool.Attribute;
 import org.antlr.v4.tool.Rule;
 import org.antlr.v4.tool.ast.AltAST;
@@ -133,12 +133,12 @@ public class RuleFunction extends OutputModelObject {
 
 		// make structs for -> labeled alts, define ctx labels for elements
 		altLabelCtxs = new HashMap<String,AltLabelStructDecl>();
-		List<Triple<Integer,AltAST,String>> labels = r.getAltLabels();
+		List<Tuple3<Integer,AltAST,String>> labels = r.getAltLabels();
 		if ( labels!=null ) {
-			for (Triple<Integer,AltAST,String> pair : labels) {
-				Integer altNum = pair.a;
-				AltAST altAST = pair.b;
-				String label = pair.c;
+			for (Tuple3<Integer,AltAST,String> pair : labels) {
+				Integer altNum = pair.getItem1();
+				AltAST altAST = pair.getItem2();
+				String label = pair.getItem3();
 				altToContext[altNum] = new AltLabelStructDecl(factory, r, altNum, label);
 				altLabelCtxs.put(label, altToContext[altNum]);
 				Set<Decl> decls = getDeclsForAltElements(altAST);
