@@ -36,6 +36,8 @@ import org.antlr.v4.runtime.atn.ATNConfigSet;
  *  in the various paths when the error. Reported by reportNoViableAlternative()
  */
 public class NoViableAltException extends RecognitionException {
+	private static final long serialVersionUID = 5096000008992867052L;
+
 	/** Which configurations did we try at input.index() that couldn't match input.LT(1)? */
 	public ATNConfigSet deadEndConfigs;
 

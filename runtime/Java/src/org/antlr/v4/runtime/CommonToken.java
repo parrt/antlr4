@@ -33,6 +33,8 @@ import org.antlr.v4.runtime.misc.Interval;
 import java.io.Serializable;
 
 public class CommonToken implements WritableToken, Serializable {
+	private static final long serialVersionUID = -6708843461296520577L;
+
 	protected int type;
 	protected int line;
 	protected int charPositionInLine = -1; // set to invalid position

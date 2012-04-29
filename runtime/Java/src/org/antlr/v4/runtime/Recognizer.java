@@ -42,6 +42,7 @@ public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 	public static final int EOF=-1;
 
 	@NotNull
+	@SuppressWarnings("serial")
 	private List<ANTLRErrorListener<? super Symbol>> _listeners =
 		new CopyOnWriteArrayList<ANTLRErrorListener<? super Symbol>>() {{ add(ConsoleErrorListener.INSTANCE); }};
 
