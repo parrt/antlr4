@@ -132,10 +132,11 @@ public <if(parser.abstractRecognizer)>abstract <endif>class <parser.name> extend
 		<parser.ruleNames:{r | "<r>"}; separator=", ", wrap, anchor>
 	};
 
-	public class ContextFactory {
-        // TODO: pass in info, don't make me extract from rule funcs
-		<funcs:{f | public <f.ruleCtx.struct.name> new<f.ruleCtx.struct.name>() { return EContext(...) \}}>
-		<funcs:{f | <f.altLabelCtxs:{l | <altLabelCtxs.(l)>}; separator="\n">}>
+	public ParserRuleContext\<Token> createContext(int ruleIndex, int altIndex) {
+        switch ( ruleIndex ) {
+            <funcs:{f | case RULE_<f.currentRule.name> : return new <f.currentRule.ctxType>(_ctx, <f.currentRule.startState>);}; separator="\n">
+        }
+        return null;
 	}
 
 	@Override

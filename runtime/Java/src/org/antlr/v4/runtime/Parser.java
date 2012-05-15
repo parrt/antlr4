@@ -434,6 +434,13 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator<Token>
 		return false;
 	}
 
+	/** The RuleContext factory. If altIndex <= 0, then only pay attention to
+	 *  the ruleIndex--there was no alt label specified.
+	 */
+	public ParserRuleContext<Token> createContext(int ruleIndex, int altIndex) {
+		throw new UnsupportedOperationException("No rule context factory");
+	}
+
     public boolean isExpectedToken(int symbol) {
 //   		return getInterpreter().atn.nextTokens(_ctx);
         ATN atn = getInterpreter().atn;
