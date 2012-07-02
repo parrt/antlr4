@@ -31,20 +31,27 @@ package org.antlr.v4.runtime;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.IntervalSet;
+import org.antlr.v4.runtime.misc.Nullable;
 
 /**
  *
  * @author Sam Harwell
  */
-public class BaseErrorListener<Symbol> implements ANTLRErrorListener<Symbol> {
+public class BaseErrorListener<Symbol extends Token> implements ANTLRErrorListener<Symbol> {
 
 	@Override
-	public <T extends Symbol> void syntaxError(Recognizer<T, ?> recognizer,
-											   T offendingSymbol,
-											   int line,
-											   int charPositionInLine,
+	public <T extends Symbol> void syntaxError(Parser parser,
+											   @Nullable T offendingSymbol,
+											   int line, int charPositionInLine,
 											   String msg,
-											   RecognitionException e)
+											   @Nullable RecognitionException e)
+	{
+	}
+
+	@Override
+	public void tokenError(Lexer lexer, int offendingChar,
+						   int line, int charPositionInLine, String msg,
+						   @Nullable RecognitionException e)
 	{
 	}
 

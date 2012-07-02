@@ -31,6 +31,7 @@ package org.antlr.v4.runtime;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.IntervalSet;
+import org.antlr.v4.runtime.misc.Nullable;
 
 import java.util.Collection;
 
@@ -38,7 +39,7 @@ import java.util.Collection;
  *
  * @author Sam Harwell
  */
-public class ProxyErrorListener<Symbol> implements ANTLRErrorListener<Symbol> {
+public class ProxyErrorListener<Symbol extends Token> implements ANTLRErrorListener<Symbol> {
 	private final Collection<? extends ANTLRErrorListener<? super Symbol>> delegates;
 
 	public ProxyErrorListener(Collection<? extends ANTLRErrorListener<? super Symbol>> delegates) {
@@ -46,15 +47,25 @@ public class ProxyErrorListener<Symbol> implements ANTLRErrorListener<Symbol> {
 	}
 
 	@Override
-	public <T extends Symbol> void syntaxError(Recognizer<T, ?> recognizer,
-											   T offendingSymbol,
-											   int line,
-											   int charPositionInLine,
+	public <T extends Symbol> void syntaxError(Parser parser,
+											   @Nullable T offendingSymbol,
+											   int line, int charPositionInLine,
 											   String msg,
-											   RecognitionException e)
+											   @Nullable RecognitionException e)
 	{
 		for (ANTLRErrorListener<? super Symbol> listener : delegates) {
-			listener.syntaxError(recognizer, offendingSymbol, line, charPositionInLine, msg, e);
+			listener.syntaxError(parser, offendingSymbol, line, charPositionInLine, msg, e);
+		}
+	}
+
+	@Override
+	public void tokenError(Lexer lexer, int offendingChar,
+						   int line, int charPositionInLine,
+						   String msg,
+						   @Nullable RecognitionException e)
+	{
+		for (ANTLRErrorListener<? super Symbol> listener : delegates) {
+			listener.tokenError(lexer, offendingChar, line, charPositionInLine, msg, e);
 		}
 	}
 

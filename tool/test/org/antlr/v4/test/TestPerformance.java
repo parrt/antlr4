@@ -543,12 +543,26 @@ public class TestPerformance extends BaseTest {
 		public static DescriptiveErrorListener INSTANCE = new DescriptiveErrorListener();
 
 		@Override
-		public <T extends Token> void syntaxError(Recognizer<T, ?> recognizer, T offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-			String sourceName = recognizer.getInputStream().getSourceName();
+		public <T extends Token> void syntaxError(Parser parser,
+												  @Nullable T offendingSymbol,
+												  int line, int charPositionInLine,
+												  String msg,
+												  @Nullable RecognitionException e)
+		{
+			String sourceName = parser.getInputStream().getSourceName();
 			sourceName = sourceName != null && !sourceName.isEmpty() ? sourceName+": " : "";
-			System.err.println(sourceName+"line "+line+":"+charPositionInLine+" "+msg);
+			System.err.println(sourceName + "line " + line + ":" + charPositionInLine + " " + msg);
 		}
 
+		@Override
+		public void tokenError(Lexer lexer, int offendingChar,
+							   int line, int charPositionInLine,
+							   String msg, @Nullable RecognitionException e)
+		{
+			String sourceName = lexer.getInputStream().getSourceName();
+			sourceName = sourceName != null && !sourceName.isEmpty() ? sourceName+": " : "";
+			System.err.println(sourceName + "line " + line + ":" + charPositionInLine + " " + msg);
+		}
 	}
 
 	protected static class FileExtensionFilenameFilter implements FilenameFilter {

@@ -28,22 +28,30 @@
  */
 package org.antlr.v4.runtime;
 
+import org.antlr.v4.runtime.misc.Nullable;
+
 /**
  *
  * @author Sam Harwell
  */
-public class ConsoleErrorListener extends BaseErrorListener<Object> {
+public class ConsoleErrorListener extends BaseErrorListener<Token> {
 	public static final ConsoleErrorListener INSTANCE = new ConsoleErrorListener();
 
 	@Override
-	public <T extends Object> void syntaxError(Recognizer<T, ?> recognizer,
-											   T offendingSymbol,
-											   int line,
-											   int charPositionInLine,
+	public <T extends Token> void syntaxError(Parser parser,
+											   @Nullable T offendingSymbol,
+											   int line, int charPositionInLine,
 											   String msg,
-											   RecognitionException e)
+											   @Nullable RecognitionException e)
 	{
 		System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
 	}
 
+	@Override
+	public void tokenError(Lexer lexer, int offendingChar,
+						   int line, int charPositionInLine, String msg,
+						   @Nullable RecognitionException e)
+	{
+		System.err.println("line " + line + ":" + charPositionInLine + " " + msg);
+	}
 }

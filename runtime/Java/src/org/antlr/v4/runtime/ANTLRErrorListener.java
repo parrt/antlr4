@@ -36,7 +36,7 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 
 /** How to emit recognition errors */
-public interface ANTLRErrorListener<Symbol> {
+public interface ANTLRErrorListener<Symbol extends Token> {
 	/** Upon syntax error, notify any interested parties. This is not how to
 	 *  recover from errors or compute error messages. The parser
 	 *  ANTLRErrorStrategy specifies how to recover from syntax errors
@@ -49,7 +49,7 @@ public interface ANTLRErrorListener<Symbol> {
 	 *  in-line, without returning from the surrounding rule (via the
 	 *  single token insertion and deletion mechanism).
 	 *
-	 * @param recognizer
+	 * @param parser
 	 * 		  What parser got the error. From this object, you
 	 * 		  can access the context as well as the input stream.
 	 * @param offendingSymbol
@@ -70,21 +70,28 @@ public interface ANTLRErrorListener<Symbol> {
 	 *        the parser was able to recover in line without exiting the
 	 *        surrounding rule.
 	 */
-	public <T extends Symbol> void syntaxError(Recognizer<T, ?> recognizer,
+	public <T extends Symbol> void syntaxError(Parser parser,
 											   @Nullable T offendingSymbol,
 											   int line,
 											   int charPositionInLine,
 											   String msg,
 											   @Nullable RecognitionException e);
 
+	public void tokenError(Lexer lexer,
+						   int offendingChar,
+						   int line,
+						   int charPositionInLine,
+						   String msg,
+						   @Nullable RecognitionException e);
+
 	/** Called when the parser detects a true ambiguity: an input sequence can be matched
 	 * literally by two or more pass through the grammar. ANTLR resolves the ambiguity in
 	 * favor of the alternative appearing first in the grammar. The start and stop index are
-     * zero-based absolute indices into the token stream. ambigAlts is a set of alternative numbers
-     * that can match the input sequence. This method is only called when we are parsing with
-     * full context.
-     */
-    void reportAmbiguity(@NotNull Parser recognizer,
+	 * zero-based absolute indices into the token stream. ambigAlts is a set of alternative numbers
+	 * that can match the input sequence. This method is only called when we are parsing with
+	 * full context.
+	 */
+	void reportAmbiguity(@NotNull Parser recognizer,
 						 DFA dfa, int startIndex, int stopIndex, @NotNull IntervalSet ambigAlts,
 						 @NotNull ATNConfigSet configs);
 
@@ -94,11 +101,11 @@ public interface ANTLRErrorListener<Symbol> {
 									 @NotNull ATNConfigSet configs);
 
 	/** Called by the parser when it find a conflict that is resolved by retrying the parse
-     *  with full context. This is not a warning; it simply notifies you that your grammar
-     *  is more complicated than Strong LL can handle. The parser moved up to full context
-     *  parsing for that input sequence.
-     */
-    void reportContextSensitivity(@NotNull Parser recognizer,
+	 *  with full context. This is not a warning; it simply notifies you that your grammar
+	 *  is more complicated than Strong LL can handle. The parser moved up to full context
+	 *  parsing for that input sequence.
+	 */
+	void reportContextSensitivity(@NotNull Parser recognizer,
                                   @NotNull DFA dfa,
                                   int startIndex, int stopIndex,
                                   @NotNull ATNConfigSet configs);

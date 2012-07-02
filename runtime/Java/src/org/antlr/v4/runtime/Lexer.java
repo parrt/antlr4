@@ -361,7 +361,8 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 			_input.getText(Interval.of(_tokenStartCharIndex, _input.index()))+"'";
 
 		ANTLRErrorListener<? super Integer> listener = getErrorListenerDispatch();
-		listener.syntaxError(this, null, _tokenStartLine, _tokenStartCharPositionInLine, msg, e);
+		listener.tokenError(this, _input.LA(1), _tokenStartLine,
+							_tokenStartCharPositionInLine, msg, e);
 	}
 
 	public String getCharErrorDisplay(int c) {
