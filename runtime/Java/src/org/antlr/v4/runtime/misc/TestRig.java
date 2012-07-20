@@ -127,7 +127,7 @@ public class TestRig {
 //		System.out.println("exec "+grammarName+"."+startRuleName);
 		String lexerName = grammarName+"Lexer";
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
-		Class lexerClass = null;
+		Class lexerClass;
 		try {
 			lexerClass = cl.loadClass(lexerName);
 		}
@@ -138,6 +138,7 @@ public class TestRig {
 		}
 		if ( lexerClass==null ) {
 			System.err.println("Can't load "+lexerName);
+			return;
 		}
 
 		InputStream is = System.in;
