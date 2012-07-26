@@ -786,7 +786,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				Transition trans = c.state.transition(ti);
 				ATNState target = getReachableTarget(trans, t);
 				if ( target!=null ) {
-					intermediate.add(new ATNConfig(c, target), contextCache);
+					intermediate.add(ATNConfig.create(c, target), contextCache);
 				}
 			}
 		}
@@ -863,7 +863,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			ATNState target = p.transition(i).target;
-			ATNConfig c = new ATNConfig(target, i+1, initialContext);
+			ATNConfig c = ATNConfig.create(target, i+1, initialContext);
 			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 			closure(c, configs, closureBusy, true, greedy, loopsSimulateTailRecursion);
 		}
@@ -938,7 +938,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		int n = altToPred.length;
 		for (ATNConfig c : configs) {
 			if ( ambigAlts.contains(c.alt) ) {
-				altToPred[c.alt] = SemanticContext.or(altToPred[c.alt], c.semanticContext);
+				altToPred[c.alt] = SemanticContext.or(altToPred[c.alt], c.getSemanticContext());
 			}
 		}
 
@@ -1086,8 +1086,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 					RuleTransition rt = (RuleTransition)invokingState.transition(0);
 					ATNState retState = rt.followState;
 					PredictionContext newContext = ctx.parent; // "pop" invoking state
-					ATNConfig c = new ATNConfig(retState, config.alt, newContext,
-												config.semanticContext);
+					ATNConfig c = ATNConfig.create(retState, config.alt, newContext,
+												config.getSemanticContext());
 					// While we have context to pop back from, we may have
 					// gotten that context AFTER having falling off a rule.
 					// Make sure we track that we are now out of context.
@@ -1140,7 +1140,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		// optimization
 		if ( !p.onlyHasEpsilonTransitions() ) {
             configs.add(config, contextCache);
-			if ( config.semanticContext!=null && config.semanticContext!= SemanticContext.NONE ) {
+			if ( config.getSemanticContext() !=null && config.getSemanticContext() != SemanticContext.NONE ) {
 				configs.hasSemanticContext = true;
 			}
 			if ( config.reachesIntoOuterContext>0 ) {
@@ -1199,7 +1199,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			return actionTransition(config, (ActionTransition)t);
 		}
 		else if ( t.isEpsilon() ) {
-			return new ATNConfig(config, t.target);
+			return ATNConfig.create(config, t.target);
 		}
 		return null;
 	}
@@ -1207,7 +1207,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	@NotNull
 	public ATNConfig actionTransition(@NotNull ATNConfig config, @NotNull ActionTransition t) {
 		if ( debug ) System.out.println("ACTION edge "+t.ruleIndex+":"+t.actionIndex);
-		return new ATNConfig(config, t.target);
+		return ATNConfig.create(config, t.target);
 	}
 
 	@Nullable
@@ -1230,9 +1230,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		if ( collectPredicates &&
 			 (!pt.isCtxDependent || (pt.isCtxDependent&&inContext)) )
 		{
-			SemanticContext newSemCtx = SemanticContext.and(config.semanticContext, pt.getPredicate());
+			SemanticContext newSemCtx = SemanticContext.and(config.getSemanticContext(), pt.getPredicate());
 			if ( SLL ) {
-				c = new ATNConfig(config, pt.target, newSemCtx);
+				c = ATNConfig.create(config, pt.target, newSemCtx);
 			}
 			else {
 				int currentPosition = _input.index();
@@ -1242,12 +1242,12 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				if ( predSucceeds ) {
 					// TODO: ignore semctx in config now? actually can only ignore in full LL mode
 					// REMOVE pred eval chk above?  Actually no preds so it's a no-op
-					c = new ATNConfig(config, pt.target); // no pred context
+					c = ATNConfig.create(config, pt.target); // no pred context
 				}
 			}
 		}
 		else {
-			c = new ATNConfig(config, pt.target);
+			c = ATNConfig.create(config, pt.target);
 		}
 
 		if ( debug ) System.out.println("config from pred transition="+c);
@@ -1263,7 +1263,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		PredictionContext newContext =
 			new SingletonPredictionContext(config.context, config.state.stateNumber);
 		if ( contextCache!=null ) newContext = contextCache.add(newContext);
-		return new ATNConfig(config, t.target, newContext);
+		return ATNConfig.create(config, t.target, newContext);
 	}
 
 	/**

@@ -44,46 +44,45 @@ import java.util.Set;
  *  Might be able to optimize later w/o affecting code that uses this set.
  */
 public class ATNConfigSet implements Set<ATNConfig> {
-	// TODO: convert to long like Sam?
-	public static class Key {
-		ATNState state;
-		int alt;
-		SemanticContext semanticContext;
-
-		public Key(ATNState state, int alt, SemanticContext semanticContext) {
-			this.state = state;
-			this.alt = alt;
-			this.semanticContext = semanticContext;
-		}
-
-		public Key(ATNConfig c) {
-			this(c.state, c.alt, c.semanticContext);
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if ( obj==this ) return true;
-			if ( this.hashCode() != obj.hashCode() ) return false;
-			if ( !(obj instanceof Key) ) return false;
-			Key key = (Key)obj;
-			return this.state.stateNumber==key.state.stateNumber
-				&& this.alt==key.alt
-				&& this.semanticContext.equals(key.semanticContext);
-		}
-
-		@Override
-		public int hashCode() {
-			int hashCode = 7;
-			hashCode = 5 * hashCode + state.stateNumber;
-			hashCode = 5 * hashCode + alt;
-			hashCode = 5 * hashCode + semanticContext.hashCode();
-	        return hashCode;
-		}
-	}
+//	public static class Key {
+//		ATNState state;
+//		int alt;
+//		SemanticContext semanticContext;
+//
+//		public Key(ATNState state, int alt, SemanticContext semanticContext) {
+//			this.state = state;
+//			this.alt = alt;
+//			this.semanticContext = semanticContext;
+//		}
+//
+//		public Key(ATNConfig c) {
+//			this(c.state, c.alt, c.getSemanticContext());
+//		}
+//
+//		@Override
+//		public boolean equals(Object obj) {
+//			if ( obj==this ) return true;
+//			if ( this.hashCode() != obj.hashCode() ) return false;
+//			if ( !(obj instanceof Key) ) return false;
+//			Key key = (Key)obj;
+//			return this.state.stateNumber==key.state.stateNumber
+//				&& this.alt==key.alt
+//				&& this.semanticContext.equals(key.semanticContext);
+//		}
+//
+//		@Override
+//		public int hashCode() {
+//			int hashCode = 7;
+//			hashCode = 5 * hashCode + state.stateNumber;
+//			hashCode = 5 * hashCode + alt;
+//			hashCode = 5 * hashCode + semanticContext.hashCode();
+//	        return hashCode;
+//		}
+//	}
 
 	/** Track every config we add */
-	public final LinkedHashMap<Key,ATNConfig> configToContext =
-		new LinkedHashMap<Key, ATNConfig>();
+	public final LinkedHashMap<ATNConfig,ATNConfig> configToContext =
+		new LinkedHashMap<ATNConfig, ATNConfig>();
 
 	/** Track the elements as they are added to the set; supports get(i) */
 	// too hard to keep in sync
@@ -123,10 +122,10 @@ public class ATNConfigSet implements Set<ATNConfig> {
 	 */
 	public boolean add(ATNConfig config, @Nullable PredictionContextCache contextCache) {
 		contextCache = null; // TODO: costs time to cache and saves essentially no RAM
-		Key key = new Key(config);
-		ATNConfig existing = configToContext.get(key);
+//		Key key = new Key(config);
+		ATNConfig existing = configToContext.get(config);
 		if ( existing==null ) { // nothing there yet; easy, just add
-			configToContext.put(key, config);
+			configToContext.put(config, config);
 			return true;
 		}
 		// a previous (s,i,pi,_), merge with it and save result
@@ -152,8 +151,8 @@ public class ATNConfigSet implements Set<ATNConfig> {
 
 	public Set<ATNState> getStates() {
 		Set<ATNState> states = new HashSet<ATNState>();
-		for (Key key : this.configToContext.keySet()) {
-			states.add(key.state);
+		for (ATNConfig c : this.configToContext.keySet()) {
+			states.add(c.state);
 		}
 		return states;
 	}
@@ -164,7 +163,7 @@ public class ATNConfigSet implements Set<ATNConfig> {
 
 	public void remove(int i) {
 		ATNConfig c = elements().get(i);
-		configToContext.remove(new Key(c));
+		configToContext.remove(c);
 	}
 
 	public void optimizeConfigs(ATNSimulator interpreter) {
@@ -218,10 +217,7 @@ public class ATNConfigSet implements Set<ATNConfig> {
 
 	@Override
 	public boolean contains(Object o) {
-		if ( o instanceof ATNConfig ) {
-			return configToContext.containsKey(new Key((ATNConfig)o));
-		}
-		return false;
+		return (o instanceof ATNConfig) && configToContext.containsKey(o);
 	}
 
 	@Override

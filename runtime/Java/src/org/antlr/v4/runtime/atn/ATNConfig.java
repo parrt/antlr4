@@ -69,50 +69,58 @@ public class ATNConfig {
 	public int reachesIntoOuterContext;
 
 	/** Capture lexer action we traverse */
-	public int lexerActionIndex = -1; // TOOD: move to subclass
-
-    @NotNull
-    public final SemanticContext semanticContext;
+	public int lexerActionIndex = -1; // TODO: move to subclass
 
 	public ATNConfig(@NotNull ATNState state,
 					 int alt,
 					 @Nullable PredictionContext context)
 	{
-		this(state, alt, context, SemanticContext.NONE);
-	}
-
-	public ATNConfig(@NotNull ATNState state,
-					 int alt,
-					 @Nullable PredictionContext context,
-					 @NotNull SemanticContext semanticContext)
-	{
 		this.state = state;
 		this.alt = alt;
 		this.context = context;
-		this.semanticContext = semanticContext;
 	}
 
-    public ATNConfig(@NotNull ATNConfig c, @NotNull ATNState state) {
-   		this(c, state, c.context, c.semanticContext);
-   	}
+	public static ATNConfig create(@NotNull ATNState state,
+								   int alt,
+								   @Nullable PredictionContext context)
+	{
+		return new ATNConfig(state, alt, context);
+	}
 
-    public ATNConfig(@NotNull ATNConfig c, @NotNull ATNState state, @NotNull SemanticContext semanticContext) {
-   		this(c, state, c.context, semanticContext);
-   	}
+	/** Copy from c, override state */
+	public static ATNConfig create(@NotNull ATNConfig c, @NotNull ATNState state) {
+		if ( c instanceof ATNConfigWithPred ) {
+			return create(state, c.alt, c.context, c.getSemanticContext());
+		}
+		return create(state, c.alt, c.context);
+	}
 
-    public ATNConfig(@NotNull ATNConfig c, @NotNull ATNState state, @Nullable PredictionContext context) {
-        this(c, state, context, c.semanticContext);
-    }
+	/** Copy from c, override state, context */
+	public static ATNConfig create(@NotNull ATNConfig c, @NotNull ATNState state,
+								   @Nullable PredictionContext context) {
+		return create(state, c.alt, context, c.getSemanticContext());
+	}
 
-	public ATNConfig(@NotNull ATNConfig c, @NotNull ATNState state, @Nullable PredictionContext context,
-                     @NotNull SemanticContext semanticContext)
-    {
-		this.state = state;
-		this.alt = c.alt;
-		this.context = context;
-		this.semanticContext = semanticContext;
-		this.reachesIntoOuterContext = c.reachesIntoOuterContext;
-		this.lexerActionIndex = c.lexerActionIndex;
+	/** Copy from c, override state, semctx */
+	public static ATNConfig create(@NotNull ATNConfig c, @NotNull ATNState state,
+								   @Nullable SemanticContext semanticContext) {
+		return create(state, c.alt, c.context, semanticContext);
+	}
+
+	/** Copy from c, override state, context, semctx */
+	public static ATNConfig create(@NotNull ATNConfig c, @NotNull ATNState state,
+								   @Nullable PredictionContext context,
+								   @NotNull SemanticContext semanticContext)
+	{
+		return create(state, c.alt, context, semanticContext);
+	}
+
+	public static ATNConfig create(@NotNull ATNState state,
+								   int alt,
+								   @Nullable PredictionContext context,
+								   @NotNull SemanticContext semanticContext)
+	{
+		return new ATNConfigWithPred(state, alt, context, semanticContext);
 	}
 
 	/** An ATN configuration is equal to another if both have
@@ -138,7 +146,7 @@ public class ATNConfig {
 		return this.state.stateNumber==other.state.stateNumber
 			&& this.alt==other.alt
 			&& (this.context==other.context || (this.context != null && this.context.equals(other.context)))
-			&& this.semanticContext.equals(other.semanticContext);
+			&& this.getSemanticContext().equals(other.getSemanticContext());
 	}
 
 	@Override
@@ -147,7 +155,7 @@ public class ATNConfig {
 		hashCode = 5 * hashCode + state.stateNumber;
 		hashCode = 5 * hashCode + alt;
 		hashCode = 5 * hashCode + (context != null ? context.hashCode() : 0);
-		hashCode = 5 * hashCode + semanticContext.hashCode();
+		hashCode = 5 * hashCode + (getSemanticContext()!=null ? getSemanticContext().hashCode() : 0);
         return hashCode;
     }
 
@@ -173,9 +181,9 @@ public class ATNConfig {
             buf.append(context.toString());
 			buf.append("]");
         }
-        if ( semanticContext!=null && semanticContext != SemanticContext.NONE ) {
+        if ( getSemanticContext() !=null && getSemanticContext() != SemanticContext.NONE ) {
             buf.append(",");
-            buf.append(semanticContext);
+            buf.append(getSemanticContext());
         }
         if ( reachesIntoOuterContext>0 ) {
             buf.append(",up=").append(reachesIntoOuterContext);
@@ -183,4 +191,8 @@ public class ATNConfig {
 		buf.append(')');
 		return buf.toString();
     }
+
+	public SemanticContext getSemanticContext() {
+		return null;
+	}
 }

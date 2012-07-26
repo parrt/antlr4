@@ -384,7 +384,7 @@ public class LexerATNSimulator extends ATNSimulator {
 				Transition trans = c.state.transition(ti);
 				ATNState target = getReachableTarget(trans, t);
 				if ( target!=null ) {
-					closure(new ATNConfig(c, target), reach);
+					closure(ATNConfig.create(c, target), reach);
 				}
 			}
 		}
@@ -513,7 +513,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		ATNConfigSet configs = new ATNConfigSet();
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			ATNState target = p.transition(i).target;
-			ATNConfig c = new ATNConfig(target, i+1, initialContext);
+			ATNConfig c = ATNConfig.create(target, i+1, initialContext);
 			closure(c, configs);
 		}
 		return configs;
@@ -547,7 +547,7 @@ public class LexerATNSimulator extends ATNSimulator {
 						ATNState invokingState = atn.states.get(ctx.invokingState);
 						RuleTransition rt = (RuleTransition)invokingState.transition(0);
 						ATNState retState = rt.followState;
-						ATNConfig c = new ATNConfig(retState, config.alt, newContext);
+						ATNConfig c = ATNConfig.create(retState, config.alt, newContext);
 						closure(c, configs);
 					}
 				}
@@ -579,7 +579,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		if ( t.getClass() == RuleTransition.class ) {
 			PredictionContext newContext =
 				new SingletonPredictionContext(config.context, p.stateNumber);
-			c = new ATNConfig(config, t.target, newContext);
+			c = ATNConfig.create(config, t.target, newContext);
 		}
 		else if ( t.getClass() == PredicateTransition.class ) {
 			if (recog == null) {
@@ -610,16 +610,16 @@ public class LexerATNSimulator extends ATNSimulator {
 			}
 			configs.hasSemanticContext = true;
 			if ( recog == null || recog.sempred(null, pt.ruleIndex, pt.predIndex) ) {
-				c = new ATNConfig(config, t.target, pt.getPredicate());
+				c = ATNConfig.create(config, t.target, pt.getPredicate());
 			}
 		}
 		// ignore actions; just exec one per rule upon accept
 		else if ( t.getClass() == ActionTransition.class ) {
-			c = new ATNConfig(config, t.target);
+			c = ATNConfig.create(config, t.target);
 			c.lexerActionIndex = ((ActionTransition)t).actionIndex;
 		}
 		else if ( t.isEpsilon() ) {
-			c = new ATNConfig(config, t.target);
+			c = ATNConfig.create(config, t.target);
 		}
 		return c;
 	}
