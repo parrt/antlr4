@@ -31,15 +31,10 @@ package org.antlr.v4.runtime.dfa;
 
 import org.antlr.v4.runtime.atn.ATNConfig;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
-import org.antlr.v4.runtime.atn.PredictionContext;
-import org.antlr.v4.runtime.atn.SemanticContext;
 import org.antlr.v4.runtime.misc.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /** A DFA state represents a set of possible ATN configurations.
@@ -93,7 +88,7 @@ public class DFAState {
 	 *  Future execDFA() invocations immediately jumped doing full context
 	 *  prediction if this field is true.
 	 */
-	public boolean isCtxSensitive;
+//	public boolean isCtxSensitive;
 
 	/** During SLL parsing, this is a list of predicates associated with the
 	 *  ATN configurations of the DFA state. When we have predicates,
@@ -108,24 +103,7 @@ public class DFAState {
 	 *  This list is computed by predicateDFAState() in ATN simulator.
 	 */
 	@Nullable
-	public List<PredPrediction> predicates;
-
-	public Map<PredictionContext,Integer> contextToPredictedAlt =
-		Collections.synchronizedMap(new HashMap<PredictionContext, Integer>());
-
-	/** Map a predicate to a predicted alternative */
-	public static class PredPrediction {
-		public SemanticContext pred; // never null; at least SemanticContext.NONE
-		public int alt;
-		public PredPrediction(SemanticContext pred, int alt) {
-			this.alt = alt;
-			this.pred = pred;
-		}
-		@Override
-		public String toString() {
-			return "("+pred+", "+alt+ ")";
-		}
-	}
+	public List<PredPrediction> predPredictions;
 
 	public DFAState() { }
 
@@ -190,8 +168,8 @@ public class DFAState {
         buf.append(stateNumber).append(":").append(configs);
         if ( isAcceptState ) {
             buf.append("=>");
-            if ( predicates!=null ) {
-                buf.append(predicates);
+            if ( predPredictions !=null ) {
+                buf.append(predPredictions);
             }
             else {
                 buf.append(prediction);

@@ -82,15 +82,18 @@ public class DFASerializer {
 		int n = s.stateNumber;
 		String stateStr = "s"+n;
 		if ( s.isAcceptState ) {
-            if ( s.predicates!=null ) {
-                stateStr = ":s"+n+"=>"+s.predicates;
+            if ( s.predPredictions !=null ) {
+                stateStr = ":s"+n+"=>"+s.predPredictions;
             }
             else {
                 stateStr = ":s"+n+"=>"+s.prediction;
             }
 		}
-		else if ( s.isCtxSensitive ) {
+		else if ( s instanceof FullContextDFAState ) {
 			stateStr = "s"+n+"^";
+		}
+		else if ( s.predPredictions!=null ) {
+			stateStr = "s"+n+"?";
 		}
 		return stateStr;
 	}

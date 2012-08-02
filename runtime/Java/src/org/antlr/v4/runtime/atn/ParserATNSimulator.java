@@ -38,6 +38,8 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
+import org.antlr.v4.runtime.dfa.FullContextDFAState;
+import org.antlr.v4.runtime.dfa.PredPrediction;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -49,6 +51,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -280,32 +283,45 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	loop:
 		while ( true ) {
 			if ( dfa_debug ) System.out.println("DFA state "+s.stateNumber+" LA(1)=="+getLookaheadName(input));
-			if ( s.isCtxSensitive && !SLL ) {
+			if ( s instanceof FullContextDFAState && !SLL ) {
+				FullContextDFAState s_ = (FullContextDFAState)s;
 				if ( dfa_debug ) System.out.println("ctx sensitive state "+outerContext+" in "+s);
 				PredictionContext predictionCtx = PredictionContext.fromRuleContext(outerContext);
 				predictionCtx = getCachedContext(predictionCtx);
-				Integer predI = s.contextToPredictedAlt.get(predictionCtx);
-				if ( predI!=null ) {
-					return predI; // ha! quick exit :)
+				List<SemanticContext> preds = s_.getPredicatesForContext(predictionCtx);
+				boolean[] results = FullContextDFAState.NOPREDS;
+				if ( preds!=null ) {
+					results = evalSemanticContext(preds, outerContext);
 				}
+				Integer altI = s_.getPredictedAlt(predictionCtx, results);
+				if ( altI!=null ) {
+					System.out.println("quick exit----------------------");
+					return altI; // ha! quick exit :)
+				}
+				retry_with_context_from_dfa++;
 				boolean loopsSimulateTailRecursion = true;
 				boolean fullCtx = true;
-				ATNConfigSet s0_closure =
+				ATNConfigSet s0_fullCtx =
 					computeStartState(dfa.atnStartState, outerContext,
 									  greedy, loopsSimulateTailRecursion,
 									  fullCtx);
-				retry_with_context_from_dfa++;
+
+				LinkedHashMap<SemanticContext,Boolean> predEvals =
+					getPredicates(s0_fullCtx, outerContext);
+				s0_fullCtx = stripFalsePredConfigs(s0_fullCtx, predEvals);
+
 				ATNConfigSet fullCtxSet =
-					execATNWithFullContext(dfa, s, s0_closure,
+					execATNWithFullContext(dfa, s, s0_fullCtx,
 										   input, startIndex,
 										   outerContext,
 										   ATN.INVALID_ALT_NUMBER,
 										   greedy);
-				s.contextToPredictedAlt.put(predictionCtx, fullCtxSet.uniqueAlt);
-				return fullCtxSet.uniqueAlt;
+				int predictedAlt = fullCtxSet.uniqueAlt;
+				s_.cache(predictionCtx, predEvals, predictedAlt);
+				return predictedAlt;
 			}
 			if ( s.isAcceptState ) {
-				if ( s.predicates!=null ) {
+				if ( s.predPredictions !=null ) {
 					if ( dfa_debug ) System.out.println("accept "+s);
 				}
 				else {
@@ -320,7 +336,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			}
 
 			// t is not updated if one of these states is reached
-			assert !s.isCtxSensitive && !s.isAcceptState;
+			assert !s.isAcceptState;
 
 			// if no edge, pop over to ATN interpreter, update DFA and return
 			if ( s.edges == null || t >= s.edges.length || t < -1 || s.edges[t+1] == null ) {
@@ -362,7 +378,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				throw noViableAlt(input, outerContext, s.configs, startIndex);
 			}
 			s = target;
-			if (!s.isCtxSensitive && !s.isAcceptState) {
+			if (!(s instanceof FullContextDFAState) && !s.isAcceptState) {
 				input.consume();
 				t = input.LA(1);
 			}
@@ -370,12 +386,12 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 		// Before jumping to prediction, check to see if there are
 		// disambiguating predicates to evaluate
-		if ( s.predicates!=null ) {
+		if ( s.predPredictions !=null ) {
 			// rewind input so pred's LT(i) calls make sense
 			input.seek(startIndex);
 			// since we don't report ambiguities in execDFA, we never need to
 			// use complete predicate evaluation here
-			IntervalSet alts = evalSemanticContext(s.predicates, outerContext, false);
+			IntervalSet alts = evalSemanticContext(s.predPredictions, outerContext, false);
 			if (alts.isNil()) {
 				throw noViableAlt(input, outerContext, s.configs, startIndex);
 			}
@@ -527,28 +543,33 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 							if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
 							// don't look up context in cache now since we're just creating state D
 							loopsSimulateTailRecursion = true;
-							ATNConfigSet s0_closure =
+							boolean fullCtx = true;
+							ATNConfigSet s0_fullCtx =
 								computeStartState(dfa.atnStartState,
 												  outerContext,
 												  greedy,
 												  loopsSimulateTailRecursion,
-												  true);
-							// we have write lock already, no need to relock
-							fullCtxSet = execATNWithFullContext(dfa, D, s0_closure,
+												  fullCtx);
+							FullContextDFAState D_ = new FullContextDFAState(D);
+							LinkedHashMap<SemanticContext,Boolean> predEvals =
+								getPredicates(s0_fullCtx, outerContext);
+							s0_fullCtx = stripFalsePredConfigs(s0_fullCtx, predEvals);
+
+							fullCtxSet = execATNWithFullContext(dfa, D_, s0_fullCtx,
 																input, startIndex,
 																outerContext,
-																D.configs.conflictingAlts.getMinElement(),
+																D_.configs.conflictingAlts.getMinElement(),
 																greedy);
-							// not accept state: isCtxSensitive
-							PredictionContext predictionCtx = PredictionContext.fromRuleContext(outerContext);
+
+							// Add edge to new state (or prev if there)
+							D_ = (FullContextDFAState)addDFAEdge(dfa, previousD, t, D_);
+							// Cache pred results and predicted alt
+							PredictionContext predictionCtx =
+								PredictionContext.fromRuleContext(outerContext);
 							predictionCtx = getCachedContext(predictionCtx);
-							D.isCtxSensitive = true; // always force DFA to ATN simulate
 							predictedAlt = fullCtxSet.uniqueAlt;
-							D.prediction = ATN.INVALID_ALT_NUMBER;
-							// TODO: have to cache pred list to test also
-							D.contextToPredictedAlt.put(predictionCtx, predictedAlt); // CACHE
-							addDFAEdge(dfa, previousD, t, D);
-							return predictedAlt; // all done with preds, etc...
+							D_.cache(predictionCtx, predEvals, predictedAlt);
+							return predictedAlt;
 						}
 					}
 					else {
@@ -589,13 +610,13 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				// pairs if preds found for conflicting alts
 				IntervalSet altsToCollectPredsFrom = getConflictingAltsOrUniqueAlt(D.configs);
 				SemanticContext[] altToPred = getPredsForAmbigAlts(altsToCollectPredsFrom, D.configs, nalts);
-				D.predicates = getPredicatePredictions(altsToCollectPredsFrom, altToPred);
+				D.predPredictions = getPredicatePredictions(altsToCollectPredsFrom, altToPred);
 				D.prediction = ATN.INVALID_ALT_NUMBER; // make sure we use preds
 
-				if ( D.predicates!=null ) {
+				if ( D.predPredictions !=null ) {
 					int stopIndex = input.index();
 					input.seek(startIndex);
-					IntervalSet alts = evalSemanticContext(D.predicates, outerContext, true);
+					IntervalSet alts = evalSemanticContext(D.predPredictions, outerContext, true);
 					D.prediction = ATN.INVALID_ALT_NUMBER; // indicate we have preds
 					addDFAEdge(dfa, previousD, t, D);
 					switch (alts.size()) {
@@ -624,10 +645,10 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		}
 	}
 
-	// comes back with reach.uniqueAlt set to a valid alt
+	// comes back with reach.uniqueAlt set to a valid alt.
 	public ATNConfigSet execATNWithFullContext(DFA dfa,
 											   DFAState D, // how far we got before failing over
-											   @NotNull ATNConfigSet s0,
+											   ATNConfigSet s0,
 											   @NotNull TokenStream input, int startIndex,
 											   ParserRuleContext<?> outerContext,
 											   int SLL_min_alt, // todo: is this in D as min ambig alts?
@@ -635,12 +656,13 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	{
 		// caller must have write lock on dfa
 		retry_with_context++;
-		reportAttemptingFullContext(dfa, s0, startIndex, input.index());
 
+		boolean fullCtx = true;
+		reportAttemptingFullContext(dfa, s0, startIndex, input.index());
 		if ( debug || debug_list_atn_decisions ) {
 			System.out.println("execATNWithFullContext "+s0+", greedy="+greedy);
 		}
-		boolean fullCtx = true;
+
 		ATNConfigSet reach = null;
 		ATNConfigSet previous = s0;
 		input.seek(startIndex);
@@ -801,16 +823,16 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		 *
 		 * From this, it is clear that NONE||anything==NONE.
 		 */
-		SemanticContext[] altToPred = new SemanticContext[nalts +1];
+		SemanticContext[] altToPred = new SemanticContext[nalts+1];
 		int n = altToPred.length;
 		for (ATNConfig c : configs) {
-			if ( ambigAlts.contains(c.alt) ) {
+			if ( ambigAlts==null || ambigAlts.contains(c.alt) ) {
 				altToPred[c.alt] = SemanticContext.or(altToPred[c.alt], c.semanticContext);
 			}
 		}
 
 		int nPredAlts = 0;
-		for (int i = 0; i < n; i++) {
+		for (int i = 1; i < n; i++) {
 			if (altToPred[i] == null) {
 				altToPred[i] = SemanticContext.NONE;
 			}
@@ -830,10 +852,10 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return altToPred;
 	}
 
-	public List<DFAState.PredPrediction> getPredicatePredictions(IntervalSet ambigAlts,
-																 SemanticContext[] altToPred)
+	public List<PredPrediction> getPredicatePredictions(IntervalSet ambigAlts,
+														SemanticContext[] altToPred)
 	{
-		List<DFAState.PredPrediction> pairs = new ArrayList<DFAState.PredPrediction>();
+		List<PredPrediction> pairs = new ArrayList<PredPrediction>();
 		boolean containsPredicate = false;
 		for (int i = 1; i < altToPred.length; i++) {
 			SemanticContext pred = altToPred[i];
@@ -841,8 +863,8 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			// unpredicated is indicated by SemanticContext.NONE
 			assert pred != null;
 
-			if (ambigAlts!=null && ambigAlts.contains(i)) {
-				pairs.add(new DFAState.PredPrediction(pred, i));
+			if (ambigAlts==null || ambigAlts.contains(i)) {
+				pairs.add(new PredPrediction(pred, i));
 			}
 			if ( pred!=SemanticContext.NONE ) containsPredicate = true;
 		}
@@ -861,12 +883,12 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	 *  then we stop at the first predicate that evaluates to true. This
 	 *  includes pairs with null predicates.
 	 */
-	public IntervalSet evalSemanticContext(List<DFAState.PredPrediction> predPredictions,
+	public IntervalSet evalSemanticContext(List<PredPrediction> predPredictions,
 										   ParserRuleContext<?> outerContext,
 										   boolean complete)
 	{
 		IntervalSet predictions = new IntervalSet();
-		for (DFAState.PredPrediction pair : predPredictions) {
+		for (PredPrediction pair : predPredictions) {
 			if ( pair.pred==null ) { // TODO: can't be null, can it?
 				predictions.add(pair.alt);
 				if (!complete) {
@@ -891,6 +913,56 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		}
 
 		return predictions;
+	}
+
+	/** Get a map from unique pred to evaluation of that pred. Return null
+	 *  if no preds.
+	 */
+	public LinkedHashMap<SemanticContext,Boolean> getPredicates(@NotNull ATNConfigSet configs,
+																ParserRuleContext<?> outerContext)
+	{
+		LinkedHashMap<SemanticContext,Boolean> preds = new LinkedHashMap<SemanticContext, Boolean>();
+		for (ATNConfig c : configs) {
+			SemanticContext pred = c.semanticContext;
+			if ( pred !=null && pred !=SemanticContext.NONE ) {
+				if ( !preds.containsKey(pred) ) {
+					preds.put(pred, pred.eval(parser, outerContext));
+				}
+			}
+		}
+		if ( preds.size()==0 ) return null;
+		return preds;
+	}
+
+	/** From a list of preds, return "list" of eval results */
+	public boolean[] evalSemanticContext(Collection<SemanticContext> preds,
+										 ParserRuleContext<?> outerContext)
+	{
+		boolean[] results = new boolean[preds.size()];
+		int i = 0;
+		for (SemanticContext pred : preds) {
+			results[i++] = pred.eval(parser, outerContext);
+		}
+		return results;
+	}
+
+	/** Create new config set w/o configs whose predicate context evaluates
+	 *  to false.
+	 */
+	public ATNConfigSet stripFalsePredConfigs(ATNConfigSet configs,
+											  LinkedHashMap<SemanticContext,Boolean> predEvals)
+	{
+		boolean fullCtx = true;
+		ATNConfigSet stripped = new ATNConfigSet(fullCtx);
+		for (ATNConfig c : configs) {
+			SemanticContext pred = c.semanticContext;
+			if ( pred==null || pred==SemanticContext.NONE ||
+				 (predEvals!=null && predEvals.get(pred)) )
+			{
+				stripped.add(c);
+			}
+		}
+		return stripped;
 	}
 
 
@@ -1111,7 +1183,9 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		if ( collectPredicates &&
 			 (!pt.isCtxDependent || (pt.isCtxDependent&&inContext)) )
 		{
-			if ( fullCtx ) {
+//			if ( fullCtx ) {
+			if (false) {
+				// TODO: remove after we strip above
 				// In full context mode, we can evaluate predicates on-the-fly
 				// during closure, which dramatically reduces the size of
 				// the config sets. It also obviates the need to test predicates
@@ -1424,13 +1498,13 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 		return false;
 	}
 
-	protected void addDFAEdge(@NotNull DFA dfa,
-							  @Nullable DFAState from,
-							  int t,
-							  @Nullable DFAState to)
+	protected DFAState addDFAEdge(@NotNull DFA dfa,
+								  @Nullable DFAState from,
+								  int t,
+								  @Nullable DFAState to)
 	{
 		if ( debug ) System.out.println("EDGE "+from+" -> "+to+" upon "+getTokenName(t));
-		if ( from==null || t < -1 || to == null ) return;
+		if ( from==null || t < -1 || to == null ) return null;
 		to = addDFAState(dfa, to); // used existing if possible not incoming
 		synchronized (dfa) {
 			if ( from.edges==null ) {
@@ -1439,6 +1513,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			from.edges[t+1] = to; // connect
 		}
 		if ( debug ) System.out.println("DFA=\n"+dfa.toString(parser!=null?parser.getTokenNames():null));
+		return to;
 	}
 
 	/** Add D if not there and return D. Return previous if already present. */

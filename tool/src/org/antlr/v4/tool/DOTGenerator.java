@@ -51,6 +51,7 @@ import org.antlr.v4.runtime.atn.StarLoopbackState;
 import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
+import org.antlr.v4.runtime.dfa.FullContextDFAState;
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
@@ -139,8 +140,15 @@ public class DOTGenerator {
 		if ( s.isAcceptState ) {
 			buf.append("=>").append(s.prediction);
 		}
-		if ( s.isCtxSensitive ) {
+		if ( s instanceof FullContextDFAState ) {
 			buf.append("^");
+			FullContextDFAState s_ = (FullContextDFAState)s;
+			if ( s_.hasPredicates() ) {
+				buf.append("?");
+			}
+		}
+		else if ( s.predPredictions!=null ) {
+			buf.append("?");
 		}
 		if ( grammar!=null && grammar.tool.verbose_dfa ) {
 			Set<Integer> alts = s.getAltSet();
