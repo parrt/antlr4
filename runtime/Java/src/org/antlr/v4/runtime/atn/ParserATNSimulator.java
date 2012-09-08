@@ -47,6 +47,7 @@ import org.stringtemplate.v4.misc.MultiMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -432,8 +433,20 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 	loop:
 		while ( true ) {
 			if ( dfa_debug ) System.out.println("DFA state "+s.stateNumber+" LA(1)=="+getLookaheadName(input));
-			if ( s.isCtxSensitive && !SLL ) {
-				if ( dfa_debug ) System.out.println("ctx sensitive state "+outerContext+" in "+s);
+			if ( s.requiresFullContext && !SLL ) {
+				if ( dfa_debug ) System.out.println("Full LL ctx sensitive state "+outerContext+" in "+s);
+
+				// IF PREDS, MIGHT RESOLVE TO SINGLE ALT => SLL (or syntax error)
+				if ( s.predicates!=null ) {
+					if ( debug ) System.out.println("DFA state has preds in DFA sim LL failover");
+					input.seek(startIndex);
+					IntervalSet alts = evalSemanticContext(s.predicates, outerContext, true);
+					if ( alts.size()==1 ) {
+						if ( debug ) System.out.println("Full LL avoided");
+						return alts.getMinElement();
+					}
+				}
+
 				boolean loopsSimulateTailRecursion = true;
 				boolean fullCtx = true;
 				ATNConfigSet s0_closure =
@@ -464,7 +477,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 			}
 
 			// t is not updated if one of these states is reached
-			assert !s.isCtxSensitive && !s.isAcceptState;
+			assert !s.requiresFullContext && !s.isAcceptState;
 
 			// if no edge, pop over to ATN interpreter, update DFA and return
 			if ( s.edges == null || t >= s.edges.length || t < -1 || s.edges[t+1] == null ) {
@@ -506,7 +519,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				throw noViableAlt(input, outerContext, s.configs, startIndex);
 			}
 			s = target;
-			if (!s.isCtxSensitive && !s.isAcceptState) {
+			if (!s.requiresFullContext && !s.isAcceptState) {
 				input.consume();
 				t = input.LA(1);
 			}
@@ -673,7 +686,33 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 							// Falls through to check predicates below
 						}
 						else {
-							// SLL CONFLICT; RETRY WITH FULL LL CONTEXT
+							// SLL CONFLICT
+							// not accept state; needs full LL
+							D.requiresFullContext = true; // force DFA to ATN simulate
+							D.prediction = ATN.INVALID_ALT_NUMBER;
+
+							// IF PREDS, MIGHT RESOLVE TO SINGLE ALT => SLL (or syntax error)
+							if ( D.configs.hasSemanticContext ) {
+								if ( debug ) System.out.println("DFA state has preds in ATN sim LL failover");
+								int nalts = decState.getNumberOfTransitions();
+								IntervalSet altsToCollectPredsFrom = getConflictingAltsOrUniqueAlt(D.configs);
+								SemanticContext[] altToPred =
+									getPredsForAmbigAlts(altsToCollectPredsFrom, D.configs, nalts);
+								if ( altToPred!=null ) {
+									D.predicates = getPredicatePredictions(altsToCollectPredsFrom, altToPred);
+									if ( D.predicates!=null ) {
+										input.seek(startIndex);
+										IntervalSet alts = evalSemanticContext(D.predicates, outerContext, true);
+										if ( alts.size()==1 ) {
+											addDFAEdge(dfa, previousD, t, D);
+											if ( debug ) System.out.println("Full LL avoided");
+											return alts.getMinElement();
+										}
+									}
+								}
+							}
+
+							// RETRY WITH FULL LL CONTEXT
 							if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
 							// don't look up context in cache now since we're just creating state D
 							loopsSimulateTailRecursion = true;
@@ -688,9 +727,6 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 																  outerContext,
 																  D.configs.conflictingAlts.getMinElement(),
 																  greedy);
-							// not accept state: isCtxSensitive
-							D.isCtxSensitive = true; // always force DFA to ATN simulate
-							D.prediction = ATN.INVALID_ALT_NUMBER;
 							addDFAEdge(dfa, previousD, t, D);
 							return predictedAlt; // all done with preds, etc...
 						}
@@ -766,6 +802,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 				}
 			}
 
+			// all adds to dfa are done after we've created full D state
 			addDFAEdge(dfa, previousD, t, D);
 			if ( D.isAcceptState ) return predictedAlt;
 
@@ -1625,6 +1662,7 @@ public class ParserATNSimulator<Symbol extends Token> extends ATNSimulator {
 
 	/** Add D if not there and return D. Return previous if already present. */
 	protected DFAState addDFAState(@NotNull DFA dfa, @NotNull DFAState D) {
+		// TODO: redo with concurrent hash map
 		synchronized (dfa) {
 			DFAState existing = dfa.states.get(D);
 			if ( existing!=null ) return existing;
