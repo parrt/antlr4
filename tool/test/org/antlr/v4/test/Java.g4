@@ -173,6 +173,11 @@ options {backtrack=true; memoize=true;}
   protected boolean assertIsKeyword = true;
 }
 
+tokens {
+    ENUM,
+    ASSERT
+}
+
 // starting point for parsing a java file
 /* The annotations are separated out to make parsing faster, but must be associated with
    a packageDeclaration or a typeDeclaration (and not an empty one). */
@@ -969,11 +974,11 @@ UnicodeEscape
     :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
     ;
 
-ENUM:   'enum' {if (!enumIsKeyword) $type=Identifier;}
+ENUM:   'enum'      -> type([enumIsKeyword ? ENUM : Identifier])
     ;
     
 ASSERT
-    :   'assert' {if (!assertIsKeyword) $type=Identifier;}
+    :   'assert'    -> type([assertIsKeyword ? ASSERT : Identifier])
     ;
     
 Identifier 
@@ -1019,13 +1024,13 @@ JavaIDDigit
        '\u1040'..'\u1049'
    ;
 
-WS  :  (' '|'\r'|'\t'|'\u000C'|'\n')+ {$channel=HIDDEN;}
+WS  :  (' '|'\r'|'\t'|'\u000C'|'\n')+ -> channel(HIDDEN)
     ;
 
 COMMENT
-    :   '/*' .* '*/' {$channel=HIDDEN;}
+    :   '/*' .* '*/' -> channel(HIDDEN)
     ;
 
 LINE_COMMENT
-    : '//' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;}
+    : '//' ~('\n'|'\r')* '\r'? '\n' -> channel(HIDDEN)
     ;

@@ -121,6 +121,7 @@ package org.antlr.v4.parse;
 @members {
     public CommonTokenStream tokens; // track stream we push to; need for context info
     public boolean isLexerRule = false;
+    public int lexerCommandLevel = 0;
 
 	/** scan backwards from current point in this.tokens list
 	 *  looking for the start of the rule or subrule.
@@ -242,8 +243,8 @@ COMMENT
 
 ARG_OR_CHARSET
 options {k=1;}
-    :   {isLexerRule}?=> LEXER_CHAR_SET {$type=LEXER_CHAR_SET;}
-    |   {!isLexerRule}?=> ARG_ACTION
+    :   {isLexerRule && lexerCommandLevel <= 0}?=> LEXER_CHAR_SET {$type=LEXER_CHAR_SET;}
+    |   {!isLexerRule || lexerCommandLevel > 0}?=> ARG_ACTION
         {
         $type=ARG_ACTION;
         // Set the token text to our gathered string minus outer [ ]
@@ -431,10 +432,10 @@ COLON        : ':'
              ;
 COLONCOLON   : '::'                   ;
 COMMA        : ','                    ;
-SEMI         : ';'                    ;
-LPAREN       : '('                    ;
-RPAREN       : ')'                    ;
-RARROW       : '->'                   ;
+SEMI         : ';'                    {lexerCommandLevel = 0;};
+LPAREN       : '('                    {if (lexerCommandLevel > 0) lexerCommandLevel++;};
+RPAREN       : ')'                    {if (lexerCommandLevel > 0) lexerCommandLevel--;};
+RARROW       : '->'                   {if (isLexerRule) lexerCommandLevel = 1;};
 LT           : '<'                    ;
 GT           : '>'                    ;
 ASSIGN       : '='                    ;
@@ -442,7 +443,7 @@ QUESTION     : '?'                    ;
 STAR         : '*'                    ;
 PLUS         : '+'                    ;
 PLUS_ASSIGN  : '+='                   ;
-OR           : '|'                    ;
+OR           : '|'                    {lexerCommandLevel = 0;};
 DOLLAR       : '$'                    ;
 DOT		     : '.'                    ; // can be WILDCARD or DOT in qid or imported rule ref
 RANGE        : '..'                   ;

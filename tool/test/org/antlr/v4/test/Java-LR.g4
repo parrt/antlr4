@@ -175,6 +175,11 @@ grammar Java;
   protected boolean assertIsKeyword = true;
 }
 
+tokens {
+    ENUM,
+    ASSERT
+}
+
 // starting point for parsing a java file
 /* The annotations are separated out to make parsing faster, but must be associated with
    a packageDeclaration or a typeDeclaration (and not an empty one). */
@@ -876,11 +881,11 @@ UnicodeEscape
     :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
     ;
 
-ENUM:   'enum' {if (!enumIsKeyword) $type=Identifier;}
+ENUM:   'enum'      -> type([enumIsKeyword ? ENUM : Identifier])
     ;
     
 ASSERT
-    :   'assert' {if (!assertIsKeyword) $type=Identifier;}
+    :   'assert'    -> type([assertIsKeyword ? ASSERT : Identifier])
     ;
     
 Identifier 

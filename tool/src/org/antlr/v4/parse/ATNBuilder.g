@@ -122,6 +122,7 @@ lexerCommand returns [String cmd]
 lexerCommandExpr
 	:	ID
 	|	INT
+	|	ARG_ACTION
 	;
 
 element returns [ATNFactory.Handle p]

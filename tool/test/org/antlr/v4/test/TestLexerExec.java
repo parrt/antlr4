@@ -88,6 +88,21 @@ public class TestLexerExec extends BaseTest {
 		assertEquals(expecting, found);
 	}
 
+	@Test public void testTypeCommandWithAction() throws Exception {
+		String grammar =
+			"lexer grammar L;\n"+
+			"tokens{I,HASH}\n" +
+			"I : '0'..'9'+ {System.out.println(\"I\");} ;\n"+
+			"HASH : '#' -> type([HASH+1]) ;";
+		String found = execLexer("L.g4", grammar, "L", "34#");
+		String expecting =
+			"I\n" +
+			"[@0,0:1='34',<1>,1:0]\n" +
+			"[@1,2:2='#',<3>,1:2]\n" +
+			"[@2,3:2='<EOF>',<-1>,1:3]\n";
+		assertEquals(expecting, found);
+	}
+
 	@Test public void testCombinedCommand() throws Exception {
 		String grammar =
 			"lexer grammar L;\n"+

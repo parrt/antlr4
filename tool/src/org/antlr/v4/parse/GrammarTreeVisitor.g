@@ -422,6 +422,7 @@ lexerCommand
 lexerCommandExpr
 	:	ID 
 	|	INT
+	|	ARG_ACTION
 	;
 	
 element

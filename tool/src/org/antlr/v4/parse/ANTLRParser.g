@@ -612,6 +612,7 @@ lexerCommand
 lexerCommandExpr
 	:	id
 	|	INT
+	|	ARG_ACTION
 	;
 
 lexerCommandName
