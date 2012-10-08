@@ -922,8 +922,25 @@ public abstract class BaseTest {
 			"        CommonTokenStream tokens = new CommonTokenStream(lex);\n" +
 			"        <createParser>\n"+
 			"		 parser.setBuildParseTree(true);\n" +
-			"        parser.<parserStartRuleName>();\n" +
+			"        ParserRuleContext\\<Token> tree = parser.<parserStartRuleName>();\n" +
+			"        ParseTreeWalker.DEFAULT.walk(new TreeShapeListener(), tree);\n" +
 			"    }\n" +
+			"\n" +
+			"	static class TreeShapeListener implements ParseTreeListener\\<Token> {\n" +
+			"		@Override public void visitTerminal(TerminalNode\\<Token> node) { }\n" +
+			"		@Override public void visitErrorNode(ErrorNode\\<Token> node) { }\n" +
+			"		@Override public void exitEveryRule(ParserRuleContext\\<Token> ctx) { }\n" +
+			"\n" +
+			"		@Override\n" +
+			"		public void enterEveryRule(ParserRuleContext\\<Token> ctx) {\n" +
+			"			for (int i = 0; i \\< ctx.getChildCount(); i++) {\n" +
+			"				ParseTree parent = ctx.getChild(i).getParent();\n" +
+			"				if (!(parent instanceof RuleNode) || ((RuleNode)parent).getRuleContext() != ctx) {\n" +
+			"					throw new IllegalStateException(\"Invalid parse tree shape detected.\");\n" +
+			"				}\n" +
+			"			}\n" +
+			"		}\n" +
+			"	}\n" +
 			"}"
 			);
         ST createParserST = new ST("        <parserName> parser = new <parserName>(tokens);\n");
