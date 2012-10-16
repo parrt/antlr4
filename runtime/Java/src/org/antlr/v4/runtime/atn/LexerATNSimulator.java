@@ -42,6 +42,7 @@ import org.antlr.v4.runtime.misc.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.BitSet;
 
 /** "dup" of ParserInterpreter */
 public class LexerATNSimulator extends ATNSimulator {
@@ -407,41 +408,67 @@ public class LexerATNSimulator extends ATNSimulator {
 			System.out.format("processAcceptConfigs: reach=%s, prevAccept=%s, prevIndex=%d\n",
 						 	  reach, prevAccept.config, prevAccept.index);
 		}
-		for (int ci=0; ci<reach.size(); ci++) {
-			LexerATNConfig c = (LexerATNConfig)reach.get(ci);
-			if ( c.state instanceof RuleStopState) {
+
+		/* Non-greedy handling works by removing all non-greedy configurations
+		 * from reach when an accept state is reached for the same token. For
+		 * example, consider the following two tokens:
+		 *
+		 * BLOCK : '{' .* '}';
+		 * OPTIONAL_BLOCK : '{' .* '}' '?';
+		 *
+		 * With the following input:
+		 *
+		 * {stuff}?
+		 *
+		 * After matching '}', an accept state at the end of BLOCK is reached,
+		 * so any configurations inside the non-greedy .* loop in BLOCK will be
+		 * removed from reach. The configuration(s) inside the non-greedy .*
+		 * loop in OPTIONAL_BLOCK are unaffected by this because no
+		 * configuration is in an accept state for OPTIONAL_BLOCK at this input
+		 * symbol.
+		 */
+		BitSet altsAtAcceptState = new BitSet();
+		BitSet nonGreedyAlts = new BitSet();
+		LexerATNConfig acceptConfig = null;
+		for (ATNConfig config : reach) {
+			if (config.state instanceof RuleStopState) {
+				altsAtAcceptState.set(config.alt);
+
 				if ( debug ) {
 					System.out.format("processAcceptConfigs: hit accept config %s index %d\n",
-									  c, input.index());
+									  config, input.index());
 				}
 
-				int index = input.index();
-				if ( index > prevAccept.index ) {
-					if ( debug ) {
-						if ( prevAccept.index>=0 ) {
-							System.out.println("processAcceptConfigs: found longer token");
-						}
-					}
-					// condition > not >= will favor prev accept at same index.
-					// This way, "int" is keyword not ID if listed first.
-					traceAcceptState(c.alt);
-					if ( debug ) {
-						System.out.format("markExecSettings for %s @ index=%d, line %d:%d\n", c, index, prevAccept.line, prevAccept.charPos);
-					}
-					captureSimState(prevAccept, input, c);
+				if (acceptConfig == null) {
+					acceptConfig = (LexerATNConfig)config;
 				}
+			}
 
-				// if we reach lexer accept state with empty stack,
-				// toss out any configs pointing at wildcard edges
-				// in rest of configs work list associated with this
-				// rule (config.alt); that rule is done. this is how we
-				// cut off nongreedy .+ loops.
-				reach = deleteWildcardConfigsForAlt(reach, ci, c);
-
-			 	// move to next char, looking for longer match
-				// (we continue processing if there are states in reach)
+			if (!((LexerATNConfig)config).isGreedy()) {
+				assert !(config.state instanceof RuleStopState);
+				nonGreedyAlts.set(config.alt);
 			}
 		}
+
+		nonGreedyAlts.and(altsAtAcceptState);
+		// this is now "alts with at least one non-greedy config and one accept config"
+		if (!nonGreedyAlts.isEmpty()) {
+			reach.removeNonGreedyConfigsInAlts(nonGreedyAlts);
+		}
+
+		// mark the new preferred accept state
+		if (acceptConfig != null && input.index() > prevAccept.index) {
+			if ( debug ) {
+				if ( prevAccept.index>=0 ) {
+					System.out.println("processAcceptConfigs: found longer token");
+				}
+			}
+			// condition > not >= will favor prev accept at same index.
+			// This way, "int" is keyword not ID if listed first.
+			traceAcceptState(acceptConfig.alt);
+			captureSimState(prevAccept, input, acceptConfig);
+		}
+
 		return reach;
 	}
 
@@ -526,62 +553,6 @@ public class LexerATNSimulator extends ATNSimulator {
 		}
 	}
 
-	/** Delete configs for alt following ci that have a wildcard edge but
-	 *  only for configs with empty stack. E.g., if we want to kill after
-	 *  config (2,1,[$]), then we need to wack only configs with $ stack:
-	 *
-	 *  	[..., (2,1,[$]), ..., (7,1,[[$, 6 $]])]
-	 *
-	 *  That means wacking (7,1,[$]) but not (7,1,[6 $]).
-	 *
-	 *  Incoming config could have multiple stacks but we only care about
-	 *  empty stack since that means we reached end of a lexer rule from
-	 *  nextToken directly.
-	 *
-	 *  Closure is unmodified; copy returned.
-	 */
-	public ATNConfigSet deleteWildcardConfigsForAlt(@NotNull ATNConfigSet closure,
-													int ci,
-													ATNConfig config)
-	{
-		int alt = config.alt;
-		if ( debug ) {
-			System.out.printf("deleteWildcardConfigsForAlt for alt %d after config %d\n", alt, ci);
-		}
-
-		ATNConfigSet dup = new ATNConfigSet(); // build up as we go thru loop
-		for (int j=0; j<=ci; j++) dup.add(closure.get(j)); // add stuff up to ci
-		int j=ci+1;
-		while ( j < closure.size() ) {
-			LexerATNConfig c = (LexerATNConfig)closure.get(j);
-			boolean isWildcard = c.state.getClass() == ATNState.class && // plain state only, not rulestop etc..
-				    c.state.transition(0) instanceof WildcardTransition;
-			if ( c.alt == alt && isWildcard ) {
-				// found config to kill but only if empty stack.
-				for (SingletonPredictionContext ctx : c.context) {
-					if ( ctx.isEmpty() ) {
-						// c.alt matches, empty stack, and j > ci => kill it
-						if ( debug ) {
-							System.out.format("delete config %s since alt %d and %d leads to wildcard\n",
-											  c, c.alt, c.state.stateNumber);
-						}
-						// don't add
-					}
-					else {
-						LexerATNConfig splitConfig =
-							new LexerATNConfig(c.state, c.alt, ctx, c.lexerActionIndex);
-						dup.add(splitConfig);
-					}
-				}
-			}
-			else {
-				dup.add(c); // add entire config
-			}
-			j++;
-		}
-		return dup;
-	}
-
 	@NotNull
 	protected ATNConfigSet computeStartState(@NotNull IntStream input,
 											 @NotNull ATNState p)
@@ -601,8 +572,6 @@ public class LexerATNSimulator extends ATNSimulator {
 			System.out.println("closure("+config.toString(recog, true)+")");
 		}
 
-		// TODO? if ( closure.contains(t) ) return;
-
 		if ( config.state instanceof RuleStopState ) {
 			if ( debug ) {
 				if ( recog!=null ) {
@@ -613,10 +582,15 @@ public class LexerATNSimulator extends ATNSimulator {
 				}
 			}
 
-			if ( config.context == null || config.context.isEmpty() ) {
-				configs.add(config);
-				return;
+			if ( config.context == null || config.context.hasEmpty() ) {
+				if (config.context == null || config.context.isEmpty()) {
+					configs.add(config);
+					return;
+				}
+
+				configs.add(new LexerATNConfig(config, config.state, PredictionContext.EMPTY));
 			}
+
 			if ( config.context!=null && !config.context.isEmpty() ) {
 				for (SingletonPredictionContext ctx : config.context) {
 					if ( !ctx.isEmpty() ) {
@@ -648,10 +622,18 @@ public class LexerATNSimulator extends ATNSimulator {
 		}
 
 		ATNState p = config.state;
+		boolean nonGreedy = (p instanceof DecisionState && ((DecisionState)p).nonGreedy && !(p instanceof PlusLoopbackState))
+			|| (p instanceof PlusBlockStartState && ((PlusBlockStartState)p).loopBackState.nonGreedy);
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			Transition t = p.transition(i);
 			LexerATNConfig c = getEpsilonTarget(config, t, configs);
-			if ( c!=null ) closure(c, configs);
+			if ( c!=null ) {
+				if (nonGreedy) {
+					c = c.enterNonGreedyBlock();
+				}
+
+				closure(c, configs);
+			}
 		}
 	}
 
@@ -662,6 +644,45 @@ public class LexerATNSimulator extends ATNSimulator {
 									  @NotNull ATNConfigSet configs)
 	{
 		ATNState p = config.state;
+		switch (p.getStateType()) {
+		case ATNState.PLUS_LOOP_BACK:
+			if (((PlusLoopbackState)p).nonGreedy) {
+				config = config.exitNonGreedyBlock();
+			}
+
+			break;
+
+		case ATNState.STAR_LOOP_BACK:
+			if (((StarLoopbackState)p).getLoopEntryState().nonGreedy) {
+				config = config.exitNonGreedyBlock();
+			}
+			break;
+
+		case ATNState.LOOP_END:
+			ATNState loopBackState = ((LoopEndState)p).loopBackState;
+			if (loopBackState instanceof PlusLoopbackState) {
+				if (((PlusLoopbackState)loopBackState).nonGreedy) {
+					config = config.exitNonGreedyBlock();
+				}
+			}
+			else {
+				StarLoopbackState starLoopbackState = (StarLoopbackState)loopBackState;
+				if (starLoopbackState.getLoopEntryState().nonGreedy) {
+					config = config.exitNonGreedyBlock();
+				}
+			}
+
+			break;
+
+		case ATNState.BLOCK_END:
+			if (p.isNonGreedyExitState()) {
+				config = config.exitNonGreedyBlock();
+			}
+			break;
+
+		default:
+			break;
+		}
 
 		LexerATNConfig c = null;
 		switch (t.getSerializationType()) {
