@@ -1,5 +1,7 @@
 grammar T;
-s@after {dumpDFA();}
-    : ID | ID {;} ;
-ID : 'a'..'z'+ ;
-WS : (' '|'\t'|'\n')+ {skip();} ;
+
+s : A # Z
+  | B{} # Z
+  | C # D
+  ;
+

@@ -1,31 +1,30 @@
 /*
- * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- *  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- *  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- *  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- *  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ [The "BSD license"]
+  Copyright (c) 2011 Terence Parr
+  All rights reserved.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
+  3. The name of the author may not be used to endorse or promote products
+     derived from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 package org.antlr.v4.runtime.atn;
@@ -387,14 +386,7 @@ public class LexerATNSimulator extends ATNSimulator {
 	 *  we can reach upon input t. Parameter reach is a return parameter.
 	 */
 	protected void getReachableConfigSet(ATNConfigSet closure, ATNConfigSet reach, int t) {
-		// this is used to skip processing for configs which have a lower priority
-		// than a config that already reached an accept state for the same rule
-		int skipAlt = ATN.INVALID_ALT_NUMBER;
 		for (ATNConfig c : closure) {
-			if (c.alt == skipAlt) {
-				continue;
-			}
-
 			if ( debug ) {
 				System.out.format("testing %s at %s\n", getTokenName(t), c.toString(recog, true));
 			}
@@ -404,12 +396,7 @@ public class LexerATNSimulator extends ATNSimulator {
 				Transition trans = c.state.transition(ti);
 				ATNState target = getReachableTarget(trans, t);
 				if ( target!=null ) {
-					if (closure(new LexerATNConfig((LexerATNConfig)c, target), reach)) {
-						// any remaining configs for this alt have a lower priority than
-						// the one that just reached an accept state.
-						skipAlt = c.alt;
-						break;
-					}
+					closure(new LexerATNConfig((LexerATNConfig)c, target), reach);
 				}
 			}
 		}
@@ -420,29 +407,41 @@ public class LexerATNSimulator extends ATNSimulator {
 			System.out.format("processAcceptConfigs: reach=%s, prevAccept=%s, prevIndex=%d\n",
 						 	  reach, prevAccept.config, prevAccept.index);
 		}
-
-		LexerATNConfig acceptConfig = null;
-		for (ATNConfig config : reach) {
-			if (config.state instanceof RuleStopState) {
-				acceptConfig = (LexerATNConfig)config;
-				break;
-			}
-		}
-
-		// mark the new preferred accept state
-		if (acceptConfig != null && input.index() > prevAccept.index) {
-			if ( debug ) {
-				if ( prevAccept.index>=0 ) {
-					System.out.println("processAcceptConfigs: found longer token");
+		for (int ci=0; ci<reach.size(); ci++) {
+			LexerATNConfig c = (LexerATNConfig)reach.get(ci);
+			if ( c.state instanceof RuleStopState) {
+				if ( debug ) {
+					System.out.format("processAcceptConfigs: hit accept config %s index %d\n",
+									  c, input.index());
 				}
+
+				int index = input.index();
+				if ( index > prevAccept.index ) {
+					if ( debug ) {
+						if ( prevAccept.index>=0 ) {
+							System.out.println("processAcceptConfigs: found longer token");
+						}
+					}
+					// condition > not >= will favor prev accept at same index.
+					// This way, "int" is keyword not ID if listed first.
+					traceAcceptState(c.alt);
+					if ( debug ) {
+						System.out.format("markExecSettings for %s @ index=%d, line %d:%d\n", c, index, prevAccept.line, prevAccept.charPos);
+					}
+					captureSimState(prevAccept, input, c);
+				}
+
+				// if we reach lexer accept state with empty stack,
+				// toss out any configs pointing at wildcard edges
+				// in rest of configs work list associated with this
+				// rule (config.alt); that rule is done. this is how we
+				// cut off nongreedy .+ loops.
+				reach = deleteWildcardConfigsForAlt(reach, ci, c);
+
+			 	// move to next char, looking for longer match
+				// (we continue processing if there are states in reach)
 			}
-
-			// condition > not >= will favor prev accept at same index.
-			// This way, "int" is keyword not ID if listed first.
-			traceAcceptState(acceptConfig.alt);
-			captureSimState(prevAccept, input, acceptConfig);
 		}
-
 		return reach;
 	}
 
@@ -472,6 +471,62 @@ public class LexerATNSimulator extends ATNSimulator {
 		return null;
 	}
 
+	/** Delete configs for alt following ci that have a wildcard edge but
+	 *  only for configs with empty stack. E.g., if we want to kill after
+	 *  config (2,1,[$]), then we need to wack only configs with $ stack:
+	 *
+	 *  	[..., (2,1,[$]), ..., (7,1,[[$, 6 $]])]
+	 *
+	 *  That means wacking (7,1,[$]) but not (7,1,[6 $]).
+	 *
+	 *  Incoming config could have multiple stacks but we only care about
+	 *  empty stack since that means we reached end of a lexer rule from
+	 *  nextToken directly.
+	 *
+	 *  Closure is unmodified; copy returned.
+	 */
+	public ATNConfigSet deleteWildcardConfigsForAlt(@NotNull ATNConfigSet closure,
+													int ci,
+													ATNConfig config)
+	{
+		int alt = config.alt;
+		if ( debug ) {
+			System.out.printf("deleteWildcardConfigsForAlt for alt %d after config %d\n", alt, ci);
+		}
+
+		ATNConfigSet dup = new OrderedATNConfigSet(); // build up as we go thru loop
+		for (int j=0; j<=ci; j++) dup.add(closure.get(j)); // add stuff up to ci
+		int j=ci+1;
+		while ( j < closure.size() ) {
+			LexerATNConfig c = (LexerATNConfig)closure.get(j);
+			boolean isWildcard = c.state.getClass() == ATNState.class && // plain state only, not rulestop etc..
+				    c.state.transition(0) instanceof WildcardTransition;
+			if ( c.alt == alt && isWildcard ) {
+				// found config to kill but only if empty stack.
+				for (SingletonPredictionContext ctx : c.context) {
+					if ( ctx.isEmpty() ) {
+						// c.alt matches, empty stack, and j > ci => kill it
+						if ( debug ) {
+							System.out.format("delete config %s since alt %d and %d leads to wildcard\n",
+											  c, c.alt, c.state.stateNumber);
+						}
+						// don't add
+					}
+					else {
+						LexerATNConfig splitConfig =
+							new LexerATNConfig(c.state, c.alt, ctx, c.lexerActionIndex);
+						dup.add(splitConfig);
+					}
+				}
+			}
+			else {
+				dup.add(c); // add entire config
+			}
+			j++;
+		}
+		return dup;
+	}
+
 	@NotNull
 	protected ATNConfigSet computeStartState(@NotNull IntStream input,
 											 @NotNull ATNState p)
@@ -486,20 +541,12 @@ public class LexerATNSimulator extends ATNSimulator {
 		return configs;
 	}
 
-	/**
-	 * Since the alternatives within any lexer decision are ordered by
-	 * preference, this method stops pursuing the closure as soon as an accept
-	 * state is reached. After the first accept state is reached by depth-first
-	 * search from {@code config}, all other (potentially reachable) states for
-	 * this rule would have a lower priority.
-	 *
-	 * @return {@code true} if an accept state is reached, otherwise
-	 * {@code false}.
-	 */
-	protected boolean closure(@NotNull LexerATNConfig config, @NotNull ATNConfigSet configs) {
+	protected void closure(@NotNull LexerATNConfig config, @NotNull ATNConfigSet configs) {
 		if ( debug ) {
 			System.out.println("closure("+config.toString(recog, true)+")");
 		}
+
+		// TODO? if ( closure.contains(t) ) return;
 
 		if ( config.state instanceof RuleStopState ) {
 			if ( debug ) {
@@ -518,10 +565,13 @@ public class LexerATNSimulator extends ATNSimulator {
 				else {
 					configs.add(new LexerATNConfig(config, config.state, PredictionContext.EMPTY));
 				}
-
-				return true;
+				return;
 			}
 
+			if ( config.context == null || config.context.isEmpty() ) {
+				configs.add(config);
+				return;
+			}
 			if ( config.context!=null && !config.context.isEmpty() ) {
 				for (SingletonPredictionContext ctx : config.context) {
 					if ( !ctx.isEmpty() ) {
@@ -540,13 +590,11 @@ public class LexerATNSimulator extends ATNSimulator {
 						RuleTransition rt = (RuleTransition)invokingState.transition(0);
 						ATNState retState = rt.followState;
 						LexerATNConfig c = new LexerATNConfig(retState, config.alt, newContext);
-						if (closure(c, configs)) {
-							return true;
-						}
+						closure(c, configs);
 					}
 				}
 			}
-			return false;
+			return;
 		}
 
 		// optimization
@@ -558,14 +606,8 @@ public class LexerATNSimulator extends ATNSimulator {
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			Transition t = p.transition(i);
 			LexerATNConfig c = getEpsilonTarget(config, t, configs);
-			if ( c!=null ) {
-				if (closure(c, configs)) {
-					return true;
-				}
-			}
+			if ( c!=null ) closure(c, configs);
 		}
-
-		return false;
 	}
 
 	// side-effect: can alter configs.hasSemanticContext
@@ -575,6 +617,7 @@ public class LexerATNSimulator extends ATNSimulator {
 									  @NotNull ATNConfigSet configs)
 	{
 		ATNState p = config.state;
+
 		LexerATNConfig c = null;
 		switch (t.getSerializationType()) {
 			case Transition.RULE:
