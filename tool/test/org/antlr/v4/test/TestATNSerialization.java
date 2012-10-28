@@ -283,10 +283,10 @@ public class TestATNSerialization extends BaseTest {
 			"2:RULE_STOP 0\n" +
 			"3:RULE_START 1\n" +
 			"4:RULE_STOP 1\n" +
-			"5:BASIC 0\n" +
-			"6:BASIC 0\n" +
-			"7:BASIC 1\n" +
-			"8:BASIC 1\n" +
+			"5:LEXER_BASIC 0 1\n" +
+			"6:LEXER_BASIC 0 1\n" +
+			"7:LEXER_BASIC 1 1\n" +
+			"8:LEXER_BASIC 1 1\n" +
 			"rule 0:1 1,-1\n" +
 			"rule 1:3 2,-1\n" +
 			"mode 0:0\n" +
