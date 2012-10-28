@@ -428,16 +428,22 @@ public class ParserATNFactory implements ATNFactory {
 
 		// turn off for now in parser
 		if ( g.isParser() || g.isCombined() ) {
-			g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER, g.fileName, optAST.getToken(), optAST.getToken().getText());
-			epsilon(blkStart, blk.right);
-		}
-		else if (((QuantifierAST)optAST).isGreedy()) {
+			if ( !((QuantifierAST)optAST).isGreedy() ) {
+				g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER,
+										   g.fileName, optAST.getToken(),
+										   optAST.getToken().getText());
+			}
 			epsilon(blkStart, blk.right);
 		}
 		else {
-			Transition existing = blkStart.removeTransition(0);
-			epsilon(blkStart, blk.right);
-			blkStart.addTransition(existing);
+			if (((QuantifierAST)optAST).isGreedy()) {
+				epsilon(blkStart, blk.right);
+			}
+			else {
+				Transition existing = blkStart.removeTransition(0);
+				epsilon(blkStart, blk.right);
+				blkStart.addTransition(existing);
+			}
 		}
 
 		optAST.atnState = blk.left;
@@ -472,22 +478,28 @@ public class ParserATNFactory implements ATNFactory {
 
 		// turn off for now in parser
 		if ( g.isParser() || g.isCombined() ) {
-			g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER, g.fileName, plusAST.getToken(), plusAST.getToken().getText());
-			epsilon(loop, blkStart);	// loop back to start
-			epsilon(loop, end);			// or exit
-		}
-		else if ( ((QuantifierAST)plusAST).isGreedy() ) {
-			if (expectNonGreedy(blkAST)) {
-				g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, plusAST.getToken(), plusAST.getToken().getText());
+			if ( !((QuantifierAST)plusAST).isGreedy() ) {
+				g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER,
+										   g.fileName, plusAST.getToken(),
+										   plusAST.getToken().getText());
 			}
-
 			epsilon(loop, blkStart);	// loop back to start
 			epsilon(loop, end);			// or exit
 		}
 		else {
-			// if not greedy, priority to exit branch; make it first
-			epsilon(loop, end);			// exit
-			epsilon(loop, blkStart);	// loop back to start
+			if ( ((QuantifierAST)plusAST).isGreedy() ) {
+				if (expectNonGreedy(blkAST)) {
+					g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, plusAST.getToken(), plusAST.getToken().getText());
+				}
+
+				epsilon(loop, blkStart);	// loop back to start
+				epsilon(loop, end);			// or exit
+			}
+			else {
+				// if not greedy, priority to exit branch; make it first
+				epsilon(loop, end);			// exit
+				epsilon(loop, blkStart);	// loop back to start
+			}
 		}
 
 		return new Handle(blkStart, end);
@@ -521,22 +533,28 @@ public class ParserATNFactory implements ATNFactory {
 		BlockAST blkAST = (BlockAST)starAST.getChild(0);
 		// turn off for now in parser
 		if ( g.isParser() || g.isCombined() ) {
-			g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER, g.fileName, starAST.getToken(), starAST.getToken().getText());
-			epsilon(loop, blkStart);	// loop back to start
-			epsilon(loop, end);			// or exit
-		}
-		else if ( ((QuantifierAST)starAST).isGreedy() ) {
-			if (expectNonGreedy(blkAST)) {
-				g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, starAST.getToken(), starAST.getToken().getText());
+			if ( !((QuantifierAST)starAST).isGreedy() ) {
+				g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER,
+										   g.fileName, starAST.getToken(),
+										   starAST.getToken().getText());
 			}
-
 			epsilon(entry, blkStart);	// loop enter edge (alt 1)
 			epsilon(entry, end);		// bypass loop edge (alt 2)
 		}
 		else {
-			// if not greedy, priority to exit branch; make it first
-			epsilon(entry, end);		// bypass loop edge (alt 1)
-			epsilon(entry, blkStart);	// loop enter edge (alt 2)
+			if ( ((QuantifierAST)starAST).isGreedy() ) {
+				if (expectNonGreedy(blkAST)) {
+					g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, starAST.getToken(), starAST.getToken().getText());
+				}
+
+				epsilon(entry, blkStart);	// loop enter edge (alt 1)
+				epsilon(entry, end);		// bypass loop edge (alt 2)
+			}
+			else {
+				// if not greedy, priority to exit branch; make it first
+				epsilon(entry, end);		// bypass loop edge (alt 1)
+				epsilon(entry, blkStart);	// loop enter edge (alt 2)
+			}
 		}
 		epsilon(blkEnd, loop);		// block end hits loop back
 		epsilon(loop, entry);		// loop back to entry/exit decision
