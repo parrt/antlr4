@@ -499,7 +499,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		int j=ci+1;
 		while ( j < closure.size() ) {
 			LexerATNConfig c = (LexerATNConfig)closure.get(j);
-			boolean isWildcard = c.state.getClass() == ATNState.class && // plain state only, not rulestop etc..
+			boolean isWildcard = c.state.getClass() == LexerATNState.class && // plain state only, not rulestop etc..
 				    c.state.transition(0) instanceof WildcardTransition;
 			if ( c.alt == alt && isWildcard ) {
 				// found config to kill but only if empty stack.

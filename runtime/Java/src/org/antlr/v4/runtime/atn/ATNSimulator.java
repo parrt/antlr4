@@ -118,6 +118,10 @@ public abstract class ATNSimulator {
 			}
 			ATNState s = stateFactory(stype, i);
 			s.ruleIndex = toInt(data[p++]);
+			if ( stype == ATNState.LEXER_BASIC ) {
+				int greedyBit = ATNSimulator.toInt(data[p++]);
+				((LexerATNState)s).greedy = greedyBit==1;
+			}
 			if ( stype == ATNState.LOOP_END ) { // special case
 				int loopBackStateNumber = toInt(data[p++]);
 				loopBackStateNumbers.add(new Pair<LoopEndState, Integer>((LoopEndState)s, loopBackStateNumber));
@@ -383,6 +387,7 @@ public abstract class ATNSimulator {
 			case ATNState.STAR_LOOP_ENTRY : s = new StarLoopEntryState(); break;
 			case ATNState.PLUS_LOOP_BACK : s = new PlusLoopbackState(); break;
 			case ATNState.LOOP_END : s = new LoopEndState(); break;
+			case ATNState.LEXER_BASIC : s = new LexerATNState(); break;
             default :
                 System.err.println("invalid state type in ATN deserialization: "+type+" for state "+stateNumber);
                 break;

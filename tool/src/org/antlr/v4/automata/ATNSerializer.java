@@ -39,6 +39,7 @@ import org.antlr.v4.runtime.atn.ActionTransition;
 import org.antlr.v4.runtime.atn.AtomTransition;
 import org.antlr.v4.runtime.atn.BlockStartState;
 import org.antlr.v4.runtime.atn.DecisionState;
+import org.antlr.v4.runtime.atn.LexerATNState;
 import org.antlr.v4.runtime.atn.LoopEndState;
 import org.antlr.v4.runtime.atn.PredicateTransition;
 import org.antlr.v4.runtime.atn.RangeTransition;
@@ -70,7 +71,9 @@ public class ATNSerializer {
 	 * 		grammar-type, (ANTLRParser.LEXER, ...)
 	 *  	max token type,
 	 *  	num states,
-	 *  	state-0-type ruleIndex, state-1-type ruleIndex, ... state-i-type ruleIndex optional-arg ...
+	 *  	state-0-type ruleIndex greedy-if-lexer optional-loop-state,
+	 *  	state-1-type ruleIndex greedy-if-lexer optional-loop-state,
+	 *  	...
 	 *  	num rules,
 	 *  	rule-1-start-state rule-1-args, rule-2-start-state  rule-2-args, ...
 	 *  	(args are token type,actionIndex in lexer else 0,0)
@@ -88,8 +91,8 @@ public class ATNSerializer {
 	public IntegerList serialize() {
 		IntegerList data = new IntegerList();
 		// convert grammar type to ATN const to avoid dependence on ANTLRParser
-		if ( g.getType()== ANTLRParser.LEXER ) data.add(ATN.LEXER);
-		else if ( g.getType()== ANTLRParser.PARSER ) data.add(ATN.PARSER);
+		if ( g.getType()==ANTLRParser.LEXER ) data.add(ATN.LEXER);
+		else if ( g.getType()==ANTLRParser.PARSER ) data.add(ATN.PARSER);
 		else data.add(ATN.TREE_PARSER);
 		data.add(g.getMaxTokenType());
 		int nedges = 0;
@@ -103,6 +106,9 @@ public class ATNSerializer {
 			}
 			data.add(s.getStateType());
 			data.add(s.ruleIndex);
+			if ( g.isLexer() && s instanceof LexerATNState ) {
+				data.add(((LexerATNState)s).greedy ? 1 : 0);
+			}
 			if ( s.getStateType() == ATNState.LOOP_END ) {
 				data.add(((LoopEndState)s).loopBackState.stateNumber);
 			}
@@ -243,13 +249,17 @@ public class ATNSerializer {
             if ( stype==ATNState.INVALID_TYPE ) continue; // ignore bad type of states
 			int ruleIndex = ATNSimulator.toInt(data[p++]);
 			String arg = "";
+			if ( stype==ATNState.LEXER_BASIC ) {
+				int greedyBit = ATNSimulator.toInt(data[p++]);
+				arg = " "+greedyBit;
+			}
 			if ( stype == ATNState.LOOP_END ) {
 				int loopBackStateNumber = ATNSimulator.toInt(data[p++]);
-				arg = " "+loopBackStateNumber;
+				arg += " "+loopBackStateNumber;
 			}
 			else if ( stype == ATNState.PLUS_BLOCK_START || stype == ATNState.STAR_BLOCK_START || stype == ATNState.BLOCK_START ) {
 				int endStateNumber = ATNSimulator.toInt(data[p++]);
-				arg = " "+endStateNumber;
+				arg += " "+endStateNumber;
 			}
 			buf.append(i - 1).append(":")
 				.append(ATNState.serializationNames.get(stype)).append(" ")

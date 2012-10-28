@@ -38,18 +38,23 @@ import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.ActionTransition;
 import org.antlr.v4.runtime.atn.AtomTransition;
+import org.antlr.v4.runtime.atn.LexerATNState;
 import org.antlr.v4.runtime.atn.NotSetTransition;
 import org.antlr.v4.runtime.atn.RangeTransition;
 import org.antlr.v4.runtime.atn.RuleStartState;
+import org.antlr.v4.runtime.atn.RuleTransition;
 import org.antlr.v4.runtime.atn.SetTransition;
 import org.antlr.v4.runtime.atn.TokensStartState;
 import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
+import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.tool.LexerGrammar;
 import org.antlr.v4.tool.Rule;
 import org.antlr.v4.tool.ast.ActionAST;
+import org.antlr.v4.tool.ast.BlockAST;
 import org.antlr.v4.tool.ast.GrammarAST;
+import org.antlr.v4.tool.ast.QuantifierAST;
 import org.antlr.v4.tool.ast.TerminalAST;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
@@ -105,6 +110,17 @@ public class LexerATNFactory extends ParserATNFactory {
 
 		ATNOptimizer.optimize(g, atn);
 		return atn;
+	}
+
+	/** Lexers need to alter ATNStates so that they know they are in nongreedy block */
+	@Override
+	public Handle block(BlockAST blkAST, GrammarAST ebnfRoot, List<Handle> alts) {
+		// get usual ATN wrapper node(s) around alts for *, +, and ?
+		Handle blk = super.block(blkAST, ebnfRoot, alts);
+		if ( ebnfRoot!=null && !((QuantifierAST)ebnfRoot).isGreedy() ) {
+			checkNongreedyStructureAndSetNongreedyBit(alts);
+		}
+		return blk;
 	}
 
 	@Override
@@ -275,5 +291,48 @@ public class LexerATNFactory extends ParserATNFactory {
 			return new Handle(left, right);
 		}
 		return _ruleRef(node);
+	}
+
+	@Override
+	public ATNState newState(@Nullable GrammarAST node) {
+		ATNState n = new LexerATNState();
+		n.setRuleIndex(currentRule.index);
+		atn.addState(n);
+		return n;
+	}
+
+	/** walk ATN for each alt of block, setting greedy bit to false if nongreedy */
+	public void checkNongreedyStructureAndSetNongreedyBit(List<Handle> alts) {
+		for (Handle alt : alts) {
+			ATNState start = alt.left;
+			ATNState stop = alt.right;
+			// walk from start to stop, verifying all simple transitions
+			LexerATNState p = (LexerATNState)start;
+			while ( p!=stop ) {
+				if ( p.getNumberOfTransitions()>1 ) {
+					System.err.println("internal atn structure error > 1 trans");
+				}
+				Transition t = p.transition(0);
+				switch ( t.getSerializationType() ) { // chk whitelist
+					case Transition.ATOM :
+					case Transition.EPSILON :
+					case Transition.NOT_SET :
+					case Transition.RANGE :
+					case Transition.SET :
+					case Transition.WILDCARD :
+						// we point at valid transition in nongreedy block
+						p.greedy = false;
+						p = (LexerATNState)t.target;
+						break;
+					case Transition.RULE :
+						p = (LexerATNState)((RuleTransition)t).followState;
+						System.err.println("illegal trans in nongreedy subrule: "+t);
+						break;
+					default :
+						System.err.println("illegal trans in nongreedy subrule: "+t);
+						p = (LexerATNState)t.target;
+				}
+			}
+		}
 	}
 }
