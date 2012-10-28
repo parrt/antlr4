@@ -250,8 +250,7 @@ public abstract class ATNSimulator {
 
 				((BlockStartState)state).endState.startState = (BlockStartState)state;
 			}
-
-			if (state instanceof PlusLoopbackState) {
+			else if (state instanceof PlusLoopbackState) {
 				PlusLoopbackState loopbackState = (PlusLoopbackState)state;
 				for (int i = 0; i < loopbackState.getNumberOfTransitions(); i++) {
 					ATNState target = loopbackState.transition(i).target;

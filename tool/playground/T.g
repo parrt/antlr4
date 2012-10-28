@@ -1,7 +1,5 @@
 grammar T;
 
-s : A # Z
-  | B{} # Z
-  | C # D
-  ;
-
+s : ID '++'??;
+ID : [a-z]+ ;
+WS : [ \t\r\n]+ -> skip ;
