@@ -107,7 +107,8 @@ public class TestATNLexerInterpreter extends BaseTest {
 			"Z : 'z'\n" +
 			"  ;\n");
 		checkLexerMatches(lg, "xy", "A, EOF");
-		checkLexerMatches(lg, "xyz", "A, Z, EOF");
+		checkLexerMatches(lg, "xyz", "A, EOF");
+		checkLexerMatches(lg, "xyzz", "A, Z, EOF");
 	}
 
 	@Test public void testWildcardNonQuirkWhenSplitBetweenTwoRules() throws Exception {

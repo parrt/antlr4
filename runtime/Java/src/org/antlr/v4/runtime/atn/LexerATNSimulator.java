@@ -431,11 +431,11 @@ public class LexerATNSimulator extends ATNSimulator {
 					captureSimState(prevAccept, input, c);
 				}
 
-				// if we reach lexer accept state with empty stack,
+				// if we reach lexer accept state,
 				// toss out any configs pointing at wildcard edges
 				// in rest of configs work list associated with this
 				// rule (config.alt); that rule is done. this is how we
-				// cut off nongreedy .+ loops.
+				// cut off nongreedy .+ type loops.
 				reach = deleteWildcardConfigsForAlt(reach, ci, c);
 
 			 	// move to next char, looking for longer match
@@ -471,17 +471,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		return null;
 	}
 
-	/** Delete configs for alt following ci that have a wildcard edge but
-	 *  only for configs with empty stack. E.g., if we want to kill after
-	 *  config (2,1,[$]), then we need to wack only configs with $ stack:
-	 *
-	 *  	[..., (2,1,[$]), ..., (7,1,[[$, 6 $]])]
-	 *
-	 *  That means wacking (7,1,[$]) but not (7,1,[6 $]).
-	 *
-	 *  Incoming config could have multiple stacks but we only care about
-	 *  empty stack since that means we reached end of a lexer rule from
-	 *  nextToken directly.
+	/** Delete configs for alt following ci that have a wildcard edge.
 	 *
 	 *  Closure is unmodified; copy returned.
 	 */

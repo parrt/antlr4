@@ -62,14 +62,40 @@ public class TestLexerExec extends BaseTest {
 	@Test
 	public void testNonGreedyTermination() throws Exception {
 		String grammar =
-			"lexer grammar L;\n"
-			+ "STRING : '\"' ('\"\"' | .)*? '\"';";
+			"lexer grammar L;\n"+
+			// STRING : '"' ('\\"' | .)*? '"' ;
+			"STRING : '\"' ('\\\\\"' | .)*? '\"' ;";
+
+		String found = execLexer("L.g4", grammar, "L", "\"hi\\\"mom\""); // "hi\"mom"
+		assertEquals(
+			"[@0,0:8='\"hi\\\"mom\"',<1>,1:0]\n" +
+			"[@1,9:8='<EOF>',<-1>,1:9]\n", found);
+		assertNull(stderrDuringParse);
+	}
+
+	@Test
+	public void testNonGreedyTermination2() throws Exception {
+		String grammar =
+			"lexer grammar L;\n"+
+			"STRING : '\"' ('\"\"' | .)*? '\"' ;";
 
 		String found = execLexer("L.g4", grammar, "L", "\"hi\"\"mom\"");
 		assertEquals(
-			"[@0,0:3='\"hi\"',<1>,1:0]\n" +
-			"[@1,4:8='\"mom\"',<1>,1:4]\n" +
-			"[@2,9:8='<EOF>',<-1>,1:9]\n", found);
+			"[@0,0:8='\"hi\"\"mom\"',<1>,1:0]\n" +
+			"[@1,9:8='<EOF>',<-1>,1:9]\n", found);
+		assertNull(stderrDuringParse);
+	}
+
+	@Test
+	public void testNonGreedyTermination3() throws Exception {
+		String grammar =
+			"lexer grammar L;\n"+
+			"STRING : '\"\"' .*? '\"\"' ;";
+
+		String found = execLexer("L.g4", grammar, "L", "\"\"hi\"\"\"\"mom\"\"");
+		assertEquals(
+			"[@0,0:4='\"hi\"\"',<1>,1:0]\n" +
+			"[@1,9:8='<EOF>',<-1>,1:10]\n", found);
 		assertNull(stderrDuringParse);
 	}
 

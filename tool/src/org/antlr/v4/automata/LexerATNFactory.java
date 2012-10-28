@@ -301,16 +301,20 @@ public class LexerATNFactory extends ParserATNFactory {
 		return n;
 	}
 
-	/** walk ATN for each alt of block, setting greedy bit to false if nongreedy */
+	/** Walk ATN for each alt of block, setting greedy bit to false if nongreedy.
+	 *  Give errors for non-simple transitions (no rules, no subsubrules etc...).
+	 */
 	public void checkNongreedyStructureAndSetNongreedyBit(List<Handle> alts) {
+		nextAlt:
 		for (Handle alt : alts) {
 			ATNState start = alt.left;
 			ATNState stop = alt.right;
 			// walk from start to stop, verifying all simple transitions
 			LexerATNState p = (LexerATNState)start;
 			while ( p!=stop ) {
-				if ( p.getNumberOfTransitions()>1 ) {
-					System.err.println("internal atn structure error > 1 trans");
+				if ( !(p instanceof LexerATNState) ) {
+					System.err.println("illegal structure in nongreedy subrule: "+p);
+					continue nextAlt; // ignore this alt
 				}
 				Transition t = p.transition(0);
 				switch ( t.getSerializationType() ) { // chk whitelist
