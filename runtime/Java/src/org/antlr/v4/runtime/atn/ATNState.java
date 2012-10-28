@@ -55,6 +55,7 @@ public class ATNState {
 	public static final int STAR_LOOP_ENTRY = 10;
 	public static final int PLUS_LOOP_BACK = 11;
 	public static final int LOOP_END = 12;
+	public static final int LEXER_BASIC = 13;
 
 	public static final List<String> serializationNames =
 		Collections.unmodifiableList(Arrays.asList(
@@ -70,12 +71,14 @@ public class ATNState {
 			"STAR_LOOP_BACK",
 			"STAR_LOOP_ENTRY",
 			"PLUS_LOOP_BACK",
-			"LOOP_END"
+			"LOOP_END",
+			"LEXER_BASIC"
 		));
 
 	public static final Map<Class<? extends ATNState>, Integer> serializationTypes =
 		Collections.unmodifiableMap(new HashMap<Class<? extends ATNState>, Integer>() {{
-            put(ATNState.class, BASIC);
+			put(ATNState.class, BASIC);
+			put(LexerATNState.class, LEXER_BASIC); // not in enum order
             put(RuleStartState.class, RULE_START);
             put(BlockStartState.class, BLOCK_START);
             put(PlusBlockStartState.class, PLUS_BLOCK_START);

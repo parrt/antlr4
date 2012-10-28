@@ -73,7 +73,7 @@ public class TestATNLexerInterpreter extends BaseTest {
 			"Z : 'z'\n" +
 			"  ;\n");
 		checkLexerMatches(lg, "xy", "A, EOF");
-		checkLexerMatches(lg, "xyz", "A, Z, EOF");
+		checkLexerMatches(lg, "xyz", "A, EOF");
 	}
 
 	@Test public void testShortLongRule2() throws Exception {
