@@ -426,9 +426,15 @@ public class ParserATNFactory implements ATNFactory {
 	public Handle optional(@NotNull GrammarAST optAST, @NotNull Handle blk) {
 		BlockStartState blkStart = (BlockStartState)blk.left;
 
-		if (((QuantifierAST)optAST).isGreedy()) {
+		// turn off for now in parser
+		if ( g.isParser() || g.isCombined() ) {
+			g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER, g.fileName, optAST.getToken(), optAST.getToken().getText());
 			epsilon(blkStart, blk.right);
-		} else {
+		}
+		else if (((QuantifierAST)optAST).isGreedy()) {
+			epsilon(blkStart, blk.right);
+		}
+		else {
 			Transition existing = blkStart.removeTransition(0);
 			epsilon(blkStart, blk.right);
 			blkStart.addTransition(existing);
@@ -463,7 +469,14 @@ public class ParserATNFactory implements ATNFactory {
 		epsilon(blkEnd, loop);		// blk can see loop back
 
 		BlockAST blkAST = (BlockAST)plusAST.getChild(0);
-		if ( ((QuantifierAST)plusAST).isGreedy() ) {
+
+		// turn off for now in parser
+		if ( g.isParser() || g.isCombined() ) {
+			g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER, g.fileName, plusAST.getToken(), plusAST.getToken().getText());
+			epsilon(loop, blkStart);	// loop back to start
+			epsilon(loop, end);			// or exit
+		}
+		else if ( ((QuantifierAST)plusAST).isGreedy() ) {
 			if (expectNonGreedy(blkAST)) {
 				g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, plusAST.getToken(), plusAST.getToken().getText());
 			}
@@ -506,7 +519,13 @@ public class ParserATNFactory implements ATNFactory {
 		end.loopBackState = loop;
 
 		BlockAST blkAST = (BlockAST)starAST.getChild(0);
-		if ( ((QuantifierAST)starAST).isGreedy() ) {
+		// turn off for now in parser
+		if ( g.isParser() || g.isCombined() ) {
+			g.tool.errMgr.grammarError(ErrorType.NON_GREEDY_IN_PARSER, g.fileName, starAST.getToken(), starAST.getToken().getText());
+			epsilon(loop, blkStart);	// loop back to start
+			epsilon(loop, end);			// or exit
+		}
+		else if ( ((QuantifierAST)starAST).isGreedy() ) {
 			if (expectNonGreedy(blkAST)) {
 				g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, starAST.getToken(), starAST.getToken().getText());
 			}
