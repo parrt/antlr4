@@ -46,8 +46,10 @@ import java.io.OutputStream;
 
 /** "dup" of ParserInterpreter */
 public class LexerATNSimulator extends ATNSimulator {
-	public static boolean debug = false;
-	public static boolean dfa_debug = false;
+	public static final boolean debug = false;
+	public static final boolean dfa_debug = false;
+
+	public static final int MIN_DFA_EDGE = 0;
 	public static final int MAX_DFA_EDGE = 127; // forces unicode to stay in ATN
 
 	private boolean trace = false;
@@ -229,15 +231,17 @@ public class LexerATNSimulator extends ATNSimulator {
 				System.out.format("state %d LA(1)==%s\n", s.stateNumber, getTokenName(t));
 			}
 
+			DFAState target = null;
+			if (s.edges != null && t >= MIN_DFA_EDGE && t <= MAX_DFA_EDGE) {
+				target = s.edges[t - MIN_DFA_EDGE];
+			}
+
 			// if no edge, pop over to ATN interpreter, update DFA and return
-			if ( s.edges == null || t >= s.edges.length || t <= IntStream.EOF ||
-				 s.edges[t] == null )
-			{
+			if (target == null) {
 				ATN_failover++;
 				return failOverToATN(input, s);
 			}
 
-			DFAState target = s.edges[t];
 			if ( target == ERROR ) break;
 			s = target;
 
@@ -261,7 +265,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		return failOrAccept(prevAccept, input, reach, t);
 	}
 
-	protected int execATN(@NotNull CharStream input, @NotNull ATNConfigSet s0, @Nullable DFAState ds0) {
+	protected int execATN(@NotNull CharStream input, @NotNull ATNConfigSet s0, @NotNull DFAState ds0) {
 		//System.out.println("enter exec index "+input.index()+" from "+s0);
 		@NotNull
 		ATNConfigSet closure = s0;
@@ -271,6 +275,7 @@ public class LexerATNSimulator extends ATNSimulator {
 
 		traceLookahead1();
 		int t = input.LA(1);
+		@NotNull
 		DFAState s = ds0; // s is current/from DFA state
 
 		while ( true ) { // while more work
@@ -297,20 +302,18 @@ public class LexerATNSimulator extends ATNSimulator {
 			// that already has lots of edges out of it. e.g., .* in comments.
 			DFAState target = null;
 			ATNConfigSet reach = null;
-			if (s != null) {
-				if ( s.edges != null && t < s.edges.length && t > IntStream.EOF ) {
-					closure = s.configs;
-					target = s.edges[t];
-					if (target == ERROR) {
-						break;
+			if ( s.edges != null && t >= MIN_DFA_EDGE && t <= MAX_DFA_EDGE ) {
+				closure = s.configs;
+				target = s.edges[t - MIN_DFA_EDGE];
+				if (target == ERROR) {
+					break;
+				}
+				else if (target != null) {
+					if ( debug ) {
+						System.out.println("reuse state "+s.stateNumber+
+										   " edge to "+target.stateNumber);
 					}
-					else if (target != null) {
-						if ( debug ) {
-							System.out.println("reuse state "+s.stateNumber+
-											   " edge to "+target.stateNumber);
-						}
-						reach = target.configs;
-					}
+					reach = target.configs;
 				}
 			}
 
@@ -325,12 +328,11 @@ public class LexerATNSimulator extends ATNSimulator {
 					// we reached state associated with closure for sure, so
 					// make sure it's defined. worst case, we define s0 from
 					// start state configs.
+					@NotNull
 					DFAState from = s != null ? s : addDFAState(closure);
 					// we got nowhere on t, don't throw out this knowledge; it'd
 					// cause a failover from DFA later.
-					if (from != null) {
-						addDFAEdge(from, t, ERROR);
-					}
+					addDFAEdge(from, t, ERROR);
 					break; // stop when we can't match any more char
 				}
 
@@ -387,7 +389,7 @@ public class LexerATNSimulator extends ATNSimulator {
 	 *  we can reach upon input {@code t}. Parameter {@code reach} is a return
 	 *  parameter.
 	 */
-	protected void getReachableConfigSet(ATNConfigSet closure, ATNConfigSet reach, int t) {
+	protected void getReachableConfigSet(@NotNull ATNConfigSet closure, @NotNull ATNConfigSet reach, int t) {
 		// this is used to skip processing for configs which have a lower priority
 		// than a config that already reached an accept state for the same rule
 		int skipAlt = ATN.INVALID_ALT_NUMBER;
@@ -417,6 +419,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		}
 	}
 
+	@NotNull
 	protected ATNConfigSet processAcceptConfigs(@NotNull CharStream input, @NotNull ATNConfigSet reach) {
 		if ( debug ) {
 			System.out.format("processAcceptConfigs: reach=%s, prevAccept=%s, prevIndex=%d\n",
@@ -585,10 +588,6 @@ public class LexerATNSimulator extends ATNSimulator {
 				break;
 
 			case Transition.PREDICATE:
-//				if (recog == null) {
-//					System.out.format("Predicates cannot be evaluated without a recognizer; assuming true.\n");
-//				}
-
 				/*  Track traversing semantic predicates. If we traverse,
 				 we cannot add a DFA state for this "reach" computation
 				 because the DFA would not test the predicate again in the
@@ -613,7 +612,7 @@ public class LexerATNSimulator extends ATNSimulator {
 				}
 				configs.hasSemanticContext = true;
 				if ( recog == null || recog.sempred(null, pt.ruleIndex, pt.predIndex) ) {
-					c = new LexerATNConfig(config, t.target, pt.getPredicate());
+					c = new LexerATNConfig(config, t.target);
 				}
 				break;
 			// ignore actions; just exec one per rule upon accept
@@ -672,36 +671,49 @@ public class LexerATNSimulator extends ATNSimulator {
 		settings.dfaState = null;
 	}
 
+	@NotNull
 	protected DFAState addDFAEdge(@NotNull DFAState from,
 								  int t,
 								  @NotNull ATNConfigSet q)
 	{
+		/* leading to this call, ATNConfigSet.hasSemanticContext is used as a
+		 * marker indicating dynamic predicate evaluation makes this edge
+		 * dependent on the specific input sequence, so the static edge in the
+		 * DFA should be omitted. The target DFAState is still created since
+		 * execATN has the ability to resynchronize with the DFA state cache
+		 * following the predicate evaluation step.
+		 */
+		boolean suppressEdge = q.hasSemanticContext;
+		q.hasSemanticContext = false;
+
+		@NotNull
 		DFAState to = addDFAState(q);
 
-		// even if we can add the states, we can't add an edge for labels out of range
-		if (t < 0 || t > MAX_DFA_EDGE) {
+		if (suppressEdge) {
 			return to;
 		}
 
-		if (from == null || to == null) {
-			return to;
-		}
-
-		if ( debug ) System.out.println("EDGE "+from+" -> "+to+" upon "+((char)t));
 		addDFAEdge(from, t, to);
-
 		return to;
 	}
 
 	protected void addDFAEdge(@NotNull DFAState p, int t, @NotNull DFAState q) {
-		if (t < 0 || t > MAX_DFA_EDGE) return; // Only track edges within the DFA bounds
+		if (t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
+			// Only track edges within the DFA bounds
+			return;
+		}
+
+		if ( debug ) {
+			System.out.println("EDGE "+p+" -> "+q+" upon "+((char)t));
+		}
+
 		DFA dfa = decisionToDFA[mode];
 		synchronized (dfa) {
 			if ( p.edges==null ) {
 				//  make room for tokens 1..n and -1 masquerading as index 0
-				p.edges = new DFAState[MAX_DFA_EDGE+1]; // TODO: make adaptive
+				p.edges = new DFAState[MAX_DFA_EDGE-MIN_DFA_EDGE+1];
 			}
-			p.edges[t] = q; // connect
+			p.edges[t - MIN_DFA_EDGE] = q; // connect
 		}
 	}
 
@@ -710,10 +722,12 @@ public class LexerATNSimulator extends ATNSimulator {
 		configuration containing an ATN rule stop state. Later, when
 		traversing the DFA, we will know which rule to accept.
 	 */
-	@Nullable
+	@NotNull
 	protected DFAState addDFAState(@NotNull ATNConfigSet configs) {
-		// If we eval'd a predicate while filling configs, mustn't create DFA state
-		if ( configs.hasSemanticContext ) return null;
+		/* the lexer evaluates predicates on-the-fly; by this point configs
+		 * should not contain any configurations with unevaluated predicates.
+		 */
+		assert !configs.hasSemanticContext;
 
 		DFAState proposed = new DFAState(configs);
 		ATNConfig firstConfigWithRuleStopState = null;
