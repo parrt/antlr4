@@ -418,6 +418,17 @@ public class ParserATNSimulator extends ATNSimulator {
 		while ( true ) {
 			if ( dfa_debug ) System.out.println("DFA state "+s.stateNumber+" LA(1)=="+getLookaheadName(input));
 			if ( s.requiresFullContext && mode != PredictionMode.SLL ) {
+				// IF PREDS, MIGHT RESOLVE TO SINGLE ALT => SLL (or syntax error)
+				if ( s.predicates!=null ) {
+					if ( debug ) System.out.println("DFA state has preds in DFA sim LL failover");
+					input.seek(startIndex);
+					BitSet alts = evalSemanticContext(s.predicates, outerContext, true);
+					if ( alts.cardinality()==1 ) {
+						if ( debug ) System.out.println("Full LL avoided");
+						return alts.nextSetBit(0);
+					}
+				}
+
 				if ( dfa_debug ) System.out.println("ctx sensitive state "+outerContext+" in "+s);
 				boolean fullCtx = true;
 				ATNConfigSet s0_closure =
@@ -647,6 +658,17 @@ public class ParserATNSimulator extends ATNSimulator {
 					// Falls through to check predicates below
 				}
 				else {
+					// IF PREDS, MIGHT RESOLVE TO SINGLE ALT => SLL (or syntax error)
+					if ( D.configs.hasSemanticContext ) {
+						predicateDFAState(D, decState);
+						input.seek(startIndex);
+						BitSet alts = evalSemanticContext(D.predicates, outerContext, true);
+						if ( alts.cardinality()==1 ) {
+							if ( debug ) System.out.println("Full LL avoided");
+							return alts.nextSetBit(0);
+						}
+					}
+
 					// RETRY WITH FULL LL CONTEXT
 					if ( debug ) System.out.println("RETRY with outerContext="+outerContext);
 					ATNConfigSet s0_closure =
@@ -669,23 +691,7 @@ public class ParserATNSimulator extends ATNSimulator {
 			}
 
 			if ( D.isAcceptState && D.configs.hasSemanticContext ) {
-				// We need to test all predicates, even in DFA states that
-				// uniquely predict alternative.
-				int nalts = decState.getNumberOfTransitions();
-				// Update DFA so reach becomes accept state with (predicate,alt)
-				// pairs if preds found for conflicting alts
-				BitSet altsToCollectPredsFrom = getConflictingAltsOrUniqueAlt(D.configs);
-				SemanticContext[] altToPred = getPredsForAmbigAlts(altsToCollectPredsFrom, D.configs, nalts);
-				if ( altToPred!=null ) {
-					D.predicates = getPredicatePredictions(altsToCollectPredsFrom, altToPred);
-					D.prediction = ATN.INVALID_ALT_NUMBER; // make sure we use preds
-				}
-				else {
-					// There are preds in configs but they might go away
-					// when OR'd together like {p}? || NONE == NONE. If neither
-					// alt has preds, resolve to min alt
-					D.prediction = altsToCollectPredsFrom.nextSetBit(0);
-				}
+				predicateDFAState(D, decState);
 
 				if ( D.predicates!=null ) {
 					int stopIndex = input.index();
@@ -717,6 +723,26 @@ public class ParserATNSimulator extends ATNSimulator {
 			previousD = D;
 			input.consume();
 			t = input.LA(1);
+		}
+	}
+
+	protected void predicateDFAState(DFAState dfaState, DecisionState decisionState) {
+		// We need to test all predicates, even in DFA states that
+		// uniquely predict alternative.
+		int nalts = decisionState.getNumberOfTransitions();
+		// Update DFA so reach becomes accept state with (predicate,alt)
+		// pairs if preds found for conflicting alts
+		BitSet altsToCollectPredsFrom = getConflictingAltsOrUniqueAlt(dfaState.configs);
+		SemanticContext[] altToPred = getPredsForAmbigAlts(altsToCollectPredsFrom, dfaState.configs, nalts);
+		if ( altToPred!=null ) {
+			dfaState.predicates = getPredicatePredictions(altsToCollectPredsFrom, altToPred);
+			dfaState.prediction = ATN.INVALID_ALT_NUMBER; // make sure we use preds
+		}
+		else {
+			// There are preds in configs but they might go away
+			// when OR'd together like {p}? || NONE == NONE. If neither
+			// alt has preds, resolve to min alt
+			dfaState.prediction = altsToCollectPredsFrom.nextSetBit(0);
 		}
 	}
 
