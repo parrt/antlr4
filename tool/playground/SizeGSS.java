@@ -35,7 +35,6 @@ import org.antlr.v4.runtime.atn.PredictionContext;
 import org.antlr.v4.runtime.atn.SingletonPredictionContext;
 import org.antlr.v4.runtime.misc.DoubleKeyMap;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -64,45 +63,116 @@ public class SizeGSS {
 		PredictionContext newContext =
 			SingletonPredictionContext.create(PredictionContext.EMPTY, 2);
 
-		PredictionContext ctx = null;
+
 
 		DoubleKeyMap<PredictionContext,PredictionContext,PredictionContext> mergeCache = null;
 
 		Set<IntArray> skip = new HashSet<IntArray>();
 //		skip.add(new IntArray(2,1,1));
 
-		List<Integer> nodeCounts = new ArrayList<Integer>();
-		List<Integer> edgeCounts = new ArrayList<Integer>();
 
-		int N = 3;
-		int[] nodes = {1,2,3};
-		for (int i=0; i<N; i++) {
-			for (int j=0; j<N; j++) {
-				for (int k=0; k<N; k++) {
-					int[] s = {nodes[i], nodes[j], nodes[k]};
-					if ( skip.contains(new IntArray(s)) ) continue;
-					PredictionContext seq = configs(s);
-					System.out.println(seq);
-					boolean rootIsWildcard = false;
+		for (int n=1; n<=15; n++) {
+//			final List<Integer> nodeCounts = new ArrayList<Integer>();
+	//		final List<Integer> edgeCounts = new ArrayList<Integer>();
+			MyPermute2 gen = new MyPermute2(n);
+			gen.permutations();
+//			System.out.println(Collections.max(nodeCounts));
+			System.out.println(gen.max);
+		}
 
-					List<PredictionContext> allnodes = PredictionContext.getAllContextNodes(ctx);
-					nodeCounts.add(allnodes.size());
-					edgeCounts.add(edgeCount(allnodes));
-//					System.out.println("# nodes = "+ allnodes.size()+", # edges = "+edgeCount(allnodes));
+//		for (int i = 0; i < edgeCounts.size(); i++) {
+//			int c = edgeCounts.get(i);
+//			if ( i!=0 ) System.out.print(", ");
+//			if ( i % 30 == 0 ) System.out.println();
+//			System.out.print(c);
+//		}
+//		System.out.println(edgeCounts);
 
-					if ( ctx == null ) {
-						ctx = seq;
-					}
-					else {
-						ctx = PredictionContext.merge(ctx, seq, rootIsWildcard, mergeCache);
-					}
+//		int N = 3;
+//		int[] nodes = {1,2,3};
+//		for (int i=0; i<N; i++) {
+//			for (int j=0; j<N; j++) {
+//				for (int k=0; k<N; k++) {
+//					int[] s = {nodes[i], nodes[j], nodes[k]};
+//					if ( skip.contains(new IntArray(s)) ) continue;
+//					PredictionContext seq = configs(s);
+//					System.out.println(seq);
+//					boolean rootIsWildcard = false;
+//
+//					List<PredictionContext> allnodes = PredictionContext.getAllContextNodes(ctx);
+//					nodeCounts.add(allnodes.size());
+//					edgeCounts.add(edgeCount(allnodes));
+////					System.out.println("# nodes = "+ allnodes.size()+", # edges = "+edgeCount(allnodes));
+//
+//					if ( ctx == null ) {
+//						ctx = seq;
+//					}
+//					else {
+//						ctx = PredictionContext.merge(ctx, seq, rootIsWildcard, mergeCache);
+//					}
+//				}
+//			}
+//		}
+//		System.out.println("----------");
+//		System.out.println(nodeCounts);
+//		System.out.println(edgeCounts);
+//		System.out.println(PredictionContext.toDOTString(ctx));
+	}
+
+	public static void permute(String beginningString, String endingString) {
+		if (endingString.length() <= 1)
+			System.out.println(beginningString + endingString);
+		else
+			for (int i = 0; i < endingString.length(); i++) {
+				try {
+					String newString = endingString.substring(0, i) + endingString.substring(i + 1);
+
+					permute(beginningString + endingString.charAt(i), newString);
+				} catch (StringIndexOutOfBoundsException exception) {
+					exception.printStackTrace();
 				}
 			}
+	}
+
+	static void permute(java.util.List<Integer> arr, int k){
+		for(int i = k; i < arr.size(); i++){
+			java.util.Collections.swap(arr, i, k);
+			permute(arr, k+1);
+			java.util.Collections.swap(arr, k, i);
 		}
-		System.out.println("----------");
-		System.out.println(nodeCounts);
-		System.out.println(edgeCounts);
-		System.out.println(PredictionContext.toDOTString(ctx));
+		if (k == arr.size() -1){
+			System.out.println(java.util.Arrays.toString(arr.toArray()));
+		}
+	}
+
+	static void allseq(int n) {
+		int[] nodes = {1,2,3};
+		int[] index = new int[n];
+		int[] s = new int[n];
+		boolean done = false;
+		while ( !done ) {
+			for (int i = 0; i < n; i++) {
+				s[i] = nodes[index[i]];
+				index[i]++;
+			}
+		}
+	}
+
+	static boolean allmax(int[] index, int n) {
+		for (int i = 0; i < n; i++) {
+			if ( index[i]<n ) return false;
+		}
+		return true;
+	}
+
+	static void foo(int [] nodes, int[] s, int i, int n) {
+		if ( i==n ) return;
+		for (int j = 0; j < nodes.length; j++) {
+			int[] s_ = Arrays.copyOf(s, n);
+			s_[i] = nodes[j];
+			System.out.println(Arrays.toString(s));
+			foo(nodes, s_, i+1, n);
+		}
 	}
 
 	static PredictionContext configs(int[] seq) {
@@ -130,5 +200,43 @@ public class SizeGSS {
 			n += current.size();
 		}
 		return n;
+	}
+
+
+	static class MyPermute2 extends Permute2 {
+		PredictionContext ctx;
+		DoubleKeyMap<PredictionContext,PredictionContext,PredictionContext> mergeCache;
+		public int max;
+
+		public MyPermute2(int n) {
+			super(new int[]{1, 2, 3}, n);
+			ctx = null;
+//			mergeCache = new DoubleKeyMap<PredictionContext, PredictionContext, PredictionContext>();
+			max = -1;
+			System.gc();
+//			Runtime runtime = Runtime.getRuntime();
+//			System.out.println(runtime.totalMemory()-runtime.freeMemory());
+		}
+
+		@Override
+		public void action(int[] a) {
+//				System.out.println(Arrays.toString(a));
+			boolean rootIsWildcard = false;
+			int numnodes = PredictionContext.countAllContextNodes(ctx);
+			if ( numnodes>max ) max = numnodes;
+//					nodeCounts.add(numnodes);
+//					edgeCounts.add(edgeCount(allnodes));
+//				System.out.println("# nodes = "+ allnodes.size()+", # edges = "+edgeCount(allnodes));
+
+			PredictionContext seq = configs(a);
+			if ( ctx == null ) {
+				ctx = seq;
+			}
+			else {
+				ctx = PredictionContext.merge(ctx, seq, rootIsWildcard, mergeCache);
+//				Runtime runtime = Runtime.getRuntime();
+//				System.out.println(runtime.totalMemory()-runtime.freeMemory());
+			}
+		}
 	}
 }
