@@ -46,13 +46,16 @@ import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenSource;
 import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNConfig;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
+import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ErrorNode;
@@ -68,6 +71,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -78,8 +84,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -108,6 +116,38 @@ public class TestPerformance extends BaseTest {
      * {@link #TOP_PACKAGE}.
      */
     private static final boolean RECURSIVE = true;
+	/**
+	 * {@code true} to read all source files from disk into memory before
+	 * starting the parse. The default value is {@code true} to help prevent
+	 * drive speed from affecting the performance results. This value may be set
+	 * to {@code false} to support parsing large input sets which would not
+	 * otherwise fit into memory.
+	 */
+	private static final boolean PRELOAD_SOURCES = true;
+	/**
+	 * The encoding to use when reading source files.
+	 */
+	private static final String ENCODING = "UTF-8";
+	/**
+	 * The maximum number of files to parse in a single iteration.
+	 */
+	private static final int MAX_FILES_PER_PARSE_ITERATION = Integer.MAX_VALUE;
+
+	/**
+	 * {@code true} to call {@link Collections#shuffle} on the list of input
+	 * files before the first parse iteration.
+	 */
+	private static final boolean SHUFFLE_FILES_AT_START = false;
+	/**
+	 * {@code true} to call {@link Collections#shuffle} before each parse
+	 * iteration <em>after</em> the first.
+	 */
+	private static final boolean SHUFFLE_FILES_AFTER_ITERATIONS = false;
+	/**
+	 * The instance of {@link Random} passed when calling
+	 * {@link Collections#shuffle}.
+	 */
+	private static final Random RANDOM = new Random();
 
     /**
      * {@code true} to use the Java grammar with expressions in the v4
@@ -159,7 +199,7 @@ public class TestPerformance extends BaseTest {
      * {@code true} to use {@link BailErrorStrategy}, {@code false} to use
      * {@link DefaultErrorStrategy}.
      */
-    private static final boolean BAIL_ON_ERROR = true;
+    private static final boolean BAIL_ON_ERROR = false;
 	/**
 	 * {@code true} to compute a checksum for verifying consistency across
 	 * optimizations and multiple passes.
@@ -188,11 +228,24 @@ public class TestPerformance extends BaseTest {
 	 */
     private static final boolean SHOW_DFA_STATE_STATS = true;
 
+	/**
+	 * Specify the {@link PredictionMode} used by the
+	 * {@link ParserATNSimulator}. If {@link #TWO_STAGE_PARSING} is
+	 * {@code true}, this value only applies to the second stage, as the first
+	 * stage will always use {@link PredictionMode#SLL}.
+	 */
 	private static final PredictionMode PREDICTION_MODE = PredictionMode.LL;
 
 	private static final boolean TWO_STAGE_PARSING = true;
 
     private static final boolean SHOW_CONFIG_STATS = false;
+
+	/**
+	 * If {@code true}, detailed statistics for the number of DFA edges were
+	 * taken while parsing each file, as well as the number of DFA edges which
+	 * required on-the-fly computation.
+	 */
+	private static final boolean COMPUTE_TRANSITION_STATS = false;
 
 	private static final boolean REPORT_SYNTAX_ERRORS = true;
 	private static final boolean REPORT_AMBIGUITIES = false;
@@ -272,8 +325,14 @@ public class TestPerformance extends BaseTest {
         File directory = new File(jdkSourceRoot);
         assertTrue(directory.isDirectory());
 
-        Collection<CharStream> sources = loadSources(directory, new FileExtensionFilenameFilter(".java"), RECURSIVE);
+		FilenameFilter filesFilter = FilenameFilters.extension(".java", false);
+		FilenameFilter directoriesFilter = FilenameFilters.ALL_FILES;
+		List<InputDescriptor> sources = loadSources(directory, filesFilter, directoriesFilter, RECURSIVE);
+		if (SHUFFLE_FILES_AT_START) {
+			Collections.shuffle(sources, RANDOM);
+		}
 
+		System.out.format("Located %d source files.%n", sources.size());
 		System.out.print(getOptionsDescription(TOP_PACKAGE));
 
         currentPass = 0;
@@ -282,16 +341,26 @@ public class TestPerformance extends BaseTest {
             currentPass = i + 1;
             if (CLEAR_DFA) {
 				if (sharedLexers.length > 0) {
-					Arrays.fill(sharedLexers[0].getInterpreter().decisionToDFA, null);
+					ATN atn = sharedLexers[0].getATN();
+					for (int j = 0; j < sharedLexers[0].getInterpreter().decisionToDFA.length; j++) {
+						sharedLexers[0].getInterpreter().decisionToDFA[j] = new DFA(atn.getDecisionState(j), j);
+					}
 				}
 
 				if (sharedParsers.length > 0) {
-					Arrays.fill(sharedParsers[0].getInterpreter().decisionToDFA, null);
+					ATN atn = sharedParsers[0].getATN();
+					for (int j = 0; j < sharedParsers[0].getInterpreter().decisionToDFA.length; j++) {
+						sharedParsers[0].getInterpreter().decisionToDFA[j] = new DFA(atn.getDecisionState(j), j);
+					}
 				}
 
 				Arrays.fill(sharedLexers, null);
 				Arrays.fill(sharedParsers, null);
             }
+
+			if (SHUFFLE_FILES_AFTER_ITERATIONS) {
+				Collections.shuffle(sources, RANDOM);
+			}
 
             parse2(factory, sources);
         }
@@ -359,7 +428,7 @@ public class TestPerformance extends BaseTest {
      *  This method is separate from {@link #parse2} so the first pass can be distinguished when analyzing
      *  profiler results.
      */
-    protected void parse1(ParserFactory factory, Collection<CharStream> sources) throws InterruptedException {
+    protected void parse1(ParserFactory factory, Collection<InputDescriptor> sources) throws InterruptedException {
         System.gc();
         parseSources(factory, sources);
     }
@@ -368,39 +437,34 @@ public class TestPerformance extends BaseTest {
      *  This method is separate from {@link #parse1} so the first pass can be distinguished when analyzing
      *  profiler results.
      */
-    protected void parse2(ParserFactory factory, Collection<CharStream> sources) throws InterruptedException {
+    protected void parse2(ParserFactory factory, Collection<InputDescriptor> sources) throws InterruptedException {
         System.gc();
         parseSources(factory, sources);
     }
 
-    protected Collection<CharStream> loadSources(File directory, FilenameFilter filter, boolean recursive) {
-		return loadSources(directory, filter, null, recursive);
-	}
-
-    protected Collection<CharStream> loadSources(File directory, FilenameFilter filter, String encoding, boolean recursive) {
-        Collection<CharStream> result = new ArrayList<CharStream>();
-        loadSources(directory, filter, encoding, recursive, result);
+    protected List<InputDescriptor> loadSources(File directory, FilenameFilter filesFilter, FilenameFilter directoriesFilter, boolean recursive) {
+        List<InputDescriptor> result = new ArrayList<InputDescriptor>();
+        loadSources(directory, filesFilter, directoriesFilter, recursive, result);
         return result;
     }
 
-    protected void loadSources(File directory, FilenameFilter filter, String encoding, boolean recursive, Collection<CharStream> result) {
+    protected void loadSources(File directory, FilenameFilter filesFilter, FilenameFilter directoriesFilter, boolean recursive, Collection<InputDescriptor> result) {
         assert directory.isDirectory();
 
-        File[] sources = directory.listFiles(filter);
+        File[] sources = directory.listFiles(filesFilter);
         for (File file : sources) {
-            try {
-                CharStream input = new ANTLRFileStream(file.getAbsolutePath(), encoding);
-                result.add(input);
-            } catch (IOException ex) {
+			if (!file.isFile()) {
+				continue;
+			}
 
-            }
+			result.add(new InputDescriptor(file.getAbsolutePath()));
         }
 
         if (recursive) {
-            File[] children = directory.listFiles();
+            File[] children = directory.listFiles(directoriesFilter);
             for (File child : children) {
                 if (child.isDirectory()) {
-                    loadSources(child, filter, encoding, true, result);
+                    loadSources(child, filesFilter, directoriesFilter, true, result);
                 }
             }
         }
@@ -409,19 +473,26 @@ public class TestPerformance extends BaseTest {
     int configOutputSize = 0;
 
     @SuppressWarnings("unused")
-	protected void parseSources(final ParserFactory factory, Collection<CharStream> sources) throws InterruptedException {
+	protected void parseSources(final ParserFactory factory, Collection<InputDescriptor> sources) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         tokenCount.set(0);
         int inputSize = 0;
+		int inputCount = 0;
 
-		Collection<Future<Integer>> results = new ArrayList<Future<Integer>>();
+		Collection<Future<FileParseResult>> results = new ArrayList<Future<FileParseResult>>();
 		ExecutorService executorService = Executors.newFixedThreadPool(NUMBER_OF_THREADS, new NumberedThreadFactory());
-        for (final CharStream input : sources) {
+		for (InputDescriptor inputDescriptor : sources) {
+			if (inputCount >= MAX_FILES_PER_PARSE_ITERATION) {
+				break;
+			}
+
+			final CharStream input = inputDescriptor.getInputStream();
             input.seek(0);
             inputSize += input.size();
-			Future<Integer> futureChecksum = executorService.submit(new Callable<Integer>() {
+			inputCount++;
+			Future<FileParseResult> futureChecksum = executorService.submit(new Callable<FileParseResult>() {
 				@Override
-				public Integer call() {
+				public FileParseResult call() {
 					// this incurred a great deal of overhead and was causing significant variations in performance results.
 					//System.out.format("Parsing file %s\n", input.getSourceName());
 					try {
@@ -432,7 +503,7 @@ public class TestPerformance extends BaseTest {
 						t.printStackTrace(System.err);
 					}
 
-					return -1;
+					return null;
 				}
 			});
 
@@ -440,16 +511,17 @@ public class TestPerformance extends BaseTest {
         }
 
 		Checksum checksum = new CRC32();
-		for (Future<Integer> future : results) {
-			int value = 0;
+		for (Future<FileParseResult> future : results) {
+			int fileChecksum = 0;
 			try {
-				value = future.get();
+				FileParseResult fileResult = future.get();
+				fileChecksum = fileResult.checksum;
 			} catch (ExecutionException ex) {
 				Logger.getLogger(TestPerformance.class.getName()).log(Level.SEVERE, null, ex);
 			}
 
 			if (COMPUTE_CHECKSUM) {
-				updateChecksum(checksum, value);
+				updateChecksum(checksum, fileChecksum);
 			}
 		}
 
@@ -457,7 +529,7 @@ public class TestPerformance extends BaseTest {
 		executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
         System.out.format("Total parse time for %d files (%d KB, %d tokens, checksum 0x%8X): %dms%n",
-                          sources.size(),
+                          inputCount,
                           inputSize / 1024,
                           tokenCount.get(),
 						  COMPUTE_CHECKSUM ? checksum.getValue() : 0,
@@ -474,7 +546,7 @@ public class TestPerformance extends BaseTest {
 
 				for (int i = 0; i < modeToDFA.length; i++) {
 					DFA dfa = modeToDFA[i];
-					if (dfa == null || dfa.states == null) {
+					if (dfa == null) {
 						continue;
 					}
 
@@ -502,7 +574,7 @@ public class TestPerformance extends BaseTest {
 
                 for (int i = 0; i < decisionToDFA.length; i++) {
                     DFA dfa = decisionToDFA[i];
-                    if (dfa == null || dfa.states == null) {
+                    if (dfa == null) {
                         continue;
                     }
 
@@ -524,7 +596,7 @@ public class TestPerformance extends BaseTest {
 
             for (int i = 0; i < decisionToDFA.length; i++) {
                 DFA dfa = decisionToDFA[i];
-                if (dfa == null || dfa.states == null) {
+                if (dfa == null) {
                     continue;
                 }
 
@@ -659,9 +731,10 @@ public class TestPerformance extends BaseTest {
 
             return new ParserFactory() {
 				@Override
-                public int parseFile(CharStream input, int thread) {
+                public FileParseResult parseFile(CharStream input, int thread) {
 					final Checksum checksum = new CRC32();
 
+					final long startTime = System.nanoTime();
 					assert thread >= 0 && thread < NUMBER_OF_THREADS;
 
                     try {
@@ -676,6 +749,9 @@ public class TestPerformance extends BaseTest {
                             lexer.setInputStream(input);
                         } else {
                             lexer = lexerCtor.newInstance(input);
+							if (COMPUTE_TRANSITION_STATS) {
+								lexer.setInterpreter(new StatisticsLexerATNSimulator(lexer, lexer.getATN(), lexer.getInterpreter().decisionToDFA, lexer.getInterpreter().getSharedContextCache()));
+							}
 							sharedLexers[thread] = lexer;
 							if (!REUSE_LEXER_DFA) {
 								Field decisionToDFAField = LexerATNSimulator.class.getDeclaredField("decisionToDFA");
@@ -685,7 +761,10 @@ public class TestPerformance extends BaseTest {
                         }
 
 						if (!REUSE_LEXER_DFA) {
-							Arrays.fill(lexer.getInterpreter().decisionToDFA, null);
+							ATN atn = lexer.getATN();
+							for (int i = 0; i < lexer.getInterpreter().decisionToDFA.length; i++) {
+								lexer.getInterpreter().decisionToDFA[i] = new DFA(atn.getDecisionState(i), i);
+							}
 						}
 
                         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -699,7 +778,7 @@ public class TestPerformance extends BaseTest {
 						}
 
                         if (!RUN_PARSER) {
-                            return (int)checksum.getValue();
+                            return new FileParseResult(input.getSourceName(), (int)checksum.getValue(), null, tokens.size(), startTime, lexer, null);
                         }
 
 						Parser parser = sharedParsers[thread];
@@ -707,6 +786,9 @@ public class TestPerformance extends BaseTest {
                             parser.setInputStream(tokens);
                         } else {
                             parser = parserCtor.newInstance(tokens);
+							if (COMPUTE_TRANSITION_STATS) {
+								parser.setInterpreter(new StatisticsParserATNSimulator(parser, parser.getATN(), parser.getInterpreter().decisionToDFA, parser.getInterpreter().getSharedContextCache()));
+							}
 							sharedParsers[thread] = parser;
                         }
 
@@ -723,7 +805,10 @@ public class TestPerformance extends BaseTest {
 						}
 
 						if (!REUSE_PARSER_DFA) {
-							Arrays.fill(parser.getInterpreter().decisionToDFA, null);
+							ATN atn = parser.getATN();
+							for (int i = 0; i < parser.getInterpreter().decisionToDFA.length; i++) {
+								parser.getInterpreter().decisionToDFA[i] = new DFA(atn.getDecisionState(i), i);
+							}
 						}
 
 						parser.getInterpreter().setPredictionMode(TWO_STAGE_PARSING ? PredictionMode.SLL : PREDICTION_MODE);
@@ -764,6 +849,9 @@ public class TestPerformance extends BaseTest {
 								parser.setInputStream(tokens);
 							} else {
 								parser = parserCtor.newInstance(tokens);
+								if (COMPUTE_TRANSITION_STATS) {
+									parser.setInterpreter(new StatisticsParserATNSimulator(parser, parser.getATN(), parser.getInterpreter().decisionToDFA, parser.getInterpreter().getSharedContextCache()));
+								}
 								sharedParsers[thread] = parser;
 							}
 
@@ -791,16 +879,16 @@ public class TestPerformance extends BaseTest {
                         if (BUILD_PARSE_TREES && BLANK_LISTENER) {
                             ParseTreeWalker.DEFAULT.walk(listener, (ParseTree)parseResult);
                         }
+
+						return new FileParseResult(input.getSourceName(), (int)checksum.getValue(), (ParseTree)parseResult, tokens.size(), startTime, lexer, parser);
                     } catch (Exception e) {
 						if (!REPORT_SYNTAX_ERRORS && e instanceof ParseCancellationException) {
-							return (int)checksum.getValue();
+							return new FileParseResult("unknown", (int)checksum.getValue(), null, 0, startTime, null, null);
 						}
 
                         e.printStackTrace(System.out);
                         throw new IllegalStateException(e);
                     }
-
-					return (int)checksum.getValue();
                 }
             };
         } catch (Exception e) {
@@ -811,8 +899,134 @@ public class TestPerformance extends BaseTest {
     }
 
     protected interface ParserFactory {
-        int parseFile(CharStream input, int thread);
+        FileParseResult parseFile(CharStream input, int thread);
     }
+
+	protected static class FileParseResult {
+		public final String sourceName;
+		public final int checksum;
+		public final ParseTree parseTree;
+		public final int tokenCount;
+		public final long startTime;
+		public final long endTime;
+
+		public final int lexerDFASize;
+		public final long lexerTotalTransitions;
+		public final long lexerComputedTransitions;
+
+		public final int parserDFASize;
+		public final long parserTotalTransitions;
+		public final long parserComputedTransitions;
+
+		public FileParseResult(String sourceName, int checksum, @Nullable ParseTree parseTree, int tokenCount, long startTime, Lexer lexer, Parser parser) {
+			this.sourceName = sourceName;
+			this.checksum = checksum;
+			this.parseTree = parseTree;
+			this.tokenCount = tokenCount;
+			this.startTime = startTime;
+			this.endTime = System.nanoTime();
+
+			if (lexer != null) {
+				LexerATNSimulator interpreter = lexer.getInterpreter();
+				if (interpreter instanceof StatisticsLexerATNSimulator) {
+					lexerTotalTransitions = ((StatisticsLexerATNSimulator)interpreter).totalTransitions;
+					lexerComputedTransitions = ((StatisticsLexerATNSimulator)interpreter).computedTransitions;
+				} else {
+					lexerTotalTransitions = 0;
+					lexerComputedTransitions = 0;
+				}
+
+				int dfaSize = 0;
+				for (DFA dfa : interpreter.decisionToDFA) {
+					if (dfa != null) {
+						dfaSize += dfa.states.size();
+					}
+				}
+
+				lexerDFASize = dfaSize;
+			} else {
+				lexerDFASize = 0;
+				lexerTotalTransitions = 0;
+				lexerComputedTransitions = 0;
+			}
+
+			if (parser != null) {
+				ParserATNSimulator interpreter = parser.getInterpreter();
+				if (interpreter instanceof StatisticsParserATNSimulator) {
+					parserTotalTransitions = ((StatisticsParserATNSimulator)interpreter).totalTransitions;
+					parserComputedTransitions = ((StatisticsParserATNSimulator)interpreter).computedTransitions;
+				} else {
+					parserTotalTransitions = 0;
+					parserComputedTransitions = 0;
+				}
+
+				int dfaSize = 0;
+				for (DFA dfa : interpreter.decisionToDFA) {
+					if (dfa != null) {
+						dfaSize += dfa.states.size();
+					}
+				}
+
+				parserDFASize = dfaSize;
+			} else {
+				parserDFASize = 0;
+				parserTotalTransitions = 0;
+				parserComputedTransitions = 0;
+			}
+		}
+	}
+
+	private static class StatisticsLexerATNSimulator extends LexerATNSimulator {
+
+		public long totalTransitions;
+		public long computedTransitions;
+
+		public StatisticsLexerATNSimulator(ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+			super(atn, decisionToDFA, sharedContextCache);
+		}
+
+		public StatisticsLexerATNSimulator(Lexer recog, ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+			super(recog, atn, decisionToDFA, sharedContextCache);
+		}
+
+		@Override
+		protected DFAState getExistingTargetState(DFAState s, int t) {
+			totalTransitions++;
+			return super.getExistingTargetState(s, t);
+		}
+
+		@Override
+		protected DFAState computeTargetState(CharStream input, DFAState s, int t) {
+			computedTransitions++;
+			return super.computeTargetState(input, s, t);
+		}
+	}
+
+	private static class StatisticsParserATNSimulator extends ParserATNSimulator {
+
+		public long totalTransitions;
+		public long computedTransitions;
+
+		public StatisticsParserATNSimulator(ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+			super(atn, decisionToDFA, sharedContextCache);
+		}
+
+		public StatisticsParserATNSimulator(Parser parser, ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+			super(parser, atn, decisionToDFA, sharedContextCache);
+		}
+
+		@Override
+		protected DFAState getExistingTargetState(DFAState previousD, int t) {
+			totalTransitions++;
+			return super.getExistingTargetState(previousD, t);
+		}
+
+		@Override
+		protected DFAState computeTargetState(DFA dfa, DFAState previousD, int t) {
+			computedTransitions++;
+			return super.computeTargetState(dfa, previousD, t);
+		}
+	}
 
 	private static class DescriptiveErrorListener extends BaseErrorListener {
 		public static DescriptiveErrorListener INSTANCE = new DescriptiveErrorListener();
@@ -867,23 +1081,148 @@ public class TestPerformance extends BaseTest {
 
 	}
 
-	protected static class FileExtensionFilenameFilter implements FilenameFilter {
+	protected static final class FilenameFilters {
+		public static final FilenameFilter ALL_FILES = new FilenameFilter() {
 
-		private final String extension;
-
-		public FileExtensionFilenameFilter(String extension) {
-			if (!extension.startsWith(".")) {
-				extension = '.' + extension;
+			@Override
+			public boolean accept(File dir, String name) {
+				return true;
 			}
 
-			this.extension = extension;
+		};
+
+		public static FilenameFilter extension(String extension) {
+			return extension(extension, true);
 		}
 
-		@Override
-		public boolean accept(File dir, String name) {
-			return name.toLowerCase().endsWith(extension);
+		public static FilenameFilter extension(String extension, boolean caseSensitive) {
+			return new FileExtensionFilenameFilter(extension, caseSensitive);
 		}
 
+		public static FilenameFilter name(String filename) {
+			return name(filename, true);
+		}
+
+		public static FilenameFilter name(String filename, boolean caseSensitive) {
+			return new FileNameFilenameFilter(filename, caseSensitive);
+		}
+
+		public static FilenameFilter all(FilenameFilter... filters) {
+			return new AllFilenameFilter(filters);
+		}
+
+		public static FilenameFilter any(FilenameFilter... filters) {
+			return new AnyFilenameFilter(filters);
+		}
+
+		public static FilenameFilter none(FilenameFilter... filters) {
+			return not(any(filters));
+		}
+
+		public static FilenameFilter not(FilenameFilter filter) {
+			return new NotFilenameFilter(filter);
+		}
+
+		private FilenameFilters() {
+		}
+
+		protected static class FileExtensionFilenameFilter implements FilenameFilter {
+
+			private final String extension;
+			private final boolean caseSensitive;
+
+			public FileExtensionFilenameFilter(String extension, boolean caseSensitive) {
+				if (!extension.startsWith(".")) {
+					extension = '.' + extension;
+				}
+
+				this.extension = extension;
+				this.caseSensitive = caseSensitive;
+			}
+
+			@Override
+			public boolean accept(File dir, String name) {
+				if (caseSensitive) {
+					return name.endsWith(extension);
+				} else {
+					return name.toLowerCase().endsWith(extension);
+				}
+			}
+		}
+
+		protected static class FileNameFilenameFilter implements FilenameFilter {
+
+			private final String filename;
+			private final boolean caseSensitive;
+
+			public FileNameFilenameFilter(String filename, boolean caseSensitive) {
+				this.filename = filename;
+				this.caseSensitive = caseSensitive;
+			}
+
+			@Override
+			public boolean accept(File dir, String name) {
+				if (caseSensitive) {
+					return name.equals(filename);
+				} else {
+					return name.toLowerCase().equals(filename);
+				}
+			}
+		}
+
+		protected static class AllFilenameFilter implements FilenameFilter {
+
+			private final FilenameFilter[] filters;
+
+			public AllFilenameFilter(FilenameFilter[] filters) {
+				this.filters = filters;
+			}
+
+			@Override
+			public boolean accept(File dir, String name) {
+				for (FilenameFilter filter : filters) {
+					if (!filter.accept(dir, name)) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+		}
+
+		protected static class AnyFilenameFilter implements FilenameFilter {
+
+			private final FilenameFilter[] filters;
+
+			public AnyFilenameFilter(FilenameFilter[] filters) {
+				this.filters = filters;
+			}
+
+			@Override
+			public boolean accept(File dir, String name) {
+				for (FilenameFilter filter : filters) {
+					if (filter.accept(dir, name)) {
+						return true;
+					}
+				}
+
+				return false;
+			}
+		}
+
+		protected static class NotFilenameFilter implements FilenameFilter {
+
+			private final FilenameFilter filter;
+
+			public NotFilenameFilter(FilenameFilter filter) {
+				this.filter = filter;
+			}
+
+			@Override
+			public boolean accept(File dir, String name) {
+				return !filter.accept(dir, name);
+			}
+		}
 	}
 
 	protected static class NumberedThread extends Thread {
@@ -952,4 +1291,50 @@ public class TestPerformance extends BaseTest {
 
 	}
 
+	protected static final class InputDescriptor {
+		private final String source;
+		private Reference<CharStream> inputStream;
+
+		public InputDescriptor(@NotNull String source) {
+			this.source = source;
+			if (PRELOAD_SOURCES) {
+				getInputStream();
+			}
+		}
+
+		@NotNull
+		public CharStream getInputStream() {
+			CharStream stream = inputStream != null ? inputStream.get() : null;
+			if (stream == null) {
+				try {
+					stream = new ANTLRFileStream(source, ENCODING);
+				} catch (IOException ex) {
+					Logger.getLogger(TestPerformance.class.getName()).log(Level.SEVERE, null, ex);
+					stream = new ANTLRInputStream("");
+				}
+
+				if (PRELOAD_SOURCES) {
+					inputStream = new StrongReference<CharStream>(stream);
+				} else {
+					inputStream = new SoftReference<CharStream>(stream);
+				}
+			}
+
+			return stream;
+		}
+	}
+
+	public static class StrongReference<T> extends WeakReference<T> {
+		public final T referent;
+
+		public StrongReference(T referent) {
+			super(referent);
+			this.referent = referent;
+		}
+
+		@Override
+		public T get() {
+			return referent;
+		}
+	}
 }
