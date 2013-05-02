@@ -222,7 +222,7 @@ public class SizeGSS {
 		public void action(int[] a) {
 //				System.out.println(Arrays.toString(a));
 			boolean rootIsWildcard = false;
-			int numnodes = PredictionContext.countAllContextNodes(ctx);
+			int numnodes = PredictionContext.getAllContextNodes(ctx).size();
 			if ( numnodes>max ) max = numnodes;
 //					nodeCounts.add(numnodes);
 //					edgeCounts.add(edgeCount(allnodes));
