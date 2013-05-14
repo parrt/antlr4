@@ -29,12 +29,14 @@
  */
 
 import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.DiagnosticErrorListener;
+import org.antlr.v4.runtime.ConsoleErrorListener;
+import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
@@ -44,17 +46,14 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 
-import javax.print.PrintException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -83,12 +82,13 @@ public class Profile {
 
 		@Override
 		public String toString() {
-			return fileName+"@"+index;
+			return fileName+"["+content.length+"]"+"@"+index;
 		}
 	}
 	static class StatisticsParserATNSimulator extends ParserATNSimulator {
 		public long totalTransitions;
-		public long computedTransitions;
+		public long ATNTransitions;
+		public long fullContextTransitions;
 
 		public StatisticsParserATNSimulator(ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
 			super(atn, decisionToDFA, sharedContextCache);
@@ -100,23 +100,36 @@ public class Profile {
 
 		@Override
 		protected DFAState getExistingTargetState(DFAState previousD, int t) {
-			// called for both DFA and ATN edge transitions
 			totalTransitions++;
 			return super.getExistingTargetState(previousD, t);
 		}
 
 		@Override
 		protected DFAState computeTargetState(DFA dfa, DFAState previousD, int t) {
-			computedTransitions++;
+			ATNTransitions++;
 			return super.computeTargetState(dfa, previousD, t);
 		}
 
 		@Override
 		protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean fullCtx) {
+			if (fullCtx) {
+				totalTransitions++;
+				ATNTransitions++;
+				fullContextTransitions++;
+			}
+
 			return super.computeReachSet(closure, t, fullCtx);
 		}
+
+		@Override
+		public String toString() {
+			return ATNTransitions+","+fullContextTransitions+","+totalTransitions;
+		}
 	}
+
 	static final Random RANDOM = new Random();
+	public static final int TRIALS = 10; // how many times to sample from docs
+	public static final int N = 5;       // how many files in sample
 
 	static protected String grammarName;
 	static protected String startRuleName;
@@ -124,6 +137,8 @@ public class Profile {
 	static Class<? extends Parser> parserClass;
 
 	static List<InputDocument> documents;
+	static List<List<StatisticsParserATNSimulator>> trials =
+		new ArrayList<List<StatisticsParserATNSimulator>>(); // 1 list per trial
 
 	public static void main(String[] args) throws Exception {
 		if (args.length > 0 ) {
@@ -148,14 +163,87 @@ public class Profile {
 				javaFiles.addAll(files);
 			}
 			documents = load(javaFiles);
-			List<InputDocument> rdocs = getRandomDocuments(documents, 5);
-
 			loadLexerParser();
-			process(rdocs);
+
+			for (int trial=1; trial<=TRIALS; trial++) {
+				System.out.println("TRIAL "+trial);
+				List<InputDocument> rdocs = getRandomDocuments(documents, N);
+				List<StatisticsParserATNSimulator> stats = process(rdocs);
+				trials.add(stats);
+			}
+			stats(trials);
 		}
 		else {
 			System.err.println("Usage: java Main <directory or file name>");
 		}
+	}
+
+	public static void stats(List<List<StatisticsParserATNSimulator>> trials) {
+		double[][] filestats = new double[N][TRIALS];
+		for (int i = 0; i < trials.size(); i++) {
+			List<StatisticsParserATNSimulator> stats = trials.get(i);
+			for (int j = 0; j < stats.size(); j++) {
+				StatisticsParserATNSimulator stat = stats.get(j);
+				filestats[j][i] = stat.ATNTransitions / (double) stat.totalTransitions;
+			}
+		}
+		System.out.println(Arrays.toString(filestats));
+	}
+
+	public static List<StatisticsParserATNSimulator> process(List<InputDocument> docs) throws Exception {
+		List<StatisticsParserATNSimulator> stats =
+			new ArrayList<StatisticsParserATNSimulator>(docs.size());
+		for (InputDocument doc : docs) {
+			System.out.print(doc+"\t\t");
+			ANTLRInputStream input =
+				new ANTLRInputStream(doc.content, doc.content.length);
+			Constructor<? extends Lexer> lexerCtor =
+				lexerClass.getConstructor(CharStream.class);
+			Lexer lexer = lexerCtor.newInstance(input);
+			Constructor<? extends Parser> parserCtor =
+				parserClass.getConstructor(TokenStream.class);
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			Parser parser = parserCtor.newInstance(tokens);
+			parser.setBuildParseTree(false); // no parse trees
+			DFA[] decisionToDFA = parser.getInterpreter().decisionToDFA;
+			PredictionContextCache sharedContextCache =
+				parser.getInterpreter().getSharedContextCache();
+			StatisticsParserATNSimulator stat =
+				new StatisticsParserATNSimulator(parser,
+												 parser.getATN(),
+												 decisionToDFA,
+												 sharedContextCache);
+			parser.setInterpreter(stat);
+			try {
+				Method startRule = parserClass.getMethod(startRuleName);
+				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
+				parser.setErrorHandler(new BailErrorStrategy());
+				try {
+					startRule.invoke(parser, (Object[])null);
+				}
+				catch (RuntimeException ex) {
+					if (ex.getClass() == RuntimeException.class &&
+						ex.getCause() instanceof RecognitionException)
+					{
+						// The BailErrorStrategy wraps the RecognitionExceptions in
+						// RuntimeExceptions so we have to make sure we're detecting
+						// a true RecognitionException not some other kind
+						tokens.reset(); // rewind input stream
+						// back to standard listeners/handlers
+						parser.addErrorListener(ConsoleErrorListener.INSTANCE);
+						parser.setErrorHandler(new DefaultErrorStrategy());
+						parser.getInterpreter().setPredictionMode(PredictionMode.LL);
+					}
+				}
+
+				stats.add(stat);
+				System.out.println(stat);
+			}
+			catch (NoSuchMethodException nsme) {
+				System.err.println("No method for rule "+startRuleName+" or it has arguments");
+			}
+		}
+		return stats;
 	}
 
 	/** From input documents, grab n in random order */
@@ -211,7 +299,8 @@ public class Profile {
 
 		// otherwise, if this is a java file, parse it!
 		else if ( ((f.getName().length()>5) &&
-			f.getName().substring(f.getName().length()-5).equals(".java")) )
+			f.getName().substring(f.getName().length()-5).equals(".java")) &&
+			f.getName().indexOf('-')<0 ) // don't allow preprocessor files like ByteBufferAs-X-Buffer.java
 		{
 			files.add(f.getAbsolutePath());
 		}
@@ -233,36 +322,6 @@ public class Profile {
 		parserClass = cl.loadClass(parserName).asSubclass(Parser.class);
 		if ( parserClass==null ) {
 			System.err.println("Can't load "+parserName);
-		}
-	}
-
-	public static void process(List<InputDocument> docs) throws Exception {
-		for (InputDocument doc : docs) {
-			System.out.println(doc);
-			ANTLRInputStream input =
-				new ANTLRInputStream(doc.content, doc.content.length);
-			Constructor<? extends Lexer> lexerCtor =
-				lexerClass.getConstructor(CharStream.class);
-			Lexer lexer = lexerCtor.newInstance(input);
-			Constructor<? extends Parser> parserCtor =
-				parserClass.getConstructor(TokenStream.class);
-			CommonTokenStream tokens = new CommonTokenStream(lexer);
-			Parser parser = parserCtor.newInstance(tokens);
-			parser.setBuildParseTree(false); // no parse trees
-			DFA[] decisionToDFA = parser.getInterpreter().decisionToDFA;
-			PredictionContextCache sharedContextCache = parser.getInterpreter().getSharedContextCache();
-			parser.setInterpreter(
-				new StatisticsParserATNSimulator(parser, parser.getATN(),
-												 decisionToDFA,
-												 sharedContextCache)
-								 );
-			try {
-				Method startRule = parserClass.getMethod(startRuleName);
-				startRule.invoke(parser, (Object[])null);
-			}
-			catch (NoSuchMethodException nsme) {
-				System.err.println("No method for rule "+startRuleName+" or it has arguments");
-			}
 		}
 	}
 
