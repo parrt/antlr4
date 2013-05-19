@@ -4,7 +4,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.DiagnosticErrorListener;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.atn.LexerATNSimulator;
-import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.atn.PredictionMode;
 
 import java.io.File;
@@ -51,9 +50,9 @@ class TestJava {
 
             System.out.println("finished parsing OK");
             System.out.println(LexerATNSimulator.match_calls+" lexer match calls");
-            System.out.println(ParserATNSimulator.predict_calls +" parser predict calls");
-            System.out.println(ParserATNSimulator.retry_with_context +" retry_with_context after SLL conflict");
-            System.out.println(ParserATNSimulator.retry_with_context_indicates_no_conflict +" retry sees no conflict");
+//            System.out.println(ParserATNSimulator.predict_calls +" parser predict calls");
+//            System.out.println(ParserATNSimulator.retry_with_context +" retry_with_context after SLL conflict");
+//            System.out.println(ParserATNSimulator.retry_with_context_indicates_no_conflict +" retry sees no conflict");
             if ( profile ) {
                 System.out.println("num decisions "+profiler.numDecisions);
             }
