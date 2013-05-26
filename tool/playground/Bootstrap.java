@@ -40,6 +40,7 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.atn.LexerATNSimulator;
 import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.atn.PredictionMode;
@@ -55,6 +56,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -87,6 +89,7 @@ public class Bootstrap {
 		new Option("TRIALS", "-trials", OptionArgType.INT, "how many trials of N samples?"),
 		new Option("N",	"-N", OptionArgType.INT, "how many files to sample from docs"),
 		new Option("inputFilePattern",	"-files", OptionArgType.STRING, "input files; e.g., '*.java'"),
+		new Option("showFileNames",	"-showfiles", "show file names as they are parsed")
 	};
 
 	static class InputDocument {
@@ -111,50 +114,53 @@ public class Bootstrap {
 		}
 	}
 
-	/** Simplified from Sam's. This treats all decisions together */
-	static class ParseInfo extends ParserATNSimulator {
+	public static class ParseStats {
 		public long totalTransitions;
 		public long ATNTransitions;
 		public long fullContextTransitions;
-		public int  startDFASize;
-		public int  stopDFASize; // only dumping this for now
+		public int startDFASize;
+		public int stopDFASize;
+
 		public long timeSLL;
 		public long timeLL;
+	}
 
-		public ParseInfo(ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
-			super(atn, decisionToDFA, sharedContextCache);
-		}
+	/** Simplified from Sam's. This treats all decisions together */
+	static class StatsParserATNSimulator extends ParserATNSimulator {
+		public final ParseStats info;
 
-		public ParseInfo(Parser parser, ATN atn,
-						 DFA[] decisionToDFA,
-						 PredictionContextCache sharedContextCache)
+		public StatsParserATNSimulator(ParseStats info,
+									   Parser parser, ATN atn,
+									   DFA[] decisionToDFA,
+									   PredictionContextCache sharedContextCache)
 		{
 			super(parser, atn, decisionToDFA, sharedContextCache);
-			startDFASize = getDFASize();
+			this.info = info;
+			info.startDFASize = getDFASize();
 		}
 
 		public void finish() {
-			stopDFASize = getDFASize();
+			info.stopDFASize = getDFASize();
 		}
 
 		@Override
 		protected DFAState getExistingTargetState(DFAState previousD, int t) {
-			totalTransitions++;
+			info.totalTransitions = info.totalTransitions + 1;
 			return super.getExistingTargetState(previousD, t);
 		}
 
 		@Override
 		protected DFAState computeTargetState(DFA dfa, DFAState previousD, int t) {
-			ATNTransitions++;
+			info.ATNTransitions = info.ATNTransitions + 1;
 			return super.computeTargetState(dfa, previousD, t);
 		}
 
 		@Override
 		protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean fullCtx) {
 			if (fullCtx) {
-				totalTransitions++;
-				ATNTransitions++;
-				fullContextTransitions++;
+				info.totalTransitions = info.totalTransitions + 1;
+				info.ATNTransitions = info.ATNTransitions + 1;
+				info.fullContextTransitions = info.fullContextTransitions + 1;
 			}
 
 			return super.computeReachSet(closure, t, fullCtx);
@@ -170,7 +176,7 @@ public class Bootstrap {
 
 		@Override
 		public String toString() {
-			return ATNTransitions+","+fullContextTransitions+","+totalTransitions;
+			return info.ATNTransitions +","+ info.fullContextTransitions +","+ info.totalTransitions;
 		}
 	}
 
@@ -183,6 +189,7 @@ public class Bootstrap {
 	public String inputFilePattern;
 	public int TRIALS = 10; // how many times to sample from docs
 	public int N = 5;       // how many files in a sample
+	public boolean showFileNames = false;
 
 	protected String grammarName;
 	protected String startRuleName;
@@ -191,8 +198,7 @@ public class Bootstrap {
 	Class<? extends Parser> parserClass;
 
 	List<InputDocument> documents;
-	List<List<ParseInfo>> trials =
-		new ArrayList<List<ParseInfo>>(); // 1 list per trial
+	List<List<ParseStats>> trials; // 1 list per trial
 
 	public static void main(String[] args) throws Exception {
 		Bootstrap p = new Bootstrap();
@@ -211,6 +217,7 @@ public class Bootstrap {
 			documents = load(allFiles);
 			loadLexerParser();
 
+			System.out.println(TRIALS+" trials, "+N+" files");
 			doTrials();
 
 //			stats(trials);
@@ -221,11 +228,11 @@ public class Bootstrap {
 
 	public void doTrials() throws Exception {
 		// A trial picks N random files from documents
+		trials = new ArrayList<List<ParseStats>>();
 		for (int trial=1; trial<=TRIALS; trial++) {
-			System.gc();
 			System.out.println("TRIAL "+trial);
 			List<InputDocument> rdocs = getRandomDocuments(documents, N);
-			List<ParseInfo> stats = processSample(rdocs);
+			List<ParseStats> stats = processSample(rdocs);
 			trials.add(stats);
 		}
 	}
@@ -242,11 +249,11 @@ public class Bootstrap {
 //				transitions.append(f);
 //				dfaSizes.append(f);
 //				timings.append(f);
-				List<ParseInfo> trial = trials.get(t);
-				ParseInfo stat = trial.get(f);
+				List<ParseStats> trial = trials.get(t);
+				ParseStats stat = trial.get(f);
 				double atnRatio = stat.ATNTransitions / (double) stat.totalTransitions;
 				if ( t>0 ) transitions.append(", ");
-				transitions.append(atnRatio);
+				transitions.append(atnRatio+"("+stat.ATNTransitions+"/"+stat.totalTransitions+")");
 				if ( t>0 ) dfaSizes.append(", ");
 				dfaSizes.append(stat.stopDFASize);
 				// calc cumulative time after all files thus far for this trial
@@ -294,22 +301,33 @@ public class Bootstrap {
 	/** Do a single trial of docs to parse, wipe DFA at start, new parse/lexer
 	 *  objects per parse.
 	 */
-	public List<ParseInfo> processSample(List<InputDocument> docs) throws Exception {
-		{	// wipe DFA
+	public List<ParseStats> processSample(List<InputDocument> docs) throws Exception {
+		{	// wipe lexer/parser DFA
+			Constructor<? extends Lexer> lexerCtor =
+				lexerClass.getConstructor(CharStream.class);
+			Lexer lexer = lexerCtor.newInstance((CharStream)null);
+			ATN atn = lexer.getATN();
+			LexerATNSimulator l = lexer.getInterpreter();
+			for (int d = 0; d < l.decisionToDFA.length; d++) {
+				l.decisionToDFA[d] = new DFA(atn.getDecisionState(d), d);
+			}
+
 			Constructor<? extends Parser> parserCtor =
 				parserClass.getConstructor(TokenStream.class);
 			Parser parser = parserCtor.newInstance((TokenStream)null);
-			ATN atn = parser.getATN();
-			ParserATNSimulator interp = parser.getInterpreter();
-			for (int j = 0; j < interp.decisionToDFA.length; j++) {
-				interp.decisionToDFA[j] = new DFA(atn.getDecisionState(j), j);
+			atn = parser.getATN();
+			ParserATNSimulator p = parser.getInterpreter();
+			for (int d = 0; d < p.decisionToDFA.length; d++) {
+				p.decisionToDFA[d] = new DFA(atn.getDecisionState(d), d);
 			}
+			System.gc();
 		}
 
-		List<ParseInfo> stats =
-			new ArrayList<ParseInfo>(docs.size());
+		int d = 0;
+		List<ParseStats> parseStats = new ArrayList<ParseStats>(docs.size());
 		for (InputDocument doc : docs) {
-			System.out.print(doc);
+			if ( showFileNames ) System.out.print(doc);
+//			if ( d % 10 == 0 ) System.out.print(" "+d);
 			ANTLRInputStream input =
 				new ANTLRInputStream(doc.content, doc.content.length);
 			Constructor<? extends Lexer> lexerCtor =
@@ -323,12 +341,15 @@ public class Bootstrap {
 			DFA[] decisionToDFA = parser.getInterpreter().decisionToDFA;
 			PredictionContextCache sharedContextCache =
 				parser.getInterpreter().getSharedContextCache();
-			ParseInfo stat =
-				new ParseInfo(parser,
-							  parser.getATN(),
-							  decisionToDFA,
-							  sharedContextCache);
-			parser.setInterpreter(stat);
+			ParseStats oneFileStats = new ParseStats();
+			StatsParserATNSimulator sim =
+				new StatsParserATNSimulator(
+					oneFileStats,
+					parser,
+					parser.getATN(),
+					decisionToDFA,
+					sharedContextCache);
+			parser.setInterpreter(sim);
 			try {
 				Method startRule = parserClass.getMethod(startRuleName);
 				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
@@ -337,7 +358,7 @@ public class Bootstrap {
 					final long startTime = System.nanoTime();
 					startRule.invoke(parser, (Object[])null);
 					final long stopTime = System.nanoTime();
-					stat.timeSLL = stopTime - startTime;
+					oneFileStats.timeSLL = stopTime - startTime;
 				}
 				catch (RuntimeException ex) {
 					if (ex.getClass() == RuntimeException.class &&
@@ -355,24 +376,37 @@ public class Bootstrap {
 						final long startTime = System.nanoTime();
 						startRule.invoke(parser, (Object[])null);
 						final long stopTime = System.nanoTime();
-						stat.timeLL = stopTime - startTime;
+						oneFileStats.timeLL = stopTime - startTime;
 					}
 				}
 
-				stat.finish();
+				sim.finish();
 
-				stats.add(stat);
-				System.out.println("\t\t"+stat+", "+((double)stat.ATNTransitions/stat.totalTransitions));
+				parseStats.add(oneFileStats);
+				if ( showFileNames ) System.out.println("\t\t"+sim+", "+((double)oneFileStats.ATNTransitions/oneFileStats.totalTransitions));
 			}
 			catch (NoSuchMethodException nsme) {
 				System.err.println("No method for rule "+startRuleName+" or it has arguments");
 			}
+//			if ( d % 10 == 0 ) System.out.println();
+			d++;
 		}
-		return stats;
+		return parseStats;
 	}
 
-	/** From input documents, grab n in random order */
+	/** From input documents, grab n in random order w/o replacement */
 	public List<InputDocument> getRandomDocuments(List<InputDocument> documents, int n) {
+		List<InputDocument> documents_ = new ArrayList<InputDocument>(documents);
+		Collections.shuffle(documents_, RANDOM);
+		List<InputDocument> contentList = new ArrayList<InputDocument>(n);
+		for (int i=0; i<n; i++) { // get first n files from shuffle and set file index for it
+			contentList.add(new InputDocument(documents_.get(i), i));
+		}
+		return contentList;
+	}
+
+	/** From input documents, grab n in random order w replacement */
+	public List<InputDocument> getRandomDocumentsWithRepl(List<InputDocument> documents, int n) {
 		List<InputDocument> contentList = new ArrayList<InputDocument>(n);
 		for (int i=1; i<=n; i++) {
 			int r = RANDOM.nextInt(documents.size()); // get random index from 0..|inputfiles|-1
