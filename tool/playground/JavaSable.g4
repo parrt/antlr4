@@ -42,7 +42,9 @@ grammar JavaSable;
 
   type :
      primitive_type |
-     reference_type;
+     (type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']';
 
   // 4.2
 
@@ -67,19 +69,14 @@ grammar JavaSable;
 
   // 4.3
 
-  reference_type :
-     ((type_name | class_or_interface_type ('.') Identifier) type_arguments?) |
-     ((type_name | class_or_interface_type ('.') Identifier) type_arguments?) |
-     type_variable |
-     array_type;
-
+  
   class_or_interface_type :
-     ((type_name | class_or_interface_type ('.') Identifier) type_arguments?) |
-     ((type_name | class_or_interface_type ('.') Identifier) type_arguments?);
+     (type_name type_arguments?) ('.' Identifier type_arguments?)*
+     ;
 
   type_decl_specifier :
      type_name |
-     class_or_interface_type ('.') Identifier;
+     class_or_interface_type '.' Identifier;
 
   // defined differently in 6.5
   //
@@ -90,11 +87,7 @@ grammar JavaSable;
   type_variable :
     Identifier;
 
-  array_type :
-    type '[' ']';
-
-  // 4.4
-
+  
   type_parameter :
     type_variable type_bound?;
 
@@ -119,41 +112,47 @@ grammar JavaSable;
      type_argument_list ',' type_argument;
 
   type_argument :
-     reference_type |
+     ((type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']') |
      wildcard;
 
   wildcard :
     '?' wildcard_bounds?;
 
   wildcard_bounds :
-     'extends' reference_type |
-     'super' reference_type;
+     'extends' ((type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']') |
+     'super' ((type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']');
 
   // 6.5
 
   package_name :
      Identifier |
-     package_name ('.') Identifier;
+     package_name '.' Identifier;
 
   type_name :
      Identifier |
-     package_or_type_name ('.') Identifier;
+     package_or_type_name '.' Identifier;
 
   expression_name :
      Identifier |
-     ambiguous_name ('.') Identifier;
+     ambiguous_name '.' Identifier;
 
   method_name :
      Identifier |
-     ambiguous_name ('.') Identifier;
+     ambiguous_name '.' Identifier;
 
   package_or_type_name :
      Identifier |
-     package_or_type_name ('.') Identifier;
+     package_or_type_name '.' Identifier;
 
   ambiguous_name :
      Identifier |
-     ambiguous_name ('.') Identifier;
+     ambiguous_name '.' Identifier;
 
   // 7.3
 
@@ -185,13 +184,13 @@ grammar JavaSable;
     'import' type_name ';';
 
   type_import_on_demand_declaration :
-    'import' package_or_type_name ('.') '*' ';';
+    'import' package_or_type_name '.' '*' ';';
 
   single_static_import_declaration :
-    'import' 'static' type_name ('.') Identifier ';';
+    'import' 'static' type_name '.' Identifier ';';
 
   static_import_on_demand_declaration :
-    'import' 'static' type_name ('.') '*' ';';
+    'import' 'static' type_name '.' '*' ';';
 
   // 7.6
 
@@ -405,14 +404,18 @@ grammar JavaSable;
   explicit_constructor_invocation :
      non_wild_type_arguments? 'this' '(' argument_list? ')' ';' |
      non_wild_type_arguments? 'super' '(' argument_list? ')' ';' |
-     primary ('.') non_wild_type_arguments? 'super' '(' argument_list? ')' ';';
+     primary '.' non_wild_type_arguments? 'super' '(' argument_list? ')' ';';
 
   non_wild_type_arguments :
     '<' reference_type_list '>';
 
   reference_type_list :
-     reference_type |
-     reference_type_list ',' reference_type;
+     ((type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']') |
+     reference_type_list ',' ((type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']');
 
   // 8.9
 
@@ -919,7 +922,9 @@ grammar JavaSable;
 
   cast_expression :
      '(' primitive_type ')' unary_expression |
-     '(' reference_type ')' unary_expression_not_plus_minus;
+     '(' ((type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']') ')' unary_expression_not_plus_minus;
 
   // 15.17
 
@@ -952,7 +957,9 @@ grammar JavaSable;
      relational_expression '>' shift_expression |
      relational_expression '<=' shift_expression |
      relational_expression '>=' shift_expression |
-     relational_expression 'instanceof' reference_type;
+     relational_expression 'instanceof' ((type_name type_arguments?) ('.' Identifier type_arguments?)* |
+     type_variable |
+     type '[' ']');
 
   // 15.21
 
