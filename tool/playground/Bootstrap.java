@@ -253,7 +253,7 @@ public class Bootstrap {
 				ParseStats stat = trial.get(f);
 				double atnRatio = stat.ATNTransitions / (double) stat.totalTransitions;
 				if ( t>0 ) transitions.append(", ");
-				transitions.append(atnRatio+"("+stat.ATNTransitions+"/"+stat.totalTransitions+")");
+				transitions.append(atnRatio); //+"("+stat.ATNTransitions+"/"+stat.totalTransitions+")");
 				if ( t>0 ) dfaSizes.append(", ");
 				dfaSizes.append(stat.stopDFASize);
 				// calc cumulative time after all files thus far for this trial
@@ -364,6 +364,7 @@ public class Bootstrap {
 					if (ex.getClass() == RuntimeException.class &&
 						ex.getCause() instanceof RecognitionException)
 					{
+						System.err.println("FAIL OVER TO LL");
 						// The BailErrorStrategy wraps the RecognitionExceptions in
 						// RuntimeExceptions so we have to make sure we're detecting
 						// a true RecognitionException not some other kind
