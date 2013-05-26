@@ -45,15 +45,16 @@ import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
+import org.antlr.v4.runtime.misc.Utils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -63,7 +64,31 @@ import java.util.Random;
  *  Two-stage parse all N files, recording stats for each file.
  *  Dump for processing in R or Python
  */
-public class Profile {
+public class Bootstrap {
+	public static enum OptionArgType { NONE, STRING, INT } // NONE implies boolean
+	public static class Option {
+		String fieldName;
+		String name;
+		OptionArgType argType;
+		String description;
+
+		public Option(String fieldName, String name, String description) {
+			this(fieldName, name, OptionArgType.NONE, description);
+		}
+
+		public Option(String fieldName, String name, OptionArgType argType, String description) {
+			this.fieldName = fieldName;
+			this.name = name;
+			this.argType = argType;
+			this.description = description;
+		}
+	}
+	public static Option[] optionDefs = {
+		new Option("TRIALS", "-trials", OptionArgType.INT, "how many trials of N samples?"),
+		new Option("N",	"-N", OptionArgType.INT, "how many files to sample from docs"),
+		new Option("inputFilePattern",	"-files", OptionArgType.STRING, "input files; e.g., '*.java'"),
+	};
+
 	static class InputDocument {
 		String fileName;
 		char[] content;
@@ -85,6 +110,8 @@ public class Profile {
 			return fileName+"["+content.length+"]"+"@"+index;
 		}
 	}
+
+	/** Simplified from Sam's. This treats all decisions together */
 	static class StatisticsParserATNSimulator extends ParserATNSimulator {
 		public long totalTransitions;
 		public long ATNTransitions;
@@ -128,69 +155,99 @@ public class Profile {
 	}
 
 	static final Random RANDOM = new Random();
-	public static final int TRIALS = 10; // how many times to sample from docs
-	public static final int N = 5;       // how many files in sample
+	public static final String TRANSITION_FILE = "transitions.txt";
 
-	static protected String grammarName;
-	static protected String startRuleName;
-	static Class<? extends Lexer> lexerClass;
-	static Class<? extends Parser> parserClass;
+	// options
+	public String inputFilePattern;
+	public int TRIALS = 10; // how many times to sample from docs
+	public int N = 5;       // how many files in a sample
 
-	static List<InputDocument> documents;
-	static List<List<StatisticsParserATNSimulator>> trials =
+	protected String grammarName;
+	protected String startRuleName;
+	List<String> inputFiles = new ArrayList<String>();
+	Class<? extends Lexer> lexerClass;
+	Class<? extends Parser> parserClass;
+
+	List<InputDocument> documents;
+	List<List<StatisticsParserATNSimulator>> trials =
 		new ArrayList<List<StatisticsParserATNSimulator>>(); // 1 list per trial
 
 	public static void main(String[] args) throws Exception {
-		if (args.length > 0 ) {
-			// for each directory/file specified on the command line
-			List<String> inputFiles = new ArrayList<String>();
-			int i=0;
-			grammarName = args[i];
-			i++;
-			startRuleName = args[i];
-			i++;
-			while ( i<args.length ) {
-				String arg = args[i];
-				i++;
-				if ( arg.charAt(0)!='-' ) { // input file name
-					inputFiles.add(arg);
-					continue;
-				}
-			}
-			List<String> javaFiles = new ArrayList<String>();
+		Bootstrap p = new Bootstrap();
+		if ( args.length == 0 ) { p.help(); System.exit(0); }
+		p.go(args);
+	}
+
+	public void go(String[] args) throws Exception {
+		handleArgs(args);
+		if (inputFiles.size() > 0 ) {
+			List<String> allFiles = new ArrayList<String>();
 			for (String fileName : inputFiles) {
 				List<String> files = getFilenames(new File(fileName));
-				javaFiles.addAll(files);
+				allFiles.addAll(files);
 			}
-			documents = load(javaFiles);
+			documents = load(allFiles);
 			loadLexerParser();
 
+			// A trial picks N random files from documents
 			for (int trial=1; trial<=TRIALS; trial++) {
 				System.out.println("TRIAL "+trial);
 				List<InputDocument> rdocs = getRandomDocuments(documents, N);
 				List<StatisticsParserATNSimulator> stats = process(rdocs);
 				trials.add(stats);
 			}
-			stats(trials);
-		}
-		else {
-			System.err.println("Usage: java Main <directory or file name>");
+//			stats(trials);
+//			dump();
+			dumpTransitionStats();
 		}
 	}
 
-	public static void stats(List<List<StatisticsParserATNSimulator>> trials) {
-		double[][] filestats = new double[N][TRIALS];
-		for (int i = 0; i < trials.size(); i++) {
-			List<StatisticsParserATNSimulator> stats = trials.get(i);
-			for (int j = 0; j < stats.size(); j++) {
-				StatisticsParserATNSimulator stat = stats.get(j);
-				filestats[j][i] = stat.ATNTransitions / (double) stat.totalTransitions;
+	public void dumpTransitionStats() throws IOException {
+		// print ATN vs DFA stats for all files at same index
+		StringBuilder buf = new StringBuilder();
+		for (int f = 0; f < N; f++) {
+			for (int t = 0; t < TRIALS; t++) {
+				buf.append(f);
+				List<StatisticsParserATNSimulator> trial = trials.get(t);
+				StatisticsParserATNSimulator stat = trial.get(f);
+				double ratio = stat.ATNTransitions / (double) stat.totalTransitions;
+				buf.append(", ");
+				buf.append(ratio);
 			}
+			buf.append("\n");
 		}
-		System.out.println(Arrays.toString(filestats));
+		Utils.writeFile(grammarName+"-"+TRANSITION_FILE, buf.toString());
 	}
 
-	public static List<StatisticsParserATNSimulator> process(List<InputDocument> docs) throws Exception {
+//	public void dump() {
+//		System.out.println("trial, file, ATN, LL, transitions");
+//		for (int i = 0; i < trials.size(); i++) {
+//			List<StatisticsParserATNSimulator> trial = trials.get(i);
+//			for (int j = 0; j < trial.size(); j++) {
+//				StatisticsParserATNSimulator stat = trial.get(j);
+//				System.out.printf("%d, %d, %d, %d, %d\n",
+//								  i+1,
+//								  j+1,
+//								  stat.ATNTransitions,
+//								  stat.fullContextTransitions,
+//								  stat.totalTransitions);
+//			}
+//		}
+//	}
+
+//	public void stats(List<List<StatisticsParserATNSimulator>> trials) {
+//		double[][] filestats = new double[N][TRIALS];
+//		for (int i = 0; i < trials.size(); i++) {
+//			List<StatisticsParserATNSimulator> stats = trials.get(i);
+//			for (int j = 0; j < stats.size(); j++) {
+//				StatisticsParserATNSimulator stat = stats.get(j);
+//				filestats[j][i] = stat.ATNTransitions / (double) stat.totalTransitions;
+//			}
+//		}
+//		System.out.println(Arrays.toString(filestats));
+//	}
+
+	public List<StatisticsParserATNSimulator> process(List<InputDocument> docs) throws Exception {
 		List<StatisticsParserATNSimulator> stats =
 			new ArrayList<StatisticsParserATNSimulator>(docs.size());
 		for (InputDocument doc : docs) {
@@ -247,7 +304,7 @@ public class Profile {
 	}
 
 	/** From input documents, grab n in random order */
-	public static List<InputDocument> getRandomDocuments(List<InputDocument> documents, int n) {
+	public List<InputDocument> getRandomDocuments(List<InputDocument> documents, int n) {
 		List<InputDocument> contentList = new ArrayList<InputDocument>(n);
 		for (int i=1; i<=n; i++) {
 			int r = RANDOM.nextInt(documents.size()); // get random index from 0..|inputfiles|-1
@@ -257,7 +314,7 @@ public class Profile {
 	}
 
 	/** Get all file contents into input array */
-	public static List<InputDocument> load(List<String> fileNames) throws IOException {
+	public List<InputDocument> load(List<String> fileNames) throws IOException {
 		List<InputDocument> input = new ArrayList<InputDocument>(fileNames.size());
 		for (String f : fileNames) {
 			input.add(load(f));
@@ -266,7 +323,7 @@ public class Profile {
 		return input;
 	}
 
-	public static InputDocument load(String fileName) throws IOException {
+	public InputDocument load(String fileName) throws IOException {
 		File f = new File(fileName);
 		int size = (int)f.length();
 		FileInputStream fis = new FileInputStream(fileName);
@@ -282,13 +339,13 @@ public class Profile {
 		return new InputDocument(fileName, data);
 	}
 
-	public static List<String> getFilenames(File f) throws Exception {
+	public List<String> getFilenames(File f) throws Exception {
 		List<String> files = new ArrayList<String>();
 		getFilenames_(f, files);
 		return files;
 	}
 
-	public static void getFilenames_(File f, List<String> files) throws Exception {
+	public void getFilenames_(File f, List<String> files) throws Exception {
 		// If this is a directory, walk each file/dir in that directory
 		if (f.isDirectory()) {
 			String flist[] = f.list();
@@ -306,8 +363,8 @@ public class Profile {
 		}
 	}
 
-	static void loadLexerParser() throws Exception {
-				System.out.println("exec "+grammarName+"."+startRuleName);
+	void loadLexerParser() throws Exception {
+		System.out.println("exec "+grammarName+"."+startRuleName);
 		String lexerName = grammarName+"Lexer";
 		ClassLoader cl = Thread.currentThread().getContextClassLoader();
 		try {
@@ -322,6 +379,62 @@ public class Profile {
 		parserClass = cl.loadClass(parserName).asSubclass(Parser.class);
 		if ( parserClass==null ) {
 			System.err.println("Can't load "+parserName);
+		}
+	}
+
+	public void help() {
+		for (Option o : optionDefs) {
+			String name = o.name + (o.argType!=OptionArgType.NONE? " ___" : "");
+			String s = String.format(" %-19s %s", name, o.description);
+			System.out.println(s);
+		}
+	}
+
+	protected void handleArgs(String[] args) {
+		// for each directory/file specified on the command line
+		int i=0;
+		grammarName = args[i];
+		i++;
+		startRuleName = args[i];
+		i++;
+		while ( args!=null && i<args.length ) {
+			String arg = args[i];
+			i++;
+			if ( arg.charAt(0)!='-' ) { // file name
+				if ( !inputFiles.contains(arg) ) inputFiles.add(arg);
+				continue;
+			}
+			boolean found = false;
+			for (Option o : optionDefs) {
+				if ( arg.equals(o.name) ) {
+					found = true;
+					Object argValue = null;
+					if ( o.argType==OptionArgType.STRING ) {
+						argValue = args[i];
+						i++;
+					}
+					else if ( o.argType==OptionArgType.INT ) {
+						argValue = Integer.valueOf(args[i]);
+						i++;
+					}
+					// use reflection to set field
+					Class<? extends Bootstrap> c = this.getClass();
+					try {
+						Field f = c.getField(o.fieldName);
+						if ( argValue==null ) {
+							if ( arg.startsWith("-no-") ) f.setBoolean(this, false);
+							else f.setBoolean(this, true);
+						}
+						else f.set(this, argValue);
+					}
+					catch (Exception e) {
+						System.out.println("can't access field "+o.fieldName);
+					}
+				}
+			}
+			if ( !found ) {
+				System.out.println("invalid arg: " + arg);
+			}
 		}
 	}
 

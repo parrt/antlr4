@@ -1,3 +1,12 @@
 grammar T;
 
-s : ({}A|B|C)? ;
+s : A s B
+  | A s C
+  | X
+  ;
+
+A : 'a' ;
+B : 'b' ;
+C : 'c' ;
+X : 'x' ;
+WS : [ \r\t\n]+ -> skip;
