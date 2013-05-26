@@ -112,17 +112,29 @@ public class Bootstrap {
 	}
 
 	/** Simplified from Sam's. This treats all decisions together */
-	static class StatisticsParserATNSimulator extends ParserATNSimulator {
+	static class ParseInfo extends ParserATNSimulator {
 		public long totalTransitions;
 		public long ATNTransitions;
 		public long fullContextTransitions;
+		public int  startDFASize;
+		public int  stopDFASize; // only dumping this for now
+		public long timeSLL;
+		public long timeLL;
 
-		public StatisticsParserATNSimulator(ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+		public ParseInfo(ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
 			super(atn, decisionToDFA, sharedContextCache);
 		}
 
-		public StatisticsParserATNSimulator(Parser parser, ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+		public ParseInfo(Parser parser, ATN atn,
+						 DFA[] decisionToDFA,
+						 PredictionContextCache sharedContextCache)
+		{
 			super(parser, atn, decisionToDFA, sharedContextCache);
+			startDFASize = getDFASize();
+		}
+
+		public void finish() {
+			stopDFASize = getDFASize();
 		}
 
 		@Override
@@ -148,6 +160,14 @@ public class Bootstrap {
 			return super.computeReachSet(closure, t, fullCtx);
 		}
 
+		public int getDFASize() {
+			int n = 0;
+			for (int i = 0; i < decisionToDFA.length; i++) {
+				n += decisionToDFA[i].states.size();
+			}
+			return n;
+		}
+
 		@Override
 		public String toString() {
 			return ATNTransitions+","+fullContextTransitions+","+totalTransitions;
@@ -156,6 +176,8 @@ public class Bootstrap {
 
 	static final Random RANDOM = new Random();
 	public static final String TRANSITION_FILE = "transitions.txt";
+	public static final String DFASIZE_FILE = "dfasizes.txt";
+	public static final String TIMING_FILE = "timings.txt";
 
 	// options
 	public String inputFilePattern;
@@ -169,8 +191,8 @@ public class Bootstrap {
 	Class<? extends Parser> parserClass;
 
 	List<InputDocument> documents;
-	List<List<StatisticsParserATNSimulator>> trials =
-		new ArrayList<List<StatisticsParserATNSimulator>>(); // 1 list per trial
+	List<List<ParseInfo>> trials =
+		new ArrayList<List<ParseInfo>>(); // 1 list per trial
 
 	public static void main(String[] args) throws Exception {
 		Bootstrap p = new Bootstrap();
@@ -189,34 +211,56 @@ public class Bootstrap {
 			documents = load(allFiles);
 			loadLexerParser();
 
-			// A trial picks N random files from documents
-			for (int trial=1; trial<=TRIALS; trial++) {
-				System.out.println("TRIAL "+trial);
-				List<InputDocument> rdocs = getRandomDocuments(documents, N);
-				List<StatisticsParserATNSimulator> stats = process(rdocs);
-				trials.add(stats);
-			}
+			doTrials();
+
 //			stats(trials);
 //			dump();
-			dumpTransitionStats();
+			dump();
 		}
 	}
 
-	public void dumpTransitionStats() throws IOException {
-		// print ATN vs DFA stats for all files at same index
-		StringBuilder buf = new StringBuilder();
-		for (int f = 0; f < N; f++) {
-			for (int t = 0; t < TRIALS; t++) {
-				buf.append(f);
-				List<StatisticsParserATNSimulator> trial = trials.get(t);
-				StatisticsParserATNSimulator stat = trial.get(f);
-				double ratio = stat.ATNTransitions / (double) stat.totalTransitions;
-				buf.append(", ");
-				buf.append(ratio);
-			}
-			buf.append("\n");
+	public void doTrials() throws Exception {
+		// A trial picks N random files from documents
+		for (int trial=1; trial<=TRIALS; trial++) {
+			System.gc();
+			System.out.println("TRIAL "+trial);
+			List<InputDocument> rdocs = getRandomDocuments(documents, N);
+			List<ParseInfo> stats = processSample(rdocs);
+			trials.add(stats);
 		}
-		Utils.writeFile(grammarName+"-"+TRANSITION_FILE, buf.toString());
+	}
+
+	public void dump() throws IOException {
+		// print ATN vs DFA stats for all files at same index
+		StringBuilder transitions = new StringBuilder();
+		StringBuilder dfaSizes = new StringBuilder();
+		StringBuilder timings = new StringBuilder();
+
+		for (int f = 0; f < N; f++) {
+			long cumTime = 0;
+			for (int t = 0; t < TRIALS; t++) {
+//				transitions.append(f);
+//				dfaSizes.append(f);
+//				timings.append(f);
+				List<ParseInfo> trial = trials.get(t);
+				ParseInfo stat = trial.get(f);
+				double atnRatio = stat.ATNTransitions / (double) stat.totalTransitions;
+				if ( t>0 ) transitions.append(", ");
+				transitions.append(atnRatio);
+				if ( t>0 ) dfaSizes.append(", ");
+				dfaSizes.append(stat.stopDFASize);
+				// calc cumulative time after all files thus far for this trial
+				cumTime += stat.timeLL;
+				if ( t>0 ) timings.append(", ");
+				timings.append(cumTime);
+			}
+			transitions.append("\n");
+			dfaSizes.append("\n");
+			timings.append("\n");
+		}
+		Utils.writeFile(grammarName + "-" + TRANSITION_FILE, transitions.toString());
+		Utils.writeFile(grammarName + "-" + DFASIZE_FILE, dfaSizes.toString());
+		Utils.writeFile(grammarName + "-" + TIMING_FILE, timings.toString());
 	}
 
 //	public void dump() {
@@ -247,11 +291,25 @@ public class Bootstrap {
 //		System.out.println(Arrays.toString(filestats));
 //	}
 
-	public List<StatisticsParserATNSimulator> process(List<InputDocument> docs) throws Exception {
-		List<StatisticsParserATNSimulator> stats =
-			new ArrayList<StatisticsParserATNSimulator>(docs.size());
+	/** Do a single trial of docs to parse, wipe DFA at start, new parse/lexer
+	 *  objects per parse.
+	 */
+	public List<ParseInfo> processSample(List<InputDocument> docs) throws Exception {
+		{	// wipe DFA
+			Constructor<? extends Parser> parserCtor =
+				parserClass.getConstructor(TokenStream.class);
+			Parser parser = parserCtor.newInstance((TokenStream)null);
+			ATN atn = parser.getATN();
+			ParserATNSimulator interp = parser.getInterpreter();
+			for (int j = 0; j < interp.decisionToDFA.length; j++) {
+				interp.decisionToDFA[j] = new DFA(atn.getDecisionState(j), j);
+			}
+		}
+
+		List<ParseInfo> stats =
+			new ArrayList<ParseInfo>(docs.size());
 		for (InputDocument doc : docs) {
-			System.out.print(doc+"\t\t");
+			System.out.print(doc);
 			ANTLRInputStream input =
 				new ANTLRInputStream(doc.content, doc.content.length);
 			Constructor<? extends Lexer> lexerCtor =
@@ -265,18 +323,21 @@ public class Bootstrap {
 			DFA[] decisionToDFA = parser.getInterpreter().decisionToDFA;
 			PredictionContextCache sharedContextCache =
 				parser.getInterpreter().getSharedContextCache();
-			StatisticsParserATNSimulator stat =
-				new StatisticsParserATNSimulator(parser,
-												 parser.getATN(),
-												 decisionToDFA,
-												 sharedContextCache);
+			ParseInfo stat =
+				new ParseInfo(parser,
+							  parser.getATN(),
+							  decisionToDFA,
+							  sharedContextCache);
 			parser.setInterpreter(stat);
 			try {
 				Method startRule = parserClass.getMethod(startRuleName);
 				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
 				parser.setErrorHandler(new BailErrorStrategy());
 				try {
+					final long startTime = System.nanoTime();
 					startRule.invoke(parser, (Object[])null);
+					final long stopTime = System.nanoTime();
+					stat.timeSLL = stopTime - startTime;
 				}
 				catch (RuntimeException ex) {
 					if (ex.getClass() == RuntimeException.class &&
@@ -290,11 +351,18 @@ public class Bootstrap {
 						parser.addErrorListener(ConsoleErrorListener.INSTANCE);
 						parser.setErrorHandler(new DefaultErrorStrategy());
 						parser.getInterpreter().setPredictionMode(PredictionMode.LL);
+
+						final long startTime = System.nanoTime();
+						startRule.invoke(parser, (Object[])null);
+						final long stopTime = System.nanoTime();
+						stat.timeLL = stopTime - startTime;
 					}
 				}
 
+				stat.finish();
+
 				stats.add(stat);
-				System.out.println(stat);
+				System.out.println("\t\t"+stat+", "+((double)stat.ATNTransitions/stat.totalTransitions));
 			}
 			catch (NoSuchMethodException nsme) {
 				System.err.println("No method for rule "+startRuleName+" or it has arguments");
@@ -319,7 +387,7 @@ public class Bootstrap {
 		for (String f : fileNames) {
 			input.add(load(f));
 		}
-		System.out.println(input.size());
+		System.out.println(input.size()+" files");
 		return input;
 	}
 
