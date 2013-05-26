@@ -30,6 +30,7 @@
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ConsoleErrorListener;
@@ -37,6 +38,7 @@ import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
@@ -48,6 +50,7 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.misc.Utils;
 
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -56,6 +59,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -91,6 +95,24 @@ public class Bootstrap {
 		new Option("inputFilePattern",	"-files", OptionArgType.STRING, "input files; e.g., '*.java'"),
 		new Option("showFileNames",	"-showfiles", "show file names as they are parsed")
 	};
+
+	private static class DescriptiveErrorListener extends BaseErrorListener {
+		public static DescriptiveErrorListener INSTANCE = new DescriptiveErrorListener();
+
+		@Override
+		public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+								int line, int charPositionInLine,
+								String msg, RecognitionException e)
+		{
+			String sourceName = recognizer.getInputStream().getSourceName();
+			if (!sourceName.isEmpty()) {
+				sourceName = String.format("%s:%d:%d: ", sourceName, line, charPositionInLine);
+			}
+
+			System.err.println(sourceName+"line "+line+":"+charPositionInLine+" "+msg);
+		}
+
+	}
 
 	static class InputDocument {
 		String fileName;
@@ -333,6 +355,9 @@ public class Bootstrap {
 			Constructor<? extends Lexer> lexerCtor =
 				lexerClass.getConstructor(CharStream.class);
 			Lexer lexer = lexerCtor.newInstance(input);
+			input.name = doc.fileName;
+			lexer.removeErrorListeners();
+			lexer.addErrorListener(new DescriptiveErrorListener());
 			Constructor<? extends Parser> parserCtor =
 				parserClass.getConstructor(TokenStream.class);
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -430,14 +455,19 @@ public class Bootstrap {
 		File f = new File(fileName);
 		int size = (int)f.length();
 		FileInputStream fis = new FileInputStream(fileName);
-		InputStreamReader isr = new InputStreamReader(fis);
+		InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
 		char[] data = null;
+		long numRead = 0;
 		try {
 			data = new char[size];
-			isr.read(data);
+			numRead = isr.read(data);
 		}
 		finally {
 			isr.close();
+		}
+		if ( numRead != size ) {
+			data = Arrays.copyOf(data, (int)numRead);
+//			System.err.println("read error; read="+numRead+"!="+f.length());
 		}
 		return new InputDocument(fileName, data);
 	}
@@ -474,15 +504,17 @@ public class Bootstrap {
 			lexerClass = cl.loadClass(lexerName).asSubclass(Lexer.class);
 		}
 		catch (java.lang.ClassNotFoundException cnfe) {
-			System.err.println("Can't load "+lexerName+" as lexer or parser");
+			System.err.println("Can't load "+lexerName+" as lexer");
 			return;
 		}
+		System.out.println("lexer is "+lexerName);
 
 		String parserName = grammarName+"Parser";
 		parserClass = cl.loadClass(parserName).asSubclass(Parser.class);
 		if ( parserClass==null ) {
 			System.err.println("Can't load "+parserName);
 		}
+		System.out.println("parser is "+parserName);
 	}
 
 	public void help() {

@@ -7,7 +7,6 @@ transitions_file = sys.argv[1]
 
 # load transition data. Each row is the list of trial stats per this one file
 stats = loadtxt(open(transitions_file,"rb"),delimiter=",",skiprows=0)
-print var(stats[1])
 means = [mean(filerow) for filerow in stats]
 
 trials = len(stats[0])
@@ -24,7 +23,8 @@ conf95 = [sort(filerow)[index_of_95] for filerow in stats]
 
 plt.plot(means, linewidth=0.5)
 plt.plot(conf95, color="grey", linewidth=0.5)
-plt.axis(ymax=.4)
+plt.axis(ymax=.3)
+plt.title(transitions_file)
 plt.xlabel('Files parsed', family="serif")
 plt.ylabel('ATN to total transitions ratio', family="serif")
 plt.legend(('ATN transition mean','95% one-sided confidence interval'),
