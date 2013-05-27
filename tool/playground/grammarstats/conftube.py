@@ -22,12 +22,12 @@ conf95 = [sort(filerow)[index_of_95] for filerow in stats]
 
 plt.plot(means, linewidth=0.5)
 plt.plot(conf95, color="grey", linewidth=0.5)
-plt.axis(ymax=.4)
+#plt.axis(ymax=.4)
 plt.title(transitions_file)
 plt.xlabel('Files parsed', family="serif")
 plt.ylabel('ATN to total transitions ratio', family="serif")
 plt.legend(('ATN transition mean','95% one-sided confidence interval'),
 		   loc='upper right' , prop={'family':'serif'})
-plt.savefig('/tmp/stats.pdf', format="pdf")
+plt.savefig('/tmp/'+transitions_file+'-stats.pdf', format="pdf")
 plt.show()
 
