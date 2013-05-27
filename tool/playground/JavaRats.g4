@@ -879,16 +879,12 @@ integerLiteral
 //
 
 literal
-    :   floatingPointLiteral
+    :   FloatingPointLiteral
     |   integerLiteral
     |   characterLiteral
     |   stringLiteral
     |   booleanLiteral
     |   nullLiteral
-    ;
-
-floatingPointLiteral
-    :   FloatingPointString
     ;
 
 characterLiteral
@@ -1685,45 +1681,67 @@ fragment BinaryDigitUnderscore : [01_] ;
 
 fragment IntegerTypeSuffix : [lL] ;
 
-// ----- Floating point literals
 
-FloatingPointString
-    :   Digits '.' Digits? Exponent? FloatTypeSuffix?
-    |   '.' Digits Exponent? FloatTypeSuffix?
-    |   Digits Exponent FloatTypeSuffix?
-    |   Digits Exponent? FloatTypeSuffix
-    ;
+// §3.10.2 Floating-Point Literals
 
-fragment Exponent : [eE] [+-]? Digits ;
-fragment FloatTypeSuffix : [fFdD] ;
+FloatingPointLiteral
+	:	DecimalFloatingPointLiteral
+	|	HexadecimalFloatingPointLiteral
+	;
 
-//FloatingPointLiteral
-//    :   ('0'..'9')+ '.' ('0'..'9')* Exponent? FloatTypeSuffix?
-//    |   '.' ('0'..'9')+ Exponent? FloatTypeSuffix?
-//    |   ('0'..'9')+ Exponent FloatTypeSuffix?
-//    |   ('0'..'9')+ FloatTypeSuffix
-//    |   '0' ('x'|'X')
-//        (   HexDigit+ ('.' HexDigit*)? HexExponent FloatTypeSuffix?
-//        |   '.' HexDigit+ HexExponent FloatTypeSuffix?
-//        )
-//    ;
+fragment
+DecimalFloatingPointLiteral
+	:	Digits '.' Digits? ExponentPart? FloatTypeSuffix?
+	|	'.' Digits ExponentPart? FloatTypeSuffix?
+	|	Digits ExponentPart FloatTypeSuffix?
+	|	Digits FloatTypeSuffix
+	;
 
-//fragment
-//Exponent : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
+fragment
+ExponentPart
+	:	ExponentIndicator SignedInteger
+	;
 
-//fragment
-//HexExponent : ('p'|'P') ('+'|'-')? ('0'..'9')+ ;
+fragment
+ExponentIndicator
+	:	[eE]
+	;
 
-//fragment
-//FloatTypeSuffix : ('f'|'F'|'d'|'D') ;
+fragment
+SignedInteger
+	:	Sign? Digits
+	;
 
-//CharacterLiteral
-//    :   '\'' ( EscapeSequence | ~('\''|'\\') ) '\''
-//    ;
+fragment
+Sign
+	:	[+-]
+	;
 
-//StringLiteral
-//    :  '"' ( EscapeSequence | ~('\\'|'"') )* '"'
-//    ;
+fragment
+FloatTypeSuffix
+	:	[fFdD]
+	;
+
+fragment
+HexadecimalFloatingPointLiteral
+	:	HexSignificand BinaryExponent FloatTypeSuffix?
+	;
+
+fragment
+HexSignificand
+	:	HexNumeral '.'?
+	|	'0' [xX] HexDigits? '.' HexDigits
+	;
+
+fragment
+BinaryExponent
+	:	BinaryExponentIndicator SignedInteger
+	;
+
+fragment
+BinaryExponentIndicator
+	:	[pP]
+	;
 
 CharacterConstant
     :   ['] (EscapeSequence | ~['\\]) [']

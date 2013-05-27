@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 transitions_file = sys.argv[1]
 
 # load transition data. Each row is the list of trial stats per this one file
-stats = loadtxt(open(transitions_file,"rb"),delimiter=",",skiprows=0)
+stats = loadtxt(open(transitions_file+'.txt',"rb"),delimiter=",",skiprows=0)
 means = [mean(filerow) for filerow in stats]
 
 trials = len(stats[0])
@@ -28,6 +28,6 @@ plt.xlabel('Files parsed', family="serif")
 plt.ylabel('ATN to total transitions ratio', family="serif")
 plt.legend(('ATN transition mean','95% one-sided confidence interval'),
 		   loc='upper right' , prop={'family':'serif'})
-plt.savefig('/tmp/'+transitions_file+'-stats.pdf', format="pdf")
+plt.savefig(transitions_file+'-stats.pdf', format="pdf")
 plt.show()
 
