@@ -1,54 +1,12 @@
-parser grammar sql2003Parser;
+// Douglas Godfrey posted this as ANTLR v3 grammar
+// TJP converted to v4
 
-options
-{
+parser grammar SQL2003Parser;
+
+options {
     language=Java;
-    tokenVocab=sql2003Lexer;
-    output=AST;
-    backtrack=true;
-    memoize=true;
+    tokenVocab=SQL2003Lexer;
 }
-
-// !!WARNING!! This grammar requires 64bit Java 1.6 and heap size for AntlrWorks [1GB] and Antlr [8GB] or greater.
-// 
-// !!WARNING!! Your PC or Mac will require 10GB RAM or greater!
-//
-// You need to specify the heap size separately for both AntlrWorks and for Antlr [when it is run by AntlrWorks]
-// specify -Xmx8G in AntlrWorks::Preferences::General::ANTLR_options
-// specify -Xmx1G on the Java command line for invoking AntlrWorks
-//
-// java16 -d64 -jar antlr_33_complete.jar -Xmx8G -Xwatchconversion sql2003Parser.g
-//
-// on Mac OS X right-click the ANTLRWorks.app package, select Show Package Contents and edit the info.plist file
-//   add a new child to the Java property
-//     Key   = VMOptions
-//     Value = [string] -Xms256m -Xmx1G
-//     Key   = VMArchs
-//     Value = [array] [string] x86_64
-//
-//   or in XML format
-//    <key>Java</key>
-//    <dict>
-//        <key>ClassPath</key>
-//        <string>$JAVAROOT/antlrworks.jar</string>
-//        <key>JVMVersion</key>
-//        <string>1.6</string>
-//        <key>MainClass</key>
-//        <string>org.antlr.works.IDE</string>
-//        <key>VMOptions</key>
-//        <string>-Xmx1G</string>
-//        <key>JVMArchs</key>
-//        <array>
-//          <string>x86_64</string>
-//        </array> 
-//    </dict>
-//
-// This SQL 2003 grammar has infinite look-ahead in some of the rules relating to SQL expressions.
-// The grammar will not generate no matter how much memory you have until the infinite look-ahead is resolved.
-// The likely culpret is the cluster of rules involving predicate, value_expression, value_expression_primary,
-// and nonparenthesized_value_expression_primary.
-//
-// If you manage to resolve the infinite lookahead, please repost the updated grammar on the Antlr.org site
 
 /*
 =====================================================================================
@@ -100,68 +58,6 @@ The plain text version of this grammar is
 */
 
 
-/*
-	Key SQL Statements and Fragments
-		* ALTER DOMAIN <alter domain statement>
-		* ALTER TABLE <alter table statement>
-		* CLOSE cursor <close statement>
-		* Column definition <column definition>
-		* COMMIT WORK <commit statement>
-		* CONNECT <connect statement>
-		* CREATE ASSERTION <assertion definition>
-		* CREATE CHARACTER SET <character set definition>
-		* CREATE COLLATION <collation definition>
-		* CREATE DOMAIN <domain definition>
-		* CREATE FUNCTION <schema function>
-		* CREATE PROCEDURE <schema procedure>
-		* CREATE SCHEMA <schema definition>
-		* CREATE TABLE <table definition>
-		* CREATE TRANSLATION <translation definition>
-		* CREATE TRIGGER <trigger definition>
-		* CREATE VIEW <view definition>
-		* Data type <data type>
-		* DEALLOCATE PREPARE <deallocate prepared statement>
-		* DECLARE cursor <declare cursor> <dynamic declare cursor>
-		* DECLARE LOCAL TEMPORARY TABLE <temporary table declaration>
-		* DELETE <delete statement: positioned> <delete statement: searched> <dynamic delete statement: positioned>
-		* DESCRIBE <describe statement>
-		* DESCRIPTOR statements <system descriptor statement>
-		* DISCONNECT <disconnect statement>
-		* EXECUTE <execute statement>
-		* EXECUTE IMMEDIATE <execute immediate statement>
-		* FETCH cursor <fetch statement>
-		* FROM clause <from clause>
-		* GET DIAGNOSTICS <get diagnostics statement>
-		* GRANT <grant statement>
-		* GROUP BY clause <group by clause>
-		* HAVING clause <having clause>
-		* INSERT <insert statement>
-		* Literals <literal>
-		* Keywords <key word>
-		* MERGE <merge statement>
-		* OPEN cursor <open statement>
-		* ORDER BY clause <order by clause>
-		* PREPARE <prepare statement>
-		* REVOKE <revoke statement>
-		* ROLLBACK WORK <rollback statement>
-		* SAVEPOINT <savepoint statement>
-		* Search condition <search condition> <regular expression>
-		* SELECT <query specification>
-		* SET CATALOG <set catalog statement>
-		* SET CONNECTION <set connection statement>
-		* SET CONSTRAINTS <set constraints mode statement>
-		* SET NAMES <set names statement>
-		* SET SCHEMA <set schema statement>
-		* SET SESSION AUTHORIZATION <set session user identifier statement>
-		* SET TIME ZONE <set local time zone statement>
-		* SET TRANSACTION <set transaction statement>
-		* SQL Client MODULE <SQL-client module definition>
-		* UPDATE <update statement: positioned> <update statement: searched> <dynamic update statement: positioned>
-		* Value expression <value expression>
-		* WHERE clause <where clause>
-*/
-
-
 //-------------------------------------------------------------------------
 //
 //  Start Rule
@@ -179,267 +75,14 @@ sql2003Parser
 		EOF
 	;
 
-//-------------------------------------------------------------------------
-//
-//  Parser Rules
-//
-//-------------------------------------------------------------------------
-
-
 left_bracket_or_trigraph    : Left_Bracket  | Left_Bracket_Trigraph;
 right_bracket_or_trigraph   : Right_Bracket | Right_Bracket_Trigraph;
 
-unimplemented_error : { error(UNIMPLEMENTED_FEATURE, $text); skip(); } ;
+//unimplemented_error : { error(UNIMPLEMENTED_FEATURE, $text); skip(); } ;
 
 
 //  Keyword Tokens
 
-/*
-key_word
-	:	reserved_word
-	| 	non_reserved_word;
-
-
-reserved_word  :
-		ADD
-	|	ALL
-	|	ALLOCATE
-	|	ALTER
-	|	AND
-	|	ANY
-	|	ARE
-	|	ARRAY
-	|	AS
-	|	ASENSITIVE
-	|	ASYMMETRIC
-	|	AT
-	|	ATOMIC
-	|	AUTHORIZATION
-	|	BEGIN
-	|	BETWEEN
-	|	BIGINT
-	|	BINARY
-	|	BLOB
-	|	BOOLEAN
-	|	BOTH
-	|	BY
-	|	CALL
-	|	CALLED
-	|	CASCADED
-	|	CASE
-	|	CAST
-	|	CHAR
-	|	CHARACTER
-	|	CHECK
-	|	CLOB
-	|	CLOSE
-	|	COLLATE
-	|	COLUMN
-	|	COMMIT
-	|	CONNECTION
-	|	CONNECT
-	|	CONSTRAINT
-	|	CONSTRUCTOR
-	|	CONTINUE
-	|	CORRESPONDING
-	|	CREATE
-	|	CROSS
-	|	CUBE
-	|	CURRENT
-	|	CURRENT_DATE
-	|	CURRENT_DEFAULT_TRANSFORM_GROUP
-	|	CURRENT_PATH
-	|	CURRENT_ROLE
-	|	CURRENT_TIME
-	|	CURRENT_TIMESTAMP
-	|	CURRENT_TRANSFORM_GROUP_FOR_TYPE
-	|	CURRENT_USER
-	|	CURSOR
-	|	CYCLE
-	|	DATE
-	|	DAY
-	|	DEALLOCATE
-	|	DEC
-	|	DECIMAL
-	|	DECLARE
-	|	DEFAULT
-	|	DELETE
-	|	DEREF
-	|	DESCRIBE
-	|	DETERMINISTIC
-	|	DISCONNECT
-	|	DISTINCT
-	|	DOUBLE
-	|	DROP
-	|	DYNAMIC
-	|	EACH
-	|	ELEMENT
-	|	ELSE
-	|	END
-	|	END_EXEC
-	|	ESCAPE
-	|	EXCEPT
-	|	EXEC
-	|	EXECUTE
-	|	EXISTS
-	|	EXIT
-	|	EXTERNAL
-	|	FALSE
-	|	FETCH
-	|	FILTER
-	|	FOR
-	|	FOREIGN
-	|	FREE
-	|	FROM
-	|	FULL
-	|	FUNCTION
-	|	GENERATED
-	|	GET
-	|	GLOBAL
-	|	GRANT
-	|	GROUP
-	|	GROUPING
-	|	HAVING
-	|	HOLD
-	|	HOUR
-	|	IDENTITY
-	|	IMMEDIATE
-	|	IN
-	|	INDICATOR
-	|	INNER
-	|	INOUT
-	|	INPUT
-	|	INSENSITIVE
-	|	INSERT
-	|	INT
-	|	INTEGER
-	|	INTERSECT
-	|	INTERVAL
-	|	INTO
-	|	IS
-	|	ISOLATION
-	|	JOIN
-	|	LANGUAGE
-	|	LARGE
-	|	LATERAL
-	|	LEADING
-	|	LEFT
-	|	LIKE
-	|	LOCAL
-	|	LOCALTIME
-	|	LOCALTIMESTAMP
-	|	MATCH
-	|	MEMBER
-	|	MERGE
-	|	METHOD
-	|	MINUTE
-	|	MODIFIES
-	|	MODULE
-	|	MONTH
-	|	MULTISET
-	|	NATIONAL
-	|	NATURAL
-	|	NCHAR
-	|	NCLOB
-	|	NEW
-	|	NO
-	|	NONE
-	|	NOTFOUND
-	|	NOT
-	|	NULL
-	|	NUMERIC
-	|	OF
-	|	OLD
-	|	ON
-	|	ONLY
-	|	OPEN
-	|	OR
-	|	ORDER
-	|	OUT
-	|	OUTER
-	|	OUTPUT
-	|	OVER
-	|	OVERLAPS
-	|	PARAMETER
-	|	PARTITION
-	|	PRECISION
-	|	PREPARE
-	|	PRIMARY
-	|	PROCEDURE
-	|	RANGE
-	|	READS
-	|	REAL
-	|	RECURSIVE
-	|	REF
-	|	REFERENCES
-	|	REFERENCING
-	|	RELEASE
-	|	RETURN
-	|	RETURNS
-	|	REVOKE
-	|	RIGHT
-	|	ROLLBACK
-	|	ROLLUP
-	|	ROW
-	|	ROWS
-	|	SAVEPOINT
-	|	SCOPE
-	|	SCROLL
-	|	SEARCH
-	|	SECOND
-	|	SELECT
-	|	SENSITIVE
-	|	SESSION_USER
-	|	SET
-	|	SIMILAR
-	|	SMALLINT
-	|	SOME
-	|	SPECIFIC
-	|	SPECIFICTYPE
-	|	SQL
-	|	SQLEXCEPTION
-	|	SQLSTATE
-	|	SQLWARNING
-	|	START
-	|	STATIC
-	|	SUBMULTISET
-	|	SYMMETRIC
-	|	SYSTEM
-	|	SYSTEM_USER
-	|	TABLE
-	|	THEN
-	|	TIME
-	|	TIMESTAMP
-	|	TIMEZONE_HOUR
-	|	TIMEZONE_MINUTE
-	|	TO
-	|	TRAILING
-	|	TRANSLATION
-	|	TREAT
-	|	TRIGGER
-	|	TRUE
-	|	UNDO
-	|	UNION
-	|	UNIQUE
-	|	UNKNOWN
-	|	UNNEST
-	|	UPDATE
-	|	USER
-	|	USING
-	|	VALUE
-	|	VALUES
-	|	VARCHAR
-	|	VARYING
-	|	WHEN
-	|	WHENEVER
-	|	WHERE
-	|	WINDOW
-	|	WITH
-	|	WITHIN
-	|	WITHOUT
-	|	YEAR
-	;
-*/
 
 non_reserved_word  :
 		ABS
@@ -737,65 +380,63 @@ non_reserved_word  :
 */
 
 identifier   	   
-	options{k=1;} 
 	:  
-	/*( non_reserved_word )=> non_reserved_word |*/ Regular_Identifier | Unicode_Identifier;
+	Regular_Identifier | Unicode_Identifier;
 sql_language_identifier          
-	options{k=1;}  				 
 	:  Regular_Identifier;
 user_identifier                  
-	options{k=1;}  				 
+	  				 
 	:  Regular_Identifier;
 schema_name                      
-	options{k=1;}  				 
+	  				 
 	:  identifier  ( Period  identifier )? ;
 fully_qualified_identifier       
-	options{k=1;}  				 
+	  				 
 	:  identifier  ( Period  identifier (  Period  identifier )? )?;
 
 table_name                       
-	options{k=1;}  				 
+	  				 
 	:  	( MODULE Period identifier
 		| identifier  ( Period  identifier (  Period  identifier )? )?
 		);
 cursor_name                      
-	options{k=1;}  				 
+	  				 
 	:  ( MODULE  Period )? identifier ;
 external_routine_name            
-	options{k=1;}  				 
+	  				 
 	:  identifier  | Character_String_Literal  ;
 sql_statement_name               
-	options{k=1;}  				 
+	  				 
 	:  identifier  | scoped_identifier ;
 dynamic_cursor_name              
-	options{k=1;}  				 
+	  				 
 	:  cursor_name  | scoped_identifier ;
 scoped_identifier                
-	options{k=1;}  				 
+	  				 
 	:  ( scope_option  )? simple_value_specification ;
 scope_option                     
-	options{k=1;}  				 
+	  				 
 	:  GLOBAL | LOCAL;
 
 connection_name                  
-	options{k=1;}  				 
+	  				 
 	:  simple_value_specification ;
 sql_server_name                  
-	options{k=1;}  				 
+	  				 
 	:  simple_value_specification ;
 connection_user_name             
-	options{k=1;}  				 
+	  				 
 	:  simple_value_specification ;
 
 simple_value_specification  	 
-	options{k=1;}  				 
+	  				 
 	:	literal
 	//|	host_parameter_name 	 // Colon identifier
 	|	identifier_chain 		 // identifier ( Period identifier )*
 	;
 
 column_reference
-	options{k=1;}  				 
+	  				 
 	: 	identifier_chain | MODULE Period identifier  Period identifier;
 identifier_chain   				 :  identifier  ( Period identifier  )*;
 
@@ -805,44 +446,6 @@ identifier_chain   				 :  identifier  ( Period identifier  )*;
 Specifying lexical units (tokens and separators) that participate in SQL language.
 */
 
-/*
-token  :  nondelimiter_token | delimiter_token;
-
-nondelimiter_token :
-		Regular_Identifier
-	|	Unsigned_Float
-	|	Unsigned_Integer
-	|	Unsigned_Large_Integer
-	|	Signed_Float
-	|	Signed_Integer
-	|	Signed_Large_Integer
-	|	key_word
-	;
-
-delimiter_token :
-		Unicode_Identifier
-	|	Character_String_Literal
-	|	National_Character_String_Literal
-	|	Unicode_Character_String_Literal
-	|	Bit_String_Literal
-	|	Hex_String_Literal
-	|	date_literal
-	|	time_literal
-	|	timestamp_literal
-	|	interval_literal
-	|	Unicode_Identifier
-	|	SQL_Special_Character
-	|	Not_Equals_Operator
-	|	Greater_Or_Equals_Operator
-	|	Less_Or_Equals_Operator
-	|	Concatenation_Operator
-	|	Right_Arrow
-	|	Left_Bracket_Trigraph
-	|	Right_Bracket_Trigraph
-	|	Double_Colon
-	|	Double_Period
-	;
-*/
 
 /*
 		 5.3 <literal> (p143)
@@ -850,7 +453,7 @@ delimiter_token :
 
 
 general_literal
-	options{k=1;}
+	
 	:	Character_String_Literal
 	|	National_Character_String_Literal
 	|	Bit_String_Literal
@@ -862,12 +465,12 @@ general_literal
 
 boolean_literal             :  TRUE | FALSE | UNKNOWN;
 
-signed_numeric_literal   :  Signed_Integer | Signed_Large_Integer | Signed_Float;
+signed_numeric_literal   :  Signed_Integer | Signed_Float;
 
-unsigned_numeric_literal  :  Unsigned_Integer | Unsigned_Large_Integer | Unsigned_Float ;
+unsigned_numeric_literal  :  Unsigned_Integer | Unsigned_Float ;
 
 literal
-	options{k=1;}
+	
 	:	Signed_Integer
 	|	Signed_Float
 	|	general_literal ;
@@ -928,7 +531,7 @@ Specify the precision of an interval data type.
 */
 
 interval_qualifier
-	options{k=1;}
+	
 	:	datetime_field_name  ( Left_Paren Unsigned_Integer  Right_Paren )?
 			(
 				TO
@@ -950,7 +553,7 @@ datetime_field_name   :  YEAR | MONTH | DAY | HOUR | MINUTE;
 */
 
 data_type
-	options{k=1;}
+	
 	:	predefined_type
 	|	row_type
 	|	fully_qualified_identifier
@@ -968,9 +571,9 @@ data_type
 //	;
 
 predefined_type
-	options{k=1;}
+	
 	:	character_string_type
-		( CHARACTER SET Character_Set_Name )?
+		//( CHARACTER SET Character_Set_Name )?
 		( collate_clause  )?
 	|	national_character_string_type
 		( collate_clause  )?
@@ -982,7 +585,7 @@ predefined_type
 	;
 
 character_string_type
-	options{k=1;}
+	
 	:	(	CHARACTER |	CHAR )
 		( 	Left_Paren length  Right_Paren )?
 
@@ -994,7 +597,7 @@ character_string_type
 	;
 
 national_character_string_type
-	options{k=1;}
+	
 	:	(	NATIONAL CHARACTER | NATIONAL CHAR | NCHAR
 		)	( Left_Paren length  Right_Paren )?
 
@@ -1006,18 +609,18 @@ national_character_string_type
 	;
 
 binary_large_object_string_type
-	options{k=1;}
+	
 	:	(	BINARY LARGE OBJECT | BLOB )
 		( 	Left_Paren large_object_length  Right_Paren )?
 	;
 
 numeric_type
-	options{k=1;}
+	
 	:	exact_numeric_type
 	|	approximate_numeric_type ;
 
 exact_numeric_type
-	options{k=1;}
+	
 	:	(	NUMERIC
 		|	DECIMAL
 		|	DEC
@@ -1030,7 +633,7 @@ exact_numeric_type
 	;
 
 approximate_numeric_type
-	options{k=1;}
+	
 	:	FLOAT ( Left_Paren precision  Right_Paren )?
 	|	REAL
 	|	DOUBLE PRECISION
@@ -1040,8 +643,8 @@ length
 	:	Unsigned_Integer ;
 
 large_object_length
-	options{k=1;}
-	:	(	Unsigned_Integer | Unsigned_Large_Integer )
+	
+	:   Unsigned_Integer 
 		(	char_length_units  )?
 	;
 
@@ -1058,7 +661,7 @@ boolean_type
 	:	BOOLEAN;
 
 datetime_type
-	options{k=1;}
+	
 	:	DATE
 	|	(	TIME |	TIMESTAMP )
 		( Left_Paren Unsigned_Integer  Right_Paren )?
@@ -1084,7 +687,6 @@ reference_type                      :  REF Left_Paren fully_qualified_identifier
 scope_clause                        :  SCOPE table_name ;
 
 collection_type
-	options{k=2;}
 	:   (	predefined_type
 		|	row_type
 		|	fully_qualified_identifier
@@ -1094,46 +696,12 @@ collection_type
  		|	MULTISET
  		)*;
 
-//collection_type
-//	options{k=2;}
-//	:	array_type
-//	|	multiset_type ;
 
 array_type :  	collection_type;
 
-//array_type
-//	options{k=2;}
-//	:  	( 	predefined_type
-//		|	row_type
-//		|	fully_qualified_identifier
-//		|	reference_type
-//		| 	multiset_type
-//		)
-//		( ARRAY ( left_bracket_or_trigraph Unsigned_Integer  right_bracket_or_trigraph )? )*;
-
-// array_type                       :  data_type  ARRAY ( left_bracket_or_trigraph Unsigned_Integer  right_bracket_or_trigraph )?;
 
 multiset_type 	:	collection_type;
 
-// multiset_type                    :  data_type  MULTISET;
-
-//multiset_type
-//	options{k=2;}
-//	:	(	predefined_type
-//		|	row_type
-//		|	fully_qualified_identifier
-//		|	reference_type
-//		|	array_type
-//		)
-//		( MULTISET )*;
-
-//data_type
-//	:	predefined_type
-//	|	row_type
-//	|	fully_qualified_identifier
-//	|	reference_type
-//	|	collection_type
-//	;
 
 /*
 		 6.2 field_definition  (p173)
@@ -1143,60 +711,21 @@ field_definition   :  identifier  data_type  ( reference_scope_check  )?;
 
 /*
 		 6.3 <value expression primary> (p174)
-/*
-
-/*
-value_expression_primary  :
-		parenthesized_value_expression
-	|	nonparenthesized_value_expression_primary
-	;
-
-nonparenthesized_value_expression_primary  :
-		unsigned_value_specification
-	|	column_reference
-	|	set_function_specification
-	|	window_function
-	|	scalar_subquery
-	|	case_expression
-	|	cast_specification
-	|	field_reference
-	|	subtype_treatment
-	|	method_invocation
-	|	static_method_invocation
-	|	new_specification
-	|	attribute_or_method_reference
-	|	reference_resolution
-	|	collection_value_constructor
-	|	array_element_reference
-	|	multiset_element_reference
-	|	routine_invocation
-	|	next_value_expression
-	;
-
 */
-parenthesized_value_expression
-	options{k=1;}
-	:  Left_Paren value_expression  Right_Paren;
-
-/*
-
-		 6.4 <value specification> and <target specification> (p176)*/
 
 value_specification
-	options{k=1;}
+	
 	:	literal
 	|	general_value_specification ;
 
 unsigned_value_specification
-	options{k=1;}
+	
 	:	Unsigned_Integer
 	|	general_value_specification ;
 
 general_value_specification
-	options{k=1;}
+	
 	:
-//	host_parameter_specification 		// Colon identifier  ( ( INDICATOR )? Colon identifier )?;
-//	|	embedded_variable_specification 	// duplicate of host_parameter_specification
 	|	identifier_chain 					// identifier ( Period identifier )*
 	|	dynamic_parameter_specification 	// Question_Mark
 	|	current_collation_specification 	// CURRENT_COLLATION Left_Paren string_value_expression  Right_Paren
@@ -1212,31 +741,25 @@ general_value_specification
 	;
 
 target_specification
-	options{k=1;}
+	
 	:
-//	host_parameter_specification 		// host_parameter_name  ( indicator_parameter  )?;
 	|	target_column_or_array_element 		// column_reference ( left_bracket simple_value_specification  right_bracket )?
 	|	dynamic_parameter_specification 	// Question_Mark
 	;
-//	|	column_reference 					// identifier_chain | MODULE Period identifier Period identifier
-//	|	embedded_variable_specification 	// duplicate of host_parameter_specification
-//	|	identifier_chain 					// called by column_reference
 
 target_column_or_array_element
-	options{k=1;}
+	
 	:	column_reference  ( left_bracket_or_trigraph simple_value_specification  right_bracket_or_trigraph )? ;
 
 simple_target_specification
-	options{k=1;}
+	
 	:
-//	host_parameter_specification 		// host_parameter_name  ( indicator_parameter  )?;
 	|	column_reference 					// identifier_chain | MODULE Period identifier Period identifier
-//	|	host_parameter_name 				// called by host_parameter_specification
-//	|	identifier_chain 					// called by column_reference
 	;
+
 /*
 host_parameter_specification
-	options{k=1;}
+	
 	:	host_parameter_name  ( indicator_parameter  )?;
 */
 dynamic_parameter_specification
@@ -1263,27 +786,22 @@ current_collation_specification   :  CURRENT_COLLATION Left_Paren string_value_e
 		 6.5 <contextually typed value specification> (p181)*/
 
 contextually_typed_value_specification  
-	options {k=1;}
 	:	implicitly_typed_value_specification  
 	| 	default_specification ;
 
 implicitly_typed_value_specification   
-	options {k=1;}
 	:  	null_specification  
 	| 	empty_specification ;
 
 null_specification   
-	options {k=1;}
 	:  NULL;
 
 empty_specification  
-	options {k=1;}
 	:	ARRAY left_bracket_or_trigraph right_bracket_or_trigraph
 	|	MULTISET left_bracket_or_trigraph right_bracket_or_trigraph
 	;
 
 default_specification   
-	options {k=1;}
 	:  DEFAULT;
 
 /*
@@ -1311,7 +829,7 @@ default_specification
 */
 
 set_function_specification   
-	options{k=1;}
+	
 	:  aggregate_function  | grouping_operation ;
 
 grouping_operation   :  GROUPING Left_Paren column_reference  ( Comma column_reference  )* Right_Paren;
@@ -1321,11 +839,9 @@ grouping_operation   :  GROUPING Left_Paren column_reference  ( Comma column_ref
 */
 
 window_function   
-	options {k=1;}
 	:  window_function_type  OVER window_name_or_specification ;
 
 window_function_type
-	options {k=1;}
 	:
 		rank_function_type  Left_Paren Right_Paren
 	|	ROW_NUMBER Left_Paren Right_Paren
@@ -1343,7 +859,7 @@ in_line_window_specification   :  window_specification ;
 		 6.11 case_expression  (p197)*/
 
 case_expression   
-	options{k=1;}
+	
 	:  case_abbreviation  | case_specification ;
 
 case_abbreviation  :
@@ -1363,12 +879,12 @@ searched_when_clause   :  WHEN search_condition  THEN result ;
 else_clause   :  ELSE result ;
 
 case_operand
-	options {k=1;}
+	
 	:	row_value_predicand
 	| 	overlaps_predicate_part_1;
 
 when_operand
-	options {k=1;}
+	
 	:
 		row_value_predicand
 
@@ -1401,7 +917,7 @@ result_expression   :  value_expression ;
 */
 
 cast_specification
-	options{k=1;}
+	
 	:	CAST
 		Left_Paren
 			cast_operand
@@ -1409,7 +925,7 @@ cast_specification
 		Right_Paren;
 
 cast_operand
-	options{k=1;}
+	
 	:	value_expression
 	|	implicitly_typed_value_specification ;
 
@@ -1422,7 +938,7 @@ cast_target
 */
 
 next_value_expression   
-	options{k=1;}
+	
 	:  NEXT VALUE FOR fully_qualified_identifier ;
 
 /*
@@ -1440,7 +956,7 @@ field_reference   :  value_expression_primary  Period identifier ;
 */
 
 subtype_treatment  
-	options{k=1;}
+	
 	:
 		TREAT Left_Paren subtype_operand  AS target_subtype  Right_Paren;
 
@@ -1463,7 +979,7 @@ direct_invocation  :
 		value_expression_primary  Period identifier  ( sql_argument_list )?;
 */
 generalized_invocation
-	options{k=1;}
+	
 	:	Left_Paren
 			value_expression_primary
 			AS data_type
@@ -1481,7 +997,7 @@ constructor_method_selection   :  routine_invocation ;
 		 6.17 static_method_invocation  (p223)*/
 
 static_method_invocation  
-	options{k=1;}
+	
 	:
 		fully_qualified_identifier  Double_Colon  identifier  ( sql_argument_list )?;
 
@@ -1492,11 +1008,11 @@ static_method_selection   :  routine_invocation ;
 		 6.18 new_specification  (p225)*/
 
 new_specification
-	options{k=1;}
+	
 	:	NEW routine_invocation ;
 
 new_invocation
-	options{k=1;}
+	
 	:	method_invocation
 	|	routine_invocation ;
 
@@ -1533,7 +1049,7 @@ method_reference  :
 		 6.22 reference_resolution  (p232)*/
 
 reference_resolution   
-	options{k=1;}
+	
 	:  DEREF Left_Paren reference_value_expression  Right_Paren;
 
 /*
@@ -1550,7 +1066,7 @@ array_element_reference  :
 		 6.24 multiset_element_reference  (p235)*/
 
 multiset_element_reference  
-	options{k=1;}
+	
 	:
 		ELEMENT Left_Paren multiset_value_expression  Right_Paren;
 
@@ -1561,14 +1077,14 @@ Specify a value.
 */
 
 value_expression
-	options {k=1;}
+	
 	:	common_value_expression
 	|	boolean_value_expression
 	|	row_value_expression
 	;
 
 common_value_expression
-	options {k=1;}
+	
 	:	numeric_value_expression
 	|	string_value_expression
 	|	datetime_value_expression
@@ -1579,20 +1095,20 @@ common_value_expression
 	;
 
 user_defined_type_value_expression
-	options {k=1;}
+	
 	: 	value_expression_primary ;
 
 reference_value_expression
-	options {k=1;}
+	
 	:	value_expression_primary ;
 
 collection_value_expression
-	options {k=1;}
+	
 	:	array_value_expression
 	|	multiset_value_expression ;
 
 collection_value_constructor
-	options{k=1;}
+	
 	:	array_value_constructor  		// value_expression_primary ( Concatenation_Operator  value_expression_primary )*
 	|	multiset_value_constructor ;
 
@@ -1603,21 +1119,21 @@ Specify a numeric value.
 */
 
 numeric_value_expression
-	options{k=1;}
+	
 	:	term ( ( Plus_Sign | Minus_Sign ) term )*
 	;
 
 term
-	options{k=1;}
+	
 	:	factor ( ( Asterisk | Slash ) factor )*
 	;
 
 factor
-	options{k=1;}
+	
 	:  ( sign  )? numeric_primary ;
 
 numeric_primary
-	options{k=1;}
+	
 	:	value_expression_primary
 	|	numeric_value_function
 	;
@@ -1630,7 +1146,7 @@ Specify a function yielding a value of type numeric.
 */
 
 numeric_value_function
-	options{k=1;}
+	
 	:	position_expression
 	|	extract_expression
 	|	length_expression
@@ -1674,7 +1190,7 @@ extract_field   :  primary_datetime_field  | time_zone_field ;
 time_zone_field   :  TIMEZONE_HOUR | TIMEZONE_MINUTE;
 
 extract_source
-	options{k=1;}
+	
 	:	datetime_value_expression
 	|	interval_value_expression ;
 
@@ -1706,23 +1222,23 @@ Specify a character string value or a binary string value.
 */
 
 string_value_expression
-	options{k=1;}
+	
 	:	character_value_expression; //  | blob_value_expression ;
 
 character_value_expression
-	options{k=1;}
+	
 	:	character_factor ( Concatenation_Operator  character_factor )*;
 // character_value_expression   :  concatenation  | character_factor ;
 
 // concatenation   :  character_value_expression  Concatenation_Operator  character_factor ;
 
 character_factor
-	options{k=1;}
+	
 	:	character_primary
 		( collate_clause  )?;
 
 character_primary
-	options{k=1;}
+	
 	:	value_expression_primary
 	|	string_value_function ;
 
@@ -1745,12 +1261,12 @@ Specify a function yielding a value of type character string or binary string.
 */
 
 string_value_function
-	options{k=1;}
+	
 	:	character_value_function
 	|	blob_value_function ;
 
 character_value_function
-	options{k=1;}
+	
 	:	character_substring_function
 	|	regular_expression_substring_function
 	|	fold
@@ -1763,7 +1279,7 @@ character_value_function
 	;
 
 character_substring_function
-	options{k=1;}
+	
 	:	SUBSTRING
 		Left_Paren
 			character_value_expression
@@ -1773,7 +1289,7 @@ character_substring_function
 		Right_Paren;
 
 regular_expression_substring_function
-	options{k=1;}
+	
 	:	SUBSTRING
 		Left_Paren
 			character_value_expression
@@ -1782,14 +1298,14 @@ regular_expression_substring_function
 		Right_Paren;
 
 fold
-	options{k=1;}
+	
 	:	( UPPER | LOWER )
 		Left_Paren
 			character_value_expression
 		Right_Paren;
 
 transcoding
-	options{k=1;}
+	
 	:	CONVERT
 		Left_Paren
 			character_value_expression
@@ -1797,7 +1313,7 @@ transcoding
 		Right_Paren;
 
 character_transliteration
-	options{k=1;}
+	
 	:	TRANSLATE
 		Left_Paren
 			character_value_expression
@@ -1805,14 +1321,14 @@ character_transliteration
 		Right_Paren;
 
 trim_function
-	options{k=1;}
+	
 	:	TRIM
 		Left_Paren
 			trim_operands
 		Right_Paren;
 
 trim_operands
-	options{k=1;}
+	
 	:	trim_source
 	|	trim_specification	// ( trim_specification )?
 		( trim_character  )?
@@ -1826,7 +1342,7 @@ trim_specification   :  LEADING | TRAILING | BOTH;
 trim_character   :  character_value_expression ;
 
 character_overlay_function
-	options{k=1;}
+	
 	:	OVERLAY
 		Left_Paren
 			character_value_expression
@@ -1838,7 +1354,7 @@ character_overlay_function
 
 
 normalize_function
-	options{k=1;}
+	
 	:	NORMALIZE
 		Left_Paren
 			character_value_expression
@@ -1847,14 +1363,14 @@ normalize_function
 specific_type_method   :  user_defined_type_value_expression  Period SPECIFICTYPE;
 
 blob_value_function
-	options{k=1;}
+	
 	:	blob_substring_function
 	|	blob_trim_function
 	|	blob_overlay_function
 	;
 
 blob_substring_function
-	options{k=1;}
+	
 	:	SUBSTRING
 		Left_Paren
 			character_value_expression
@@ -1863,14 +1379,14 @@ blob_substring_function
 		Right_Paren;
 
 blob_trim_function
-	options{k=1;}
+	
 	:	TRIM
 		Left_Paren
 			blob_trim_operands
 		Right_Paren;
 
 blob_trim_operands
-	options{k=1;}
+	
 	:	blob_trim_source
 	|	trim_specification
 		( trim_octet  )?
@@ -1882,7 +1398,7 @@ blob_trim_source   :  character_value_expression ;
 trim_octet   :  character_value_expression ;
 
 blob_overlay_function
-	options{k=1;}
+	
 	:	OVERLAY
 		Left_Paren
 			character_value_expression
@@ -1902,21 +1418,21 @@ Specify a datetime value.
 */
 
 datetime_value_expression
-	options{k=1;}
+	
 	:	( interval_value_expression  Plus_Sign)? datetime_term
 		( ( Plus_Sign | Minus_Sign) interval_term )*
 	;
 
 datetime_term
-	options{k=1;}
+	
 	:	datetime_factor ;
 
 datetime_factor
-	options{k=1;}
+	
 	:	datetime_primary  ( time_zone  )?;
 
 datetime_primary
-	options{k=1;}
+	
 	:	pure_numeric_value_expression
 	|	datetime_value_function ;
 
@@ -1925,11 +1441,11 @@ datetime_primary
 //	|	datetime_value_function ;
 
 time_zone
-	options{k=1;}
+	
 	:	AT time_zone_specifier ;
 
 time_zone_specifier
-	options{k=1;}
+	
 	:	LOCAL | TIME ZONE interval_primary ;
 
 /*
@@ -1940,7 +1456,7 @@ Specify a function yielding a value of type datetime.
 */
 
 datetime_value_function
-	options{k=1;}
+	
 	:	current_date_value_function
 	|	current_time_value_function
 	|	current_timestamp_value_function
@@ -1949,23 +1465,23 @@ datetime_value_function
 	;
 
 current_date_value_function
-	options{k=1;}
+	
 	:	CURRENT_DATE;
 
 current_time_value_function
-	options{k=1;}
+	
 	:	CURRENT_TIME ( Left_Paren time_precision  Right_Paren )?;
 
 current_local_time_value_function
-	options{k=1;}
+	
 	:	LOCALTIME ( Left_Paren time_precision  Right_Paren )?;
 
 current_timestamp_value_function
-	options{k=1;}
+	
 	:	CURRENT_TIMESTAMP ( Left_Paren timestamp_precision  Right_Paren )?;
 
 current_local_timestamp_value_function
-	options{k=1;}
+	
 	:	LOCALTIMESTAMP ( Left_Paren timestamp_precision  Right_Paren )?;
 
 /*
@@ -1975,7 +1491,7 @@ Specify an interval value.
 */
 
 interval_value_expression
-	options{k=1;}
+	
 	:	(	interval_term
 		|	Left_Paren datetime_value_expression  Minus_Sign datetime_term  Right_Paren interval_qualifier
 		)
@@ -1983,44 +1499,44 @@ interval_value_expression
 	;
 
 interval_term
-	options{k=1;}
+	
 	:	( pure_numeric_term Asterisk )?
 		interval_factor
 		( ( Asterisk | Slash ) pure_numeric_factor )*
 	;
 
 //interval_term
-//	options{k=1;}
+//	
 //	:	( term  Asterisk )? interval_factor
 //		( ( Asterisk | Slash ) factor )*
 //	;
 
 interval_factor
-	options{k=1;}
+	
 	:  	( sign  )? interval_primary ;
 
 interval_primary
-	options{k=1;}
+	
 	:	pure_numeric_value_expression  ( interval_qualifier  )?
 	|	interval_value_function
 	;
 
 pure_numeric_value_expression
-	options{k=1;}
+	
 	:	 ( ( Plus_Sign | Minus_Sign ) pure_numeric_term )*
 	;
 
 pure_numeric_term
-	options{k=1;}
+	
 	:	pure_numeric_factor ( ( Asterisk | Slash ) pure_numeric_factor )*
 	;
 
 pure_numeric_factor
-	options{k=1;}
+	
 	:  ( sign  )? pure_numeric_primary ;
 
 pure_numeric_primary
-	options{k=1;}
+	
 	:	unsigned_value_specification
 	|	numeric_value_function
 //	|	host_parameter_specification
@@ -2031,50 +1547,50 @@ pure_numeric_primary
 		 6.33 interval_value_function  (p276)*/
 
 interval_value_function
-	options{k=1;}
+	
 	:	interval_absolute_value_function ;
 
 interval_absolute_value_function
-	options{k=1;}
+	
 	:	ABS Left_Paren interval_value_expression  Right_Paren;
 
 /*
 		 6.34 boolean_value_expression  (p277)*/
 
 boolean_value_expression
-	options{k=1;}
+	
 	:	boolean_term ( OR boolean_term )*
 	;
 
 boolean_term
-	options {k=1;}
+	
 	:	boolean_factor ( AND boolean_factor )*
 	;
 
 boolean_factor
-	options {k=1;}
+	
 	:  ( NOT )? boolean_test ;
 
 boolean_test
-	options {k=1;}
+	
 	:  boolean_primary  ( IS ( NOT )? truth_value  )?;
 
 truth_value   :  TRUE | FALSE | UNKNOWN;
 
 boolean_primary
-	options {k=1;}
+	
 	:	predicate
 	|	boolean_predicand;
 
 boolean_predicand
-	options {k=1;}
+	
 	:	parenthesized_boolean_value_expression
 	|	nonparenthesized_value_expression_primary
 	;
 
 
 parenthesized_boolean_value_expression
-	options {k=1;}
+	
 	:  Left_Paren boolean_value_expression  Right_Paren;
 
 /*
@@ -2098,14 +1614,14 @@ array_value_expression
 
 
 method_invocation
-	options{k=1;}
+	
 	:	generalized_invocation
 	|	value_expression_primary  Period identifier  ( sql_argument_list )?
 	;
 // method_invocation   :  direct_invocation  | generalized_invocation ;
 
 value_expression_primary
-	options{k=1;}
+	
 	:	(	parenthesized_value_expression
 		|	unsigned_value_specification
 		|	column_reference
@@ -2130,13 +1646,11 @@ value_expression_primary
 		)*
 	;
 
-//value_expression_primary  :
-//		parenthesized_value_expression
-//	|	nonparenthesized_value_expression_primary
-//	;
+parenthesized_value_expression
+        :  Left_Paren value_expression  Right_Paren;
 
 nonparenthesized_value_expression_primary
-	options {k=1;}
+	
 	:	unsigned_value_specification
 	|	column_reference
 	|	set_function_specification
@@ -2190,17 +1704,17 @@ array_value_constructor_by_query  :
 		 6.37 multiset_value_expression  (p286)
 */
 multiset_value_expression
-	options{k=1;}
+	
 	:	multiset_term ( MULTISET ( UNION | EXCEPT ) ( ALL | DISTINCT )? multiset_term )*
 	;
 
 multiset_term
-	options{k=1;}
+	
 	:	multiset_primary ( MULTISET INTERSECT ( ALL | DISTINCT )? multiset_primary )*
 	;
 
 multiset_primary
-	options{k=1;}
+	
 	:	multiset_value_function
 	|	value_expression_primary ;
 
@@ -2219,29 +1733,26 @@ multiset_set_function
 */
 
 multiset_value_constructor
-	options{k=2;}
 	:	multise_value_constructor_by_enumeration
 	|	multiset_value_constructor_by_query
 	|	table_value_constructor_by_query
 	;
 
 multise_value_constructor_by_enumeration
-	options{k=2;}
 	:	MULTISET left_bracket_or_trigraph multiset_element_list  right_bracket_or_trigraph;
 
 multiset_element_list
-	options{k=1;}
+	
 	:	multiset_element  ( Comma multiset_element  )*;
 
 multiset_element
 	:	value_expression ;
 
 multiset_value_constructor_by_query
-	options{k=2;}
 	:	MULTISET Left_Paren query_expression  Right_Paren;
 
 table_value_constructor_by_query
-	options{k=1;}
+	
 	:	TABLE Left_Paren query_expression  Right_Paren;
 
 /*
@@ -2256,7 +1767,7 @@ Specify a value or list of values to be constructed into a row or partial row.
 */
 
 row_value_constructor
-	options {k=1;}
+	
 	:
 		common_value_expression
 	|	boolean_value_expression
@@ -2264,7 +1775,7 @@ row_value_constructor
 	;
 
 explicit_row_value_constructor
-	options {k=1;}
+	
 	:	Left_Paren row_value_constructor_element  Comma row_value_constructor_element_list  Right_Paren
 	|	ROW Left_Paren row_value_constructor_element_list  Right_Paren
 	|	row_subquery
@@ -2274,11 +1785,11 @@ row_value_constructor_element_list  :
 		row_value_constructor_element  ( Comma row_value_constructor_element  )*;
 
 row_value_constructor_element   
-	options {k=1;}
+	
 	:  value_expression ;
 
 contextually_typed_row_value_constructor
-	options {k=1;}
+	
     :	common_value_expression
 	|	boolean_value_expression
 	|	contextually_typed_value_specification
@@ -2287,19 +1798,19 @@ contextually_typed_row_value_constructor
 	;
 
 contextually_typed_row_value_constructor_element_list  
-	options {k=1;}
+	
 	:
 		contextually_typed_row_value_constructor_element
 		( Comma contextually_typed_row_value_constructor_element  )*;
 
 contextually_typed_row_value_constructor_element
-	options {k=1;}
+	
 	:	value_expression
 	|	contextually_typed_value_specification
 	;
 
 row_value_constructor_predicand
-	options {k=1;}
+	
 	:	common_value_expression
 	|	boolean_predicand
 	|	explicit_row_value_constructor
@@ -2313,31 +1824,31 @@ Specify a row value.
 */
 
 row_value_expression
-	options {k=1;}
+	
 	:	row_value_special_case
 	|	explicit_row_value_constructor
 	;
 
 table_row_value_expression
-	options {k=1;}
+	
 	:	row_value_special_case
 	|	row_value_constructor
 	;
 
 contextually_typed_row_value_expression
-	options {k=1;}
+	
 	:	row_value_special_case
 	|	contextually_typed_row_value_constructor
 	;
 
 row_value_predicand
-	options {k=1;}
+	
 	:	row_value_special_case
 	|	row_value_constructor_predicand
 	;
 
 row_value_special_case
-	options {k=1;}
+	
 	:  nonparenthesized_value_expression_primary ;
 
 /*
@@ -2348,20 +1859,20 @@ Specify a set of row_value_expression(s) to be constructed into a table.
 */
 
 table_value_constructor
-	options {k=1;}
+	
 	:  VALUES row_value_expression_list ;
 
 row_value_expression_list
-	options {k=1;}
+	
 	:  table_row_value_expression  ( Comma table_row_value_expression  )*;
 
 contextually_typed_table_value_constructor
-	options {k=1;}
+	
 	:	VALUES
 		contextually_typed_row_value_expression_list ;
 
 contextually_typed_row_value_expression_list
-	options {k=1;}
+	
 	:	contextually_typed_row_value_expression
     	( Comma contextually_typed_row_value_expression )*;
 
@@ -2373,7 +1884,7 @@ Specify a table or a grouped table.
 */
 
 table_expression
-	options {k=1;}
+	
 	:	from_clause
 		( where_clause  )?
 		( group_by_clause  )?
@@ -2393,7 +1904,7 @@ from_clause
 		table_reference_list ;
 
 table_reference_list
-	options {k=1;}
+	
 	:	table_reference
 		( Comma table_reference  )*;
 
@@ -2404,7 +1915,7 @@ Reference a table.
 */
 
 table_reference
-	options {k=1;}
+	
 	:	(	table_primary
 		|	joined_table
 		)
@@ -2455,7 +1966,7 @@ table_or_query_name   :  table_name  | identifier ;
 derived_column_list   :  column_name_list ;
 
 column_name_list   
-	options {k=1;}
+	
 	:  identifier  ( Comma identifier  )*;
 
 /*
@@ -2641,27 +2152,27 @@ Specify a table derived from the result of a table_expression .
 */
 
 query_specification
-	options{k=1;}
+	
 	:  SELECT ( set_quantifier  )? select_list  table_expression ;
 
 select_list
-	options{k=1;}
+	
 	:	Asterisk
 	|	select_sublist  ( Comma select_sublist  )*;
 
 select_sublist
-	options{k=1;}
+	
 	:	derived_column
 	|	qualified_asterisk ;
 
 qualified_asterisk
-	options{k=1;}
+	
 	:	schema_name  Period Asterisk
 	|	all_fields_reference
 	;
 
 derived_column
-	options{k=1;}
+	
 	:	value_expression
 		( as_clause  )?;
 
@@ -2669,11 +2180,11 @@ as_clause
 	:	( AS )? identifier ;
 
 all_fields_reference
-	options{k=1;}
+	
 	:	value_expression_primary  Period Asterisk ( AS Left_Paren all_fields_column_name_list  Right_Paren )?;
 
 all_fields_column_name_list
-	options{k=1;}
+	
 	:	column_name_list ;
 
 /*
@@ -2684,34 +2195,34 @@ Specify a table.
 */
 
 query_expression
-	options {k=1;}
+	
 	:  ( with_clause  )? query_expression_body ;
 
 with_clause
-	options {k=1;}
+	
 	:  WITH ( RECURSIVE )? with_list ;
 
 with_list
-	options {k=1;}
+	
 	:  with_list_element  ( Comma with_list_element  )*;
 
 with_list_element
-	options {k=1;}
+	
 	:	identifier  ( Left_Paren with_column_list  Right_Paren )?
 		AS Left_Paren query_expression  Right_Paren ( search_or_cycle_clause  )?;
 
 with_column_list   
-	options {k=1;}
+	
 	:  column_name_list ;
 
 query_expression_body
-	options {k=1;}
+	
 	:	non_join_query_expression  | joined_table ;
 
 //  query_expression_body   :  non_join_query_expression  | joined_table ;
 
 non_join_query_expression
-	options {k=1;}
+	
 	:	(	non_join_query_term
 		|	joined_table  ( UNION | EXCEPT ) ( ALL | DISTINCT )? ( corresponding_spec  )? query_term
 		)
@@ -2725,13 +2236,13 @@ non_join_query_expression
 //	;
 
 query_term
-	options {k=1;}
+	
 	:  non_join_query_term  | joined_table ;
 
 //query_term   :  non_join_query_term  | joined_table ;
 
 non_join_query_term
-	options {k=1;}
+	
 	:	(	non_join_query_primary
 		|	joined_table  INTERSECT ( ALL | DISTINCT )? ( corresponding_spec  )? query_primary
 		)
@@ -2744,24 +2255,24 @@ non_join_query_term
 //	;
 
 query_primary
-	options {k=1;}
+	
 	:	non_join_query_primary
 	|	joined_table ;
 
 non_join_query_primary
-	options {k=1;}
+	
 	:	simple_table
 	|	Left_Paren non_join_query_expression  Right_Paren;
 
 simple_table
-	options {k=1;}
+	
 	:	query_specification
 	|	table_value_constructor
 	|	explicit_table
 	;
 
 explicit_table
-	options {k=1;}
+	
 	:  TABLE table_or_query_name ;
 
 corresponding_spec   :  CORRESPONDING ( BY Left_Paren corresponding_column_list  Right_Paren )?;
@@ -2776,7 +2287,7 @@ expressions.
 */
 
 search_or_cycle_clause
-    options {k=1;}
+    
     :
 		search_clause
 	|	cycle_clause
@@ -2819,17 +2330,17 @@ Specify a scalar value, a row, or a table derived from a query_expression .
 */
 
 scalar_subquery   
-	options {k=1;}
+	
 	:  subquery ;
 
 row_subquery
-	options {k=1;}
+	
 	:  subquery ;
 
 table_subquery   :  subquery ;
 
 subquery
-	options {k=1;}
+	
 	:  Left_Paren query_expression  Right_Paren;
 
 /*
@@ -2841,7 +2352,7 @@ Specify a condition that can be evaluated to give a boolean value.
 */
 
 predicate
-	options {k=1;}
+	
 	:	comparison_predicate
 	|	between_predicate
 	|	in_predicate
@@ -2868,11 +2379,11 @@ Specify a comparison of two row values.
 */
 
 comparison_predicate
-	options {k=1;}
+	
 	:  row_value_predicand  comparison_predicate_part_2 ;
 
 comparison_predicate_part_2
-	options {k=1;}
+	
 	:  comp_op  row_value_predicand ;
 
 comp_op  :
@@ -2894,7 +2405,7 @@ Specify a range comparison.
 between_predicate   :  row_value_predicand  between_predicate_part_2 ;
 
 between_predicate_part_2
-	options {k=1;}
+	
 	:  ( NOT )? BETWEEN ( ASYMMETRIC | SYMMETRIC )? row_value_predicand  AND row_value_predicand ;
 
 /*
@@ -2907,7 +2418,7 @@ Specify a quantified comparison.
 in_predicate   :  row_value_predicand  in_predicate_part_2  ;
 
 in_predicate_part_2
-	options {k=1;}
+	
 	:  ( NOT )? IN in_predicate_value ;
 
 in_predicate_value  :
@@ -2929,7 +2440,7 @@ like_predicate   :  character_like_predicate; //  | octet_like_predicate ;
 character_like_predicate   :  row_value_predicand  character_like_predicate_part_2 ;
 
 character_like_predicate_part_2
-	options {k=1;}
+	
 	:  ( NOT )? LIKE character_pattern  ( ESCAPE Character_String_Literal  )?;
 
 character_pattern   :  character_value_expression ;
@@ -2953,7 +2464,7 @@ Specify a character string similarity by means of a regular expression.
 similar_predicate   :  row_value_predicand  similar_predicate_part_2 ;
 
 similar_predicate_part_2
-	options {k=1;}
+	
 	:  ( NOT )? SIMILAR TO similar_pattern  ( ESCAPE Character_String_Literal  )?;
 
 similar_pattern   :  character_value_expression ;
@@ -2979,17 +2490,18 @@ low_value   :  Unsigned_Integer ;
 high_value   :  Unsigned_Integer ;
 
 regular_primary  :
-		character_specifier
+//		character_specifier
 	|	Percent
-	|	regular_character_set
+//	|	regular_character_set
 	|	Left_Paren regular_expression  Right_Paren
 	;
 
+/*
 character_specifier     :  non_escaped_character  | escaped_character ;
 
-non_escaped_character   :  Regex_Non_Escaped_Unicode    /*!! See the Syntax Rules*/;
+non_escaped_character   :  Regex_Non_Escaped_Unicode    //!! See the Syntax Rules;
 
-escaped_character       :  Regex_Escaped_Unicode        /*!! See the Syntax Rules*/;
+escaped_character       :  Regex_Escaped_Unicode        //!! See the Syntax Rules;
 
 regular_character_set  :
 		Underscore
@@ -3008,6 +2520,7 @@ character_enumeration  :
 	|	character_specifier  Minus_Sign character_specifier
 	|	Left_Bracket Colon regular_character_set_identifier  Colon Right_Bracket
 	;
+*/
 
 regular_character_set_identifier   :  identifier ;
 
@@ -3021,7 +2534,7 @@ Specify a test for a null value.
 null_predicate   :  row_value_predicand  null_predicate_part_2 ;
 
 null_predicate_part_2
-	options {k=1;}
+	
 	:  IS ( NOT )? NULL ;
 
 /*
@@ -3034,7 +2547,7 @@ Specify a quantified comparison.
 quantified_comparison_predicate   :  row_value_predicand  quantified_comparison_predicate_part_2 ;
 
 quantified_comparison_predicate_part_2
-	options {k=1;}
+	
 	:  comp_op  quantifier  table_subquery ;
 
 quantifier   :  all  | some ;
@@ -3080,7 +2593,7 @@ Specify a test for matching rows.
 match_predicate   :  row_value_predicand  match_predicate_part_2 ;
 
 match_predicate_part_2
-	options {k=1;}
+	
 	:  MATCH ( UNIQUE )? ( SIMPLE | PARTIAL | FULL )? table_subquery ;
 
 /*
@@ -3093,15 +2606,15 @@ Specify a test for an overlap between two datetime periods.
 overlaps_predicate   :  overlaps_predicate_part_1  overlaps_predicate_part_2 ;
 
 overlaps_predicate_part_1
-	options {k=1;}
+	
    :  row_value_predicand_1 ;
 
 overlaps_predicate_part_2
-	options {k=1;}
+	
 	:  OVERLAPS row_value_predicand_2 ;
 
 row_value_predicand_1
-	options {k=1;}
+	
 	:  row_value_predicand ;
 
 row_value_predicand_2   :  row_value_predicand ;
@@ -3116,7 +2629,7 @@ Specify a test of whether two row values are distinct
 distinct_predicate   :  row_value_predicand_3  distinct_predicate_part_2 ;
 
 distinct_predicate_part_2
-	options {k=1;}
+	
 	:  IS DISTINCT FROM row_value_predicand_4 ;
 
 row_value_predicand_3   :  row_value_predicand ;
@@ -3133,7 +2646,7 @@ Specify a test of whether a value is a member of a multiset.
 member_predicate   :  row_value_predicand  member_predicate_part_2 ;
 
 member_predicate_part_2
-	options {k=1;}
+	
 	:  ( NOT )? MEMBER ( OF )? multiset_value_expression ;
 
 /*
@@ -3146,7 +2659,7 @@ Specify a test of whether a multiset is a submultiset of another multiset.
 submultiset_predicate   :  row_value_predicand  submultiset_predicate_part_2 ;
 
 submultiset_predicate_part_2
-	options {k=1;}
+	
 	:  ( NOT )? SUBMULTISET ( OF )? multiset_value_expression ;
 
 /*
@@ -3159,10 +2672,10 @@ Specify a test of whether a multiset is a set (that is, does not contain any dup
 set_predicate   :  row_value_predicand  set_predicate_part_2 ;
 
 set_predicate_part_2
-	options {k=1;}
+	
 	:  IS ( NOT )? a SET;
 
-a	:	Regular_Identifier {$Regular_Identifier.text == 'A'}?;
+a	:	{_input.LT(1).getText().equals("A")}? Regular_Identifier ;
 
 /*
 		 8.18 type_predicate  (p414)
@@ -3173,7 +2686,7 @@ Specify a type test.
 type_predicate   :  row_value_predicand  type_predicate_part_2 ;
 
 type_predicate_part_2
-	options {k=1;}
+	
 	:  IS ( NOT )? OF Left_Paren type_list Right_Paren;
 
 type_list   :  user_defined_type_specification  ( Comma user_defined_type_specification  )*;
@@ -3285,7 +2798,7 @@ language_clause   :  LANGUAGE language_name ;
 
 language_name   :  ADA | c | COBOL | FORTRAN | MUMPS | PASCAL | PLI | SQL;
 
-c	:	Regular_Identifier {$Regular_Identifier.text == 'C'}?;
+c	:	{_input.LT(1).getText().equals("C")}? Regular_Identifier ;
 
 /*
 Table 14 -- Standard programming languages
@@ -3317,15 +2830,15 @@ Invoke an SQL-invoked routine.
 */
 
 routine_invocation
-	options{k=1;}
+	
 	:	fully_qualified_identifier  sql_argument_list;
 
 sql_argument_list  
-	options{k=1;}
+	
 	:  Left_Paren ( sql_argument ( Comma sql_argument )* )? Right_Paren;
 
 sql_argument
-    options{k=1;}
+    
     :
 		value_expression
 	|	target_specification
@@ -3394,7 +2907,7 @@ Specify a value computed from a collection of rows.
 */
 
 aggregate_function
-	options{k=1;}
+	
 	:	COUNT Left_Paren Asterisk Right_Paren ( filter_clause  )?
 	|	general_set_function  ( filter_clause  )?
 	|	binary_set_function   ( filter_clause  )?
@@ -3402,7 +2915,7 @@ aggregate_function
 	;
 
 general_set_function
-	options{k=1;}
+	
 	:  set_function_type  Left_Paren ( set_quantifier  )? value_expression  Right_Paren;
 
 set_function_type   :  computational_operation ;
@@ -3420,7 +2933,7 @@ set_quantifier   :  DISTINCT | ALL;
 filter_clause   :  FILTER Left_Paren WHERE search_condition  Right_Paren;
 
 binary_set_function
-	options{k=1;}
+	
 	:	binary_set_function_type
 		Left_Paren dependent_variable_expression  Comma independent_variable_expression  Right_Paren;
 
@@ -3435,7 +2948,7 @@ dependent_variable_expression   :  numeric_value_expression ;
 independent_variable_expression   :  numeric_value_expression ;
 
 ordered_set_function
-	options{k=1;}
+	
 	:	hypothetical_set_function
 	|	inverse_distribution_function ;
 
@@ -3490,10 +3003,7 @@ schema_definition   :  CREATE SCHEMA schema_name_clause
         ( schema_element  )*;
 
 schema_character_set_or_path  :
-		schema_character_set_specification
-	|	schema_path_specification
-	|	schema_character_set_specification  schema_path_specification
-	|	schema_path_specification  schema_character_set_specification
+		schema_path_specification
 	;
 
 schema_name_clause  :
@@ -3502,7 +3012,7 @@ schema_name_clause  :
 
 schema_authorization_identifier   :  identifier ;
 
-schema_character_set_specification   :  DEFAULT CHARACTER SET Character_Set_Name ;
+//schema_character_set_specification   :  DEFAULT CHARACTER SET Character_Set_Name ;
 
 schema_path_specification   :  path_specification ;
 
@@ -3510,9 +3020,9 @@ schema_element  :
 		table_definition
 	|	view_definition
 	|	domain_definition
-	|	character_set_definition
-	|	collation_definition
-	|	transliteration_definition
+//	|	character_set_definition
+//	|	collation_definition
+//	|	transliteration_definition
 	|	assertion_definition
 	|	trigger_definition
 	|	user_defined_type_definition
@@ -3971,10 +3481,12 @@ drop_domain_statement   :  DROP DOMAIN fully_qualified_identifier  drop_behavior
 Define a character set.
 */
 
+/*
 character_set_definition :
 		CREATE CHARACTER SET fully_qualified_identifier  ( AS )? character_set_source  ( collate_clause  )?;
 
 character_set_source   :  GET Character_Set_Name ;
+*/
 
 /*
 		 11.32 <drop character set statement> (p612)
@@ -3992,11 +3504,13 @@ drop_character_set_statement   :  DROP CHARACTER SET fully_qualified_identifier 
 Define a collating sequence.
 */
 
+/*
 collation_definition  :
 		CREATE COLLATION fully_qualified_identifier  FOR Character_Set_Name
 		FROM fully_qualified_identifier  ( pad_characteristic  )?;
 
 pad_characteristic   :  NO PAD | PAD SPACE;
+*/
 
 /*
 		 11.34 <drop collation statement> (p616)
@@ -4014,6 +3528,7 @@ drop_collation_statement   :  DROP COLLATION fully_qualified_identifier  drop_be
 Define a character transliteration.
 */
 
+/*
 transliteration_definition  :
 		CREATE TRANSLATION fully_qualified_identifier  FOR source_character_set_specification
 		TO target_character_set_specification  FROM transliteration_source ;
@@ -4027,6 +3542,7 @@ transliteration_source   :  existing_transliteration_name  | transliteration_rou
 existing_transliteration_name   :  fully_qualified_identifier ;
 
 transliteration_routine   :  specific_routine_designator ;
+*/
 
 /*
 		 11.36 <drop transliteration statement> (p621)
@@ -4035,7 +3551,7 @@ transliteration_routine   :  specific_routine_designator ;
 Destroy a character transliteration.
 */
 
-drop_transliteration_statement   :  DROP TRANSLATION fully_qualified_identifier ;
+//drop_transliteration_statement   :  DROP TRANSLATION fully_qualified_identifier ;
 
 /*
 		 11.37 assertion_definition  (p623)
@@ -4302,24 +3818,24 @@ Define an SQL-invoked routine.
 */
 
 sql_invoked_routine
-	options{k=1;}
+	
 	:	schema_routine ;
 
 schema_routine
-	options{k=1;}
+	
 	:	schema_procedure
 	|	schema_function ;
 
 schema_procedure
-	options{k=1;}
+	
 	:	CREATE sql_invoked_procedure ;
 
 schema_function
-	options{k=1;}
+	
 	:	CREATE sql_invoked_function ;
 
 sql_invoked_procedure
-	options{k=1;}
+	
 	:	PROCEDURE
 		fully_qualified_identifier
 		sql_parameter_declaration_list
@@ -4327,7 +3843,7 @@ sql_invoked_procedure
 		routine_body ;
 
 sql_invoked_function
-	options{k=1;}
+	
 	:	(	function_specification
 		|	method_specification_designator
 		)
@@ -4349,7 +3865,7 @@ parameter_type   :  data_type  ( locator_indication )?;
 locator_indication   :  AS LOCATOR;
 
 function_specification
-	options{k=1;}
+	
 	:	FUNCTION
 		fully_qualified_identifier
 		sql_parameter_declaration_list returns_clause
@@ -4357,7 +3873,7 @@ function_specification
 		( dispatch_clause  )?;
 
 method_specification_designator
-	options{k=1;}
+	
 	:	SPECIFIC METHOD fully_qualified_identifier
 	|	( INSTANCE | STATIC | CONSTRUCTOR )?
 		METHOD identifier
@@ -4368,7 +3884,7 @@ method_specification_designator
 routine_characteristics   :  ( routine_characteristic  )*;
 
 routine_characteristic
-	options{k=1;}
+	
 	:	language_clause
 	|	parameter_style_clause
 	|	SPECIFIC fully_qualified_identifier
@@ -4840,13 +4356,13 @@ role_revoked   :  identifier ;
 */
 
 sql_client_module_definition
-	options{k=1;}
+	
 	:	module_name_clause
 		language_clause
 		module_authorization_clause
 		( module_path_specification  )?
 		( module_transform_group_specification  )?
-		( module_collations  )?
+//		( module_collations  )?
 		( temporary_table_declaration  )*
 		( module_contents )+
 		;
@@ -4862,11 +4378,11 @@ module_path_specification   :  path_specification ;
 
 module_transform_group_specification   :  transform_group_specification ;
 
-module_collations   :  ( module_collation_specification )+;
+//module_collations   :  ( module_collation_specification )+;
 
-module_collation_specification   :  COLLATION fully_qualified_identifier  ( FOR character_set_specification_list  )?;
+//module_collation_specification   :  COLLATION fully_qualified_identifier  ( FOR character_set_specification_list  )?;
 
-character_set_specification_list   :  Character_Set_Name  (Comma Character_Set_Name  )*;
+//character_set_specification_list   :  Character_Set_Name  (Comma Character_Set_Name  )*;
 
 module_contents  :
 		declare_cursor
@@ -4884,10 +4400,7 @@ Name an SQL-client module.
 module_name_clause
 	:	MODULE
 		( identifier  )?
-		( module_character_set_specification  )?;
-
-module_character_set_specification
-	:  NAMES ARE Character_Set_Name ;
+;
 
 /*
 		 13.3 externally_invoked_procedure  (p769)
@@ -4923,7 +4436,7 @@ Define all of the SQL-statements that are sql_procedure_statements.
 sql_procedure_statement  :  sql_executable_statement;
 
 sql_executable_statement
-	options{k=1;}
+	
 	:	sql_schema_statement
 	|	sql_data_statement
 	|	sql_control_statement
@@ -4935,13 +4448,13 @@ sql_executable_statement
 	;
 
 sql_schema_statement
-	options{k=1;}
+	
 	:	sql_schema_definition_statement
 	|	sql_schema_manipulation_statement
 	;
 
 sql_schema_definition_statement
-	options{k=1;}
+	
 	:	schema_definition
 	|	table_definition
 	|	view_definition
@@ -4949,9 +4462,9 @@ sql_schema_definition_statement
 	|	grant_statement
 	|	role_definition
 	|	domain_definition
-	|	character_set_definition
-	|	collation_definition
-	|	transliteration_definition
+//	|	character_set_definition
+//	|	collation_definition
+//	|	transliteration_definition
 	|	assertion_definition
 	|	trigger_definition
 	|	user_defined_type_definition
@@ -4962,7 +4475,7 @@ sql_schema_definition_statement
 	;
 
 sql_schema_manipulation_statement
-	options{k=1;}
+	
 	:	drop_schema_statement
 	|	alter_table_statement
 	|	drop_table_statement
@@ -4976,7 +4489,7 @@ sql_schema_manipulation_statement
 	|	drop_domain_statement
 	|	drop_character_set_statement
 	|	drop_collation_statement
-	|	drop_transliteration_statement
+//	|	drop_transliteration_statement
 	|	drop_assertion_statement
 	|	drop_trigger_statement
 	|	alter_type_statement
@@ -4989,7 +4502,7 @@ sql_schema_manipulation_statement
 	;
 
 sql_data_statement
-	options{k=1;}
+	
 	:	open_statement
 	|	fetch_statement
 	|	close_statement
@@ -5000,7 +4513,7 @@ sql_data_statement
 	;
 
 sql_data_change_statement
-	options{k=1;}
+	
 	:	delete_statement_positioned
 	|	delete_statement_searched
 	|	insert_statement
@@ -5010,13 +4523,13 @@ sql_data_change_statement
 	;
 
 sql_control_statement
-	options{k=1;}
+	
 	:	call_statement
 	|	return_statement
 	;
 
 sql_transaction_statement
-	options{k=1;}
+	
 	:	start_transaction_statement
 	|	set_transaction_statement
 	|	set_constraints_mode_statement
@@ -5027,13 +4540,13 @@ sql_transaction_statement
 	;
 
 sql_connection_statement
-	options{k=1;}
+	
 	:	connect_statement
 	|	set_connection_statement
 	|	disconnect_statement  ;
 
 sql_session_statement
-	options{k=1;}
+	
 	:	set_session_user_identifier_statement
 	|	set_role_statement
 	|	set_local_time_zone_statement
@@ -5043,13 +4556,13 @@ sql_session_statement
 	|	set_names_statement
 	|	set_path_statement
 	|	set_transform_group_statement
-	|	set_session_collation_statement
+//	|	set_session_collation_statement
 	;
 
 sql_diagnostics_statement   :  get_diagnostics_statement  ;
 
 sql_dynamic_statement
-	options{k=1;}
+	
 	:	system_descriptor_statement
 	|	prepare_statement
 	|	deallocate_prepared_statement
@@ -5060,7 +4573,7 @@ sql_dynamic_statement
 	;
 
 sql_dynamic_data_statement
-	options{k=1;}
+	
 	:	allocate_cursor_statement
 	|	dynamic_open_statement
 	|	dynamic_fetch_statement
@@ -5070,7 +4583,7 @@ sql_dynamic_data_statement
 	;
 
 system_descriptor_statement
-	options{k=1;}
+	
 	:	allocate_descriptor_statement
 	|	deallocate_descriptor_statement
 	|	set_descriptor_statement
@@ -5159,7 +4672,7 @@ Define a cursor.
 */
 
 declare_cursor
-	options{k=1;}
+	
 	:	DECLARE cursor_name
 		( cursor_sensitivity  )?
 		( cursor_scrollability  )?
@@ -5177,7 +4690,7 @@ cursor_holdability   :  WITH HOLD | WITHOUT HOLD;
 cursor_returnability   :  WITH RETURN | WITHOUT RETURN;
 
 cursor_specification
-	options{k=1;}
+	
 	:  	query_expression
 		( order_by_clause  )?
 		( updatability_clause  )? ;
@@ -5231,7 +4744,7 @@ Retrieve values from a specified row of a table.
 */
 
 select_statement_single_row
-	options{k=1;}
+	
 	:	SELECT
 		( set_quantifier  )?
 		select_list
@@ -5262,7 +4775,7 @@ Delete rows of a table.
 */
 
 delete_statement_searched
-	options{k=1;}
+	
 	:	DELETE FROM target_table
 		( WHERE search_condition )?;
 
@@ -5274,13 +4787,13 @@ Create new rows in a table.
 */
 
 insert_statement
-	options{k=1;}
+	
 	:  INSERT INTO insertion_target  insert_columns_and_source ;
 
 insertion_target   :  table_name ;
 
 insert_columns_and_source
-	options{k=1;}
+	
 	:	( 	Left_Paren insert_column_list  Right_Paren )?
 		( 	override_clause  )?
 			( 	query_expression
@@ -5300,15 +4813,15 @@ insert_columns_and_source
 // from_constructor  : ( Left_Paren insert_column_list  Right_Paren )? ( override_clause  )? contextually_typed_table_value_constructor ;
 
 override_clause   
-	options{k=1;}
+	
 	:  OVERRIDING USER VALUE | OVERRIDING SYSTEM VALUE;
 
 from_default   
-	options{k=1;}
+	
 	:  DEFAULT VALUES;
 
 insert_column_list   
-	options{k=1;}
+	
 	:  column_name_list ;
 
 /*
@@ -5319,7 +4832,7 @@ Conditionally update rows of a table, or insert new rows into a table, or both.
 */
 
 merge_statement
-	options{k=1;}
+	
 	:	MERGE INTO target_table
 		( ( AS )? merge_correlation_name  )?
 		USING table_reference
@@ -5358,7 +4871,7 @@ merge_insert_value_list
 		Right_Paren;
 
 merge_insert_value_element
-	options{k=1;}
+	
 	:	value_expression
 	|	contextually_typed_value_specification ;
 
@@ -5415,7 +4928,7 @@ mutated_target   :  object_column ( Period identifier )* ;
 // mutated_target   :  object_column  | mutated_set_clause ;
 
 update_source
-    options{k=1;}
+    
     :  value_expression  | contextually_typed_value_specification ;
 
 /*
@@ -5769,14 +5282,14 @@ character sets.  An SQL-session collation remains effective until
 another SQL-session collation for the same character set is successfully
 set.
 */
-
+/*
 set_session_collation_statement   :
 		SET COLLATION collation_specification  ( FOR character_set_specification_list  )?
 	|	SET NO COLLATION ( FOR character_set_specification_list  )?
 	;
 
 collation_specification   :  value_specification ;
-
+*/
 /*
 
 	19 Dynamic SQL
@@ -5910,11 +5423,11 @@ preparable_statement   :
 	|	preparable_sql_transaction_statement
 	|	preparable_sql_control_statement
 	|	preparable_sql_session_statement
-	|	preparable_implementation_defined_statement
+//	|	preparable_implementation_defined_statement
 	;
 
 preparable_sql_data_statement
-    options{k=1;}
+    
     :
         delete_statement_searched
 	|	dynamic_single_row_select_statement
@@ -5936,7 +5449,7 @@ preparable_sql_session_statement    :  sql_session_statement  ;
 
 dynamic_select_statement    :  cursor_specification ;
 
-preparable_implementation_defined_statement   :  unimplemented_error /*!! See the Syntax Rules.*/;
+//preparable_implementation_defined_statement   :  unimplemented_error /*!! See the Syntax Rules.*/;
 
 /*
 		 19.7 <cursor_attributes> (p953)
@@ -6146,106 +5659,7 @@ Update a row of a table through a dynamic cursor.
 preparable_dynamic_update_statement_positioned  :
 		UPDATE ( target_table  )? SET set_clause_list  WHERE CURRENT OF ( scope_option  )? cursor_name ;
 
-/*
 
-	20 Embedded SQL
-
-
-		 20.1 embedded_sql_host_program  (p989)
-
-
-Specify an embedded_sql_host_program .
-*/
-
-/*
-embedded_sql_host_program  :
-		embedded_sql_ada_program
-	|	embedded_sql_c_program
-	|	embedded_sql_cobol_program
-	|	embedded_sql_fortran_program
-	|	embedded_sql_mumps_program
-	|	embedded_sql_pascal_program
-	|	embedded_sql_pl1_program
-	;
-
-embedded_sql_statement   :  sql_prefix statement_or_declaration ( sql_terminator )?;
-
-statement_or_declaration :
-		declare_cursor
-	|	dynamic_declare_cursor
-	|	temporary_table_declaration
-	|	embedded_authorization_declaration
-	|	embedded_path_specification
-	|	embedded_transform_group_specification
-	|	embedded_collation_specification
-	|	embedded_exception_declaration
-	|	handler_declaration
-	|	sql_procedure_statement
-	;
-
-sql_prefix  :  EXEC SQL | Ampersand SQL Left_Paren;
-
-sql_terminator  :  END_EXEC | Semicolon | Right_Paren;
-
-embedded_authorization_declaration  :  DECLARE embedded_authorization_clause;
-
-embedded_authorization_clause :
-		( SCHEMA schema_name )?
-	 	( AUTHORIZATION embedded_authorization_identifier ( FOR STATIC ( ONLY | AND DYNAMIC ) )? )?
-	;
-
-embedded_authorization_identifier  :  module_authorization_identifier ;
-
-embedded_path_specification  :  path_specification ;
-
-embedded_transform_group_specification  :  transform_group_specification ;
-
-embedded_collation_specification  :  module_collations ;
-
-embedded_sql_declare_section
-    options{k=1;}
-    :
-		embedded_sql_begin_declare ( embedded_character_set_declaration )? ( host_variable_definition )* embedded_sql_end_declare
-	|	embedded_sql_MUMPS_declare
-	;
-
-embedded_character_set_declaration  :  SQL NAMES ARE Character_Set_Name ;
-
-embedded_sql_begin_declare  options{k=1;}:  sql_prefix BEGIN DECLARE SECTION ( sql_terminator )?;
-
-embedded_sql_end_declare  options{k=1;}:  sql_prefix END DECLARE SECTION ( sql_terminator )?;
-
-embedded_sql_MUMPS_declare :
-		sql_prefix BEGIN DECLARE SECTION ( embedded_character_set_declaration )?
-		( host_variable_definition )* END DECLARE SECTION sql_terminator
-		;
-
-host_variable_definition
-    options{k=1;}
-    :
-		{isAdaHost()}? 		ada_variable_definition
-	|	{isCppHost()}? 		c_variable_definition
-	|	{isCobolHost()}? 	cobol_variable_definition
-	|	{isFortranHost}? 	fortran_variable_definition
-	|	{isMumpsHost}?		mumps_variable_definition
-	|	{isPascalHost()}?	pascal_variable_definition
-	|	{isPl1Host()}?		pl1_variable_definition
-	|	{true}?
-	;
-
-host_parameter_name      :  Colon host_identifier ;
-
-host_identifier :
-		{isAdaHost()}? 		ada_host_identifier
-	|	{isCppHost()}? 		c_host_identifier
-	|	{isCobolHost()}? 	cobol_host_identifier
-	|	{isFortranHost}? 	fortran_host_identifier
-	|	{isMumpsHost}?		mumps_host_identifier
-	|	{isPascalHost()}?	pascal_host_identifier
-	|	{isPl1Host()}?		pl1_host_identifier
-	|	{true}?				sql_language_identifier
-	;
-*/
 /*
 		 20.2 embedded_exception_declaration (p1001)
 
@@ -6260,19 +5674,13 @@ condition  :  sql_condition;
 
 sql_condition :
 		major_category
-	|	SQLSTATE Left_Paren sqlstate_class_value ( Comma sqlstate_subclass_value )? Right_Paren
+	|	SQLSTATE Left_Paren Sqlstate_Class_Value ( Comma Sqlstate_Subclass_Value )? Right_Paren
 	|	CONSTRAINT fully_qualified_identifier
 	;
 
 major_category  :  SQLEXCEPTION | SQLWARNING | NOT FOUND;
 
-sqlstate_class_value  :  sqlstate_char sqlstate_char /*!! See the Syntax Rules.*/;
-
-sqlstate_subclass_value  :  sqlstate_char sqlstate_char sqlstate_char /*!! See the Syntax Rules.*/;
-
 sqlstate_value : SQLSTATE ( VALUE )? Character_String_Literal;
-
-sqlstate_char  :  Simple_Latin_Upper_Case_Letter | Digit;
 
 condition_action  :  CONTINUE | go_to;
 
@@ -6311,587 +5719,6 @@ condition_value :
   | NOTFOUND
   ;
 
-
-/*
-		 20.3 embedded_sql_ada_program (p1005)
-
-
-Specify an embedded_sql_ada_program.
-*/
-
-embedded_sql_ada_program  :  unimplemented_error /*!! See the Syntax Rules.*/;
-
-ada_variable_definition :
-		ada_host_identifier ( Comma ada_host_identifier )* Colon ada_type_specification ( ada_initial_value )?;
-
-ada_initial_value  :  ada_assignment_operator ~(Semicolon)* Semicolon;
-
-ada_assignment_operator  :  Colon Equals_Operator;
-
-ada_host_identifier  :  Regular_Identifier /*!! See the Syntax Rules.*/;
-
-ada_type_specification :
-		ada_qualified_type_specification
-	|	ada_unqualified_type_specification
-	|	ada_derived_type_specification
-	;
-
-ada_qualified_type_specification :
-		INTERFACES Period SQL Period
-		(	CHAR ( CHARACTER SET ( IS )? Character_Set_Name  )?
-			Left_Paren one Double_Period  length  Right_Paren
-		|	SMALLINT
-		|	INT
-		|	BIGINT
-		|	REAL
-		|	DOUBLE_PRECISION
-		|	BOOLEAN
-		|	SQLSTATE_TYPE
-		|	INDICATOR_TYPE
-		)
-	;
-one	:	Unsigned_Integer {$UnsignedInteger.text == '1'};
-
-ada_unqualified_type_specification :
-		CHAR Left_Paren one Double_Period  length  Right_Paren
-	|	SMALLINT
-	|	INT
-	|	BIGINT
-	|	REAL
-	|	DOUBLE_PRECISION
-	|	BOOLEAN
-	|	SQLSTATE_TYPE
-	|	INDICATOR_TYPE
-	;
-
-ada_derived_type_specification :
-		ada_CLOB_variable
-	|	ada_CLOB_locator_variable
-	|	ada_BLOB_variable
-	|	ada_BLOB_locator_variable
-	|	ada_user_defined_type_variable
-	|	ada_user_defined_type_locator_variable
-	|	ada_REF_variable
-	|	ada_array_locator_variable
-	|	ada_multiset_locator_variable
-	;
-
-ada_CLOB_variable :
-		SQL TYPE IS CLOB Left_Paren large_object_length  Right_Paren ( CHARACTER SET ( IS )? Character_Set_Name  )?;
-
-ada_CLOB_locator_variable  :  SQL TYPE IS CLOB AS LOCATOR;
-
-ada_BLOB_variable  :  SQL TYPE IS BLOB Left_Paren large_object_length  Right_Paren;
-
-ada_BLOB_locator_variable  :  SQL TYPE IS BLOB AS LOCATOR;
-
-ada_user_defined_type_variable  :  SQL TYPE IS fully_qualified_identifier  AS predefined_type ;
-
-ada_user_defined_type_locator_variable  :  SQL TYPE IS fully_qualified_identifier  AS LOCATOR;
-
-ada_REF_variable  :  SQL TYPE IS reference_type ;
-
-ada_array_locator_variable  :  SQL TYPE IS array_type  AS LOCATOR;
-
-ada_multiset_locator_variable  :  SQL TYPE IS multiset_type  AS LOCATOR;
-
-/*
-		 20.4 embedded_sql_C_program (p1011)
-
-
-Specify an embedded_sql_C_program.
-*/
-
-embedded_sql_c_program  :  unimplemented_error /*!! See the Syntax Rules.*/;
-
-c_variable_definition  :  ( c_storage_class )? ( c_class_modifier )? c_variable_specification Semicolon;
-
-c_variable_specification  :  c_numeric_variable | c_character_variable | c_derived_variable;
-
-c_storage_class  :  AUTO | EXTERN | STATIC;
-
-c_class_modifier  :  CONST | VOLATILE;
-
-c_numeric_variable :
-		( LONG LONG | LONG | SHORT | FLOAT | DOUBLE ) c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_character_variable :
-		c_character_type ( CHARACTER SET ( IS )? Character_Set_Name  )?
-		c_host_identifier c_array_specification ( c_initial_value )?
-		( Comma c_host_identifier c_array_specification ( c_initial_value )? )*
-		;
-
-c_character_type  :  CHAR | UNSIGNED CHAR | UNSIGNED SHORT;
-
-c_array_specification  :  Left_Bracket length  Right_Bracket;
-
-c_host_identifier  :  Regular_Identifier /*!! See the Syntax Rules.*/;
-
-c_derived_variable :
-		c_VARCHAR_variable
-	|	c_NCHAR_variable
-	|	c_NCHAR_VARYING_variable
-	|	c_CLOB_variable
-	|	c_NCLOB_variable
-	|	c_BLOB_variable
-	|	c_user_defined_type_variable
-	|	c_CLOB_locator_variable
-	|	c_BLOB_locator_variable
-	|	c_array_locator_variable
-	|	c_multiset_locator_variable
-	|	c_user_defined_type_locator_variable
-	|	c_REF_variable
-	;
-
-c_VARCHAR_variable :
-		VARCHAR ( CHARACTER SET ( IS )? Character_Set_Name  )?
-		c_host_identifier c_array_specification ( c_initial_value )?
-		( Comma c_host_identifier c_array_specification ( c_initial_value )? )*
-		;
-
-c_NCHAR_variable :
-		NCHAR ( CHARACTER SET ( IS )? Character_Set_Name  )?
-		c_host_identifier c_array_specification ( c_initial_value )?
-		( Comma c_host_identifier c_array_specification ( c_initial_value )?  )*
-		;
-
-c_NCHAR_VARYING_variable :
-		NCHAR_VARYING ( CHARACTER SET ( IS )? Character_Set_Name  )?
-		c_host_identifier c_array_specification ( c_initial_value )?
-		( Comma c_host_identifier c_array_specification ( c_initial_value )?  )*
-		;
-
-c_CLOB_variable :
-		SQL TYPE IS CLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_NCLOB_variable :
-		SQL TYPE IS NCLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_user_defined_type_variable :
-		SQL TYPE IS fully_qualified_identifier  AS predefined_type
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_BLOB_variable :
-		SQL TYPE IS BLOB Left_Paren large_object_length  Right_Paren
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_CLOB_locator_variable :
-		SQL TYPE IS CLOB AS LOCATOR
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_BLOB_locator_variable :
-		SQL TYPE IS BLOB AS LOCATOR
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_array_locator_variable :
-		SQL TYPE IS array_type  AS LOCATOR
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_multiset_locator_variable :
-		SQL TYPE IS multiset_type  AS LOCATOR
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_user_defined_type_locator_variable :
-		SQL TYPE IS
-		fully_qualified_identifier  AS LOCATOR
-		c_host_identifier ( c_initial_value )?
-		( Comma c_host_identifier ( c_initial_value )? )*
-		;
-
-c_REF_variable  :  SQL TYPE IS reference_type ;
-
-c_initial_value  :  Equals_Operator  ~(Semicolon)* Semicolon;
-
-/*
-		 20.5 embedded_sql_cobol_program (p1019)
-
-
-Specify an embedded_sql_cobol_program.
-*/
-
-embedded_sql_cobol_program  :  unimplemented_error /*!! See the Syntax Rules.*/;
-
-cobol_variable_definition :
-		( zero_one | seven_seven ) cobol_host_identifier cobol_type_specification
-		 ~(Period)* Period
-		;
-zero_one	:	Unsigned_Integer {$Unsigned_Integer.text == '01'}?;
-seven_seven	:	Unsigned_Integer {$Unsigned_Integer.text == '77'}?;
-
-cobol_host_identifier  :  Regular_Identifier /*!! See the Syntax Rules.*/;
-
-cobol_type_specification :
-		cobol_character_type
-	|	cobol_national_character_type
-	|	cobol_numeric_type
-	|	cobol_integer_type
-	|	cobol_derived_type_specification
-	;
-
-cobol_derived_type_specification :
-		cobol_CLOB_variable
-	|	cobol_NCLOB_variable
-	|	cobol_BLOB_variable
-	|	cobol_user_defined_type_variable
-	|	cobol_CLOB_locator_variable
-	|	cobol_BLOB_locator_variable
-	|	cobol_array_locator_variable
-	|	cobol_multiset_locator_variable
-	|	cobol_user_defined_type_locator_variable
-	|	cobol_REF_variable
-	;
-
-cobol_character_type :
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		( PIC | PICTURE ) ( IS )? ( x ( Left_Paren length  Right_Paren )? )+
-		;
-x	:	Regular_Identifier {$Regular_Identifier.text == 'X'}?;
-
-cobol_national_character_type :
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		( PIC | PICTURE ) ( IS )? ( n ( Left_Paren length  Right_Paren )? )+
-		;
-n	:	Regular_Identifier {$Regular_Identifier.text == 'N'}?;
-
-cobol_CLOB_variable :
-		( USAGE ( IS )? )?
-		SQL TYPE IS CLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		;
-
-cobol_NCLOB_variable :
-		( USAGE ( IS )? )?
-		SQL TYPE IS NCLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		;
-
-cobol_BLOB_variable :
-		( USAGE ( IS )? )?
-		SQL TYPE IS BLOB Left_Paren large_object_length  Right_Paren;
-
-cobol_user_defined_type_variable :
-		( USAGE ( IS )? )? SQL TYPE IS fully_qualified_identifier  AS predefined_type ;
-
-cobol_CLOB_locator_variable :
-		( USAGE ( IS )? )? SQL TYPE IS CLOB AS LOCATOR;
-
-cobol_BLOB_locator_variable :
-		( USAGE ( IS )? )? SQL TYPE IS BLOB AS LOCATOR;
-
-cobol_array_locator_variable :
-	( USAGE ( IS )? )? SQL TYPE IS array_type  AS LOCATOR;
-
-cobol_multiset_locator_variable :
-	( USAGE ( IS )? )? SQL TYPE IS multiset_type  AS LOCATOR;
-
-cobol_user_defined_type_locator_variable :
-	( USAGE ( IS )? )? SQL TYPE IS fully_qualified_identifier  AS LOCATOR;
-
-cobol_REF_variable  :  ( USAGE ( IS )? )? SQL TYPE IS reference_type ;
-
-cobol_numeric_type :
-		( PIC | PICTURE ) ( IS )? s cobol_nines_specification ( USAGE ( IS )? )? DISPLAY SIGN LEADING SEPARATE;
-
-s	:	Regular_Identifier {$Regular_Identifier.text == 'S'}?;
-
-cobol_nines_specification :
-		cobol_nines ( v ( cobol_nines )? )?
-	|	v cobol_nines
-	;
-v	:	Regular_Identifier {$Regular_Identifier.text == 'V'}?;
-
-cobol_integer_type  :  cobol_binary_integer;
-
-cobol_binary_integer  :  ( PIC | PICTURE ) ( IS )? s cobol_nines ( USAGE ( IS )? )? BINARY;
-
-cobol_nines  :  ( nine ( Left_Paren length  Right_Paren )? )+;
-
-nine	:	Unsigned_Integer {$Unsigned_Integer.text == '9'}?;
-
-/*
-		 20.6 embedded_sql_fortran_program (p1025)
-
-
-Specify an embedded_sql_fortran_program.
-*/
-
-embedded_sql_fortran_program  :  unimplemented_error /*!! See the Syntax Rules.*/;
-
-fortran_variable_definition :
-		fortran_type_specification fortran_host_identifier ( Comma fortran_host_identifier )*;
-
-fortran_host_identifier  :  Regular_Identifier /*!! See the Syntax Rules.*/;
-
-fortran_type_specification :
-		CHARACTER
-			( Asterisk Unsigned_Integer | LEN Equals_Operator Unsigned_Integer )?
-			( Left_Paren KIND Equals_Operator Unsigned_Integer Right_Paren )?
-			( CHARACTER SET ( IS )? Character_Set_Name  )?
-
-	|	(	INTEGER
-		|	REAL
-		|	DOUBLE PRECISION
-		|	LOGICAL
-		)
-		( Asterisk Unsigned_Integer | LEN Equals_Operator Unsigned_Integer )?
-		( Left_Paren KIND Equals_Operator Unsigned_Integer Right_Paren )?
-
-	|	fortran_derived_type_specification
-	;
-
-fortran_derived_type_specification :
-		fortran_CLOB_variable
-	|	fortran_BLOB_variable
-	|	fortran_user_defined_type_variable
-	|	fortran_CLOB_locator_variable
-	|	fortran_BLOB_locator_variable
-	|	fortran_user_defined_type_locator_variable
-	|	fortran_array_locator_variable
-	|	fortran_multiset_locator_variable
-	|	fortran_REF_variable
-	;
-
-fortran_CLOB_variable :
-		SQL TYPE IS CLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		;
-
-fortran_BLOB_variable :
-		SQL TYPE IS BLOB Left_Paren large_object_length  Right_Paren;
-
-fortran_user_defined_type_variable :
-		SQL TYPE IS fully_qualified_identifier  AS predefined_type ;
-
-fortran_CLOB_locator_variable  :  SQL TYPE IS CLOB AS LOCATOR;
-
-fortran_BLOB_locator_variable  :  SQL TYPE IS BLOB AS LOCATOR;
-
-fortran_user_defined_type_locator_variable  :  SQL TYPE IS fully_qualified_identifier  AS LOCATOR;
-
-fortran_array_locator_variable  :  SQL TYPE IS array_type  AS LOCATOR;
-
-fortran_multiset_locator_variable  :  SQL TYPE IS multiset_type  AS LOCATOR;
-
-fortran_REF_variable  :  SQL TYPE IS reference_type ;
-
-/*
-		 20.7 embedded_sql_mumps_program (p1030)
-
-
-Specify an embedded_sql_mumps_program.
-*/
-
-embedded_sql_mumps_program  :  unimplemented_error /*!! See the Syntax Rules.*/;
-
-mumps_variable_definition :
-		mumps_numeric_variable Semicolon
-	|	mumps_character_variable Semicolon
-	|	mumps_derived_type_specification Semicolon
-	;
-
-mumps_character_variable :
-		VARCHAR mumps_host_identifier mumps_length_specification
-		( Comma mumps_host_identifier mumps_length_specification )*
-		;
-
-mumps_host_identifier  :  Regular_Identifier /*!! See the Syntax Rules.*/;
-
-mumps_length_specification  :  Left_Paren length  Right_Paren;
-
-mumps_numeric_variable  :  mumps_type_specification mumps_host_identifier ( Comma mumps_host_identifier )*;
-
-mumps_type_specification :
-		INT
-	|	DEC ( Left_Paren precision  ( Comma scale  )? Right_Paren )?
-	|	REAL
-	;
-
-mumps_derived_type_specification :
-		mumps_CLOB_variable
-	|	mumps_BLOB_variable
-	|	mumps_user_defined_type_variable
-	|	mumps_CLOB_locator_variable
-	|	mumps_BLOB_locator_variable
-	|	mumps_user_defined_type_locator_variable
-	|	mumps_array_locator_variable
-	|	mumps_multiset_locator_variable
-	|	mumps_REF_variable
-	;
-
-mumps_CLOB_variable :
-		SQL TYPE IS CLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		;
-
-mumps_BLOB_variable  :  SQL TYPE IS BLOB Left_Paren large_object_length  Right_Paren;
-
-mumps_user_defined_type_variable  :  SQL TYPE IS fully_qualified_identifier  AS predefined_type ;
-
-mumps_CLOB_locator_variable  :  SQL TYPE IS CLOB AS LOCATOR;
-
-mumps_BLOB_locator_variable  :  SQL TYPE IS BLOB AS LOCATOR;
-
-mumps_user_defined_type_locator_variable  :  SQL TYPE IS fully_qualified_identifier  AS LOCATOR;
-
-mumps_array_locator_variable  :  SQL TYPE IS array_type  AS LOCATOR;
-
-mumps_multiset_locator_variable  :  SQL TYPE IS multiset_type  AS LOCATOR;
-
-mumps_REF_variable  :  SQL TYPE IS reference_type ;
-
-/*
-		 20.8 embedded_sql_pascal_program (p1035)
-
-
-Specify an embedded_sql_pascal_program.
-*/
-
-embedded_sql_pascal_program  :  unimplemented_error /*!! See the Syntax Rules.*/;
-
-pascal_variable_definition :
-		pascal_host_identifier ( Comma pascal_host_identifier )* Colon pascal_type_specification Semicolon;
-
-pascal_host_identifier  :  Regular_Identifier /*!! See the Syntax Rules.*/;
-
-pascal_type_specification :
-		PACKED ARRAY Left_Bracket one Double_Period  length  Right_Bracket OF CHAR
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-	|	INTEGER
-	|	REAL
-	|	CHAR ( CHARACTER SET ( IS )? Character_Set_Name  )?
-	|	BOOLEAN
-	|	pascal_derived_type_specification
-	;
-
-pascal_derived_type_specification :
-		pascal_CLOB_variable
-	|	pascal_BLOB_variable
-	|	pascal_user_defined_type_variable
-	|	pascal_CLOB_locator_variable
-	|	pascal_BLOB_locator_variable
-	|	pascal_user_defined_type_locator_variable
-	|	pascal_array_locator_variable
-	|	pascal_multiset_locator_variable
-	|	pascal_REF_variable
-	;
-
-pascal_CLOB_variable :
-		SQL TYPE IS CLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		;
-
-pascal_BLOB_variable  :  SQL TYPE IS BLOB Left_Paren large_object_length  Right_Paren;
-
-pascal_CLOB_locator_variable  :  SQL TYPE IS CLOB AS LOCATOR;
-
-pascal_user_defined_type_variable  :  SQL TYPE IS fully_qualified_identifier  AS predefined_type ;
-
-pascal_BLOB_locator_variable  :  SQL TYPE IS BLOB AS LOCATOR;
-
-pascal_user_defined_type_locator_variable  :  SQL TYPE IS fully_qualified_identifier  AS LOCATOR;
-
-pascal_array_locator_variable  :  SQL TYPE IS array_type  AS LOCATOR;
-
-pascal_multiset_locator_variable  :  SQL TYPE IS multiset_type  AS LOCATOR;
-
-pascal_REF_variable  :  SQL TYPE IS reference_type;
-
-/*
-		 20.9 embedded_sql_pl1_program (p1040)
-
-
-Specify an embedded_sql_pl1_program.
-*/
-
-embedded_sql_pl1_program  :  unimplemented_error /*!! See the Syntax Rules.*/;
-
-pl1_variable_definition :
-		(DCL | DECLARE)
-		( 	pl1_host_identifier
-		|	Left_Paren pl1_host_identifier ( Comma pl1_host_identifier )* Right_Paren
-		)
-		pl1_type_specification ~(Semicolon)* Semicolon
-		;
-
-pl1_host_identifier  :  Regular_Identifier /*!! See the Syntax Rules.*/;
-
-pl1_type_specification :
-		( CHAR | CHARACTER ) ( VARYING )? Left_Paren length Right_Paren ( CHARACTER SET ( IS )? Character_Set_Name  )?
-	|	pl1_type_fixed_decimal Left_Paren precision  ( Comma scale  )? Right_Paren
-	|	pl1_type_fixed_binary ( Left_Paren precision  Right_Paren )?
-	|	pl1_type_float_binary Left_Paren precision  Right_Paren
-	|	pl1_derived_type_specification
-	;
-
-pl1_derived_type_specification :
-		pl1_CLOB_variable
-	|	pl1_BLOB_variable
-	|	pl1_user_defined_type_variable
-	|	pl1_CLOB_locator_variable
-	|	pl1_BLOB_locator_variable
-	|	pl1_user_defined_type_locator_variable
-	|	pl1_array_locator_variable
-	|	pl1_multiset_locator_variable
-	|	pl1_REF_variable
-	;
-
-pl1_CLOB_variable :
-		SQL TYPE IS CLOB Left_Paren large_object_length  Right_Paren
-		( CHARACTER SET ( IS )? Character_Set_Name  )?
-		;
-
-pl1_BLOB_variable  :  SQL TYPE IS BLOB Left_Paren large_object_length  Right_Paren;
-
-pl1_user_defined_type_variable  :  SQL TYPE IS fully_qualified_identifier  AS predefined_type ;
-
-pl1_CLOB_locator_variable  :  SQL TYPE IS CLOB AS LOCATOR;
-
-pl1_BLOB_locator_variable  :  SQL TYPE IS BLOB AS LOCATOR;
-
-pl1_user_defined_type_locator_variable  :  SQL TYPE IS fully_qualified_identifier  AS LOCATOR;
-
-pl1_array_locator_variable  :  SQL TYPE IS array_type  AS LOCATOR;
-
-pl1_multiset_locator_variable  :  SQL TYPE IS multiset_type  AS LOCATOR;
-
-pl1_REF_variable  :  SQL TYPE IS reference_type ;
-
-pl1_type_fixed_decimal :
-		( DEC | DECIMAL ) FIXED
-	|	FIXED ( DEC | DECIMAL )
-	;
-
-pl1_type_fixed_binary :
-		( BIN | BINARY ) FIXED
-	|	FIXED ( BIN | BINARY )
-	;
-
-pl1_type_float_binary :
-		( BIN | BINARY ) FLOAT
-	|	FLOAT ( BIN | BINARY )
-	;
 
 /*
 	21 Direct invocation of SQL
@@ -7000,332 +5827,3 @@ condition_information_item_name :
 	;
 
 condition_number  :  simple_value_specification ;
-
-/*
-		 22.2 Pushing and popping the diagnostics area stack (p1068)
-
-
-
-	23 Status codes
-
-
-
-		 23.1 SQLSTATE (p1069)*/
-
-/*
-The character string value returned in an SQLSTATE parameter comprises a
-2-character class value followed by a 3-character subclass value, each
-with an_implementation_defined character set that has a one-octet
-character encoding form and is restricted to digits and
-simple_Latin_upper_case_letters.
-Table 31, 'SQLSTATE class and subclass values', specifies the class
-value for each condition and the subclass value or values for each class
-value.
-*/
-/*
-Class values that begin with one of the digits '0', '1', '2', '3', or
-'4' or one of the simple_Latin_upper_case_letters 'A', 'B', 'C', 'D',
-'E', 'F', 'G', or 'H' are returned only for conditions defined in
-ISO/IEC 9075 or in any other International Standard.
-The range of such class values are called standard-defined
-classes.
-Some such class codes are reserved for use by specific International
-Standards, as specified elsewhere in this Clause.
-Subclass values associated with such classes that also begin with one of
-those 13 characters are returned only for conditions defined in ISO/IEC
-9075 or some
-other International Standard.
-The range of such class values are called standard-defined classes.
-Subclass values associated with such classes that begin with one of the
-digits '5', '6', '7', '8', or '9' or one of the <simple_Latin upper
-case letter>s 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
-'T', 'U', 'V', 'W', 'X', 'Y', or 'Z' are reserved for
-implementation-specified conditions and are called
-implementation_defined subclasses.
-*/
-/*
-Class values that begin with one of the digits '5', '6', '7', '8', or
-'9' or one of the simple_Latin_upper_case_letters 'I', 'J', 'K', 'L',
-'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', or 'Z'
-are reserved for implementation-specified exception conditions and are
-called_implementation_defined classes.
-All subclass values except '000', which means no subclass, associated
-with such classes are reserved for implementation-specified conditions
-and are called_implementation_defined subclasses.
-An_implementation_defined completion condition shall be indicated by
-returning an_implementation_defined subclass in conjunction with one of
-the classes successful completion, warning, or no data.
-*/
-
-
-/*
-The 'Category' column has the following meanings: 'S' means that the class value given corresponds
-to successful completion and is a completion condition; 'W' means that the class value given
-corresponds to a successful completion but with a warning and is a completion condition; 'N' means
-that the class value given corresponds to a no-data situation and is a completion condition; 'X'
-means that the class value given corresponds to an exception condition.
-*/
-
-/*
-Table 31 - SQLSTATE class and subclass values
-*/
-
-/*
-
-    *   Category   Condition   Class   Subcondition   Subclass
-    *   X   ambiguous cursor name   3C   (no subclass)   000
-    *   X   attempt to assign to non_updatable column   0U   (no subclass)   000
-    *   X   attempt to assign to ordering column   0V   (no subclass)   000
-    *   X   cardinality violation   21   (no subclass)   000
-    *   X   connection exception   08   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   connection does not exist   003
-    *   &nbsp;   &nbsp;   &nbsp;   connection failure   006
-    *   &nbsp;   &nbsp;   &nbsp;   connection name in use   002
-    *   &nbsp;   &nbsp;   &nbsp;   SQL-client unable to establish SQL-connection   001
-    *   &nbsp;   &nbsp;   &nbsp;   SQL-server rejected establishment of SQL-connection   004
-    *   &nbsp;   &nbsp;   &nbsp;   transaction resolution unknown   007
-    *   X   cursor sensitivity exception   36   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   request failed   002
-    *   &nbsp;   &nbsp;   &nbsp;   request rejected   001
-    *   X   data exception   22   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   array data, right truncation   02F
-    *   &nbsp;   &nbsp;   &nbsp;   array element error   02E
-    *   &nbsp;   &nbsp;   &nbsp;   character not in repertoire   021
-    *   &nbsp;   &nbsp;   &nbsp;   datetime field overflow   008
-    *   &nbsp;   &nbsp;   &nbsp;   division by zero   012
-    *   &nbsp;   &nbsp;   &nbsp;   error in assignment   005
-    *   &nbsp;   &nbsp;   &nbsp;   escape character conflict   00B
-    *   &nbsp;   &nbsp;   &nbsp;   indicator overflow   022
-    *   &nbsp;   &nbsp;   &nbsp;   interval field overflow   015
-    *   &nbsp;   &nbsp;   &nbsp;   invalid argument for natural logarithm   01E
-    *   &nbsp;   &nbsp;   &nbsp;   invalid argument for power function   01F
-    *   &nbsp;   &nbsp;   &nbsp;   invalid argument for width bucket function   01G
-    *   &nbsp;   &nbsp;   &nbsp;   invalid character value for cast   018
-    *   &nbsp;   &nbsp;   &nbsp;   invalid datetime format   007
-    *   &nbsp;   &nbsp;   &nbsp;   invalid escape character   019
-    *   &nbsp;   &nbsp;   &nbsp;   invalid escape octet   00D
-    *   &nbsp;   &nbsp;   &nbsp;   invalid escape sequence   025
-    *   &nbsp;   &nbsp;   &nbsp;   invalid indicator parameter value   010
-    *   &nbsp;   &nbsp;   &nbsp;   invalid interval format   006
-    *   &nbsp;   &nbsp;   &nbsp;   invalid parameter value   023
-    *   &nbsp;   &nbsp;   &nbsp;   invalid preceding or following size in window function   013
-    *   &nbsp;   &nbsp;   &nbsp;   invalid regular expression   01B
-    *   &nbsp;   &nbsp;   &nbsp;   invalid repeat argument in a sample clause   02G
-    *   &nbsp;   &nbsp;   &nbsp;   invalid sample size   02H
-    *   &nbsp;   &nbsp;   &nbsp;   invalid time zone displacement value   009
-    *   &nbsp;   &nbsp;   &nbsp;   invalid use of escape character   00C
-    *   &nbsp;   &nbsp;   &nbsp;   most specific type mismatch   00G
-    *   &nbsp;   &nbsp;   &nbsp;   noncharacter in UCS string   029
-    *   &nbsp;   &nbsp;   &nbsp;   null value substituted for mutator subject parameter   02D
-    *   &nbsp;   &nbsp;   &nbsp;   null row not permitted in table   01C
-    *   &nbsp;   &nbsp;   &nbsp;   null value in array target   00E
-    *   &nbsp;   &nbsp;   &nbsp;   null value, no indicator parameter   002
-    *   &nbsp;   &nbsp;   &nbsp;   null value not allowed   004
-    *   &nbsp;   &nbsp;   &nbsp;   numeric value out of range   003
-    *   &nbsp;   &nbsp;   &nbsp;   sequence generator limit exceeded   00H
-    *   &nbsp;   &nbsp;   &nbsp;   string data, length mismatch   026
-    *   &nbsp;   &nbsp;   &nbsp;   string data, right truncation   001
-    *   &nbsp;   &nbsp;   &nbsp;   substring error   011
-    *   &nbsp;   &nbsp;   &nbsp;   trim error   027
-    *   &nbsp;   &nbsp;   &nbsp;   unterminated C string   024
-    *   &nbsp;   &nbsp;   &nbsp;   zero-length character string   00F
-    *   X   dependent privilege descriptors still exist   2B   (no subclass)   000
-    *   X   diagnostics exception   0Z   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   maximum number of stacked diagnostics areas exceeded   001
-    *   X   dynamic SQL error   07   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   cursor specification cannot be executed   003
-    *   &nbsp;   &nbsp;   &nbsp;   data type transform function violation   00B
-    *   &nbsp;   &nbsp;   &nbsp;   invalid DATA target   00D
-    *   &nbsp;   &nbsp;   &nbsp;   invalid DATETIME_INTERVAL_CODE   00F
-    *   &nbsp;   &nbsp;   &nbsp;   invalid descriptor count   008
-    *   &nbsp;   &nbsp;   &nbsp;   invalid descriptor index   009
-    *   &nbsp;   &nbsp;   &nbsp;   invalid LEVEL value   00E
-    *   &nbsp;   &nbsp;   &nbsp;   prepared statement not a cursor specification   005
-    *   &nbsp;   &nbsp;   &nbsp;   restricted data type attribute violation   006
-    *   &nbsp;   &nbsp;   &nbsp;   undefined DATA value   00C
-    *   &nbsp;   &nbsp;   &nbsp;   using clause does not match dynamic parameter specifications   001
-    *   &nbsp;   &nbsp;   &nbsp;   using clause does not match target specifications   002
-    *   &nbsp;   &nbsp;   &nbsp;   using clause required for dynamic parameters   004
-    *   &nbsp;   &nbsp;   &nbsp;   using clause required for result fields   007
-    *   X   external routine exception   38   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   containing SQL not permitted   001
-    *   &nbsp;   &nbsp;   &nbsp;   modifying SQL-data not permitted   002
-    *   &nbsp;   &nbsp;   &nbsp;   prohibited SQL-statement attempted   003
-    *   &nbsp;   &nbsp;   &nbsp;   reading SQL-data not permitted   004
-    *   X   external routine invocation exception   39   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   invalid SQLSTATE returned   001
-    *   &nbsp;   &nbsp;   &nbsp;   null value not allowed   004
-    *   X   feature not supported   0A   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   multiple server transactions   001
-    *   X   integrity constraint violation   23   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   restrict violation   001
-    *   X   invalid authorization specification   28   (no subclass)   000
-    *   X   invalid catalog name   3D   (no subclass)   000
-    *   X   invalid character set name   2C   (no subclass)   000
-    *   X   invalid condition number   35   (no subclass)   000
-    *   X   invalid connection name   2E   (no subclass)   000
-    *   X   invalid cursor name   34   (no subclass)   000
-    *   X   invalid cursor state   24   (no subclass)   000
-    *   X   invalid grantor   0L   (no subclass)   000
-    *   X   invalid role specification   0P   (no subclass)   000
-    *   X   invalid schema name   3F   (no subclass)   000
-    *   X   invalid schema name list specification   0E   (no subclass)   000
-    *   X   invalid session collation specification   2H   (no subclass)   000
-    *   X   invalid SQL descriptor name   33   (no subclass)   000
-    *   X   invalid SQL-invoked procedure reference   0M   (no subclass)   000
-    *   X   invalid SQL statement name   26   (no subclass)   000
-    *   X   invalid SQL statement Regular_Identifier   30   (no subclass)   000
-    *   X   invalid target type specification   0D   (no subclass)   000
-    *   X   invalid transaction initiation   0B   (no subclass)   000
-    *   X   invalid transaction state   25   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   active SQL-transaction   001
-    *   &nbsp;   &nbsp;   &nbsp;   branch transaction already active   002
-    *   &nbsp;   &nbsp;   &nbsp;   held cursor requires same isolation level   008
-    *   &nbsp;   &nbsp;   &nbsp;   inappropriate access mode for branch transaction   003
-    *   &nbsp;   &nbsp;   &nbsp;   inappropriate isolation level for branch transaction   004
-    *   &nbsp;   &nbsp;   &nbsp;   no active SQL-transaction for branch transaction   005
-    *   &nbsp;   &nbsp;   &nbsp;   read-only SQL-transaction   006
-    *   &nbsp;   &nbsp;   &nbsp;   schema and data statement mixing not supported   007
-    *   X   invalid transaction termination   2D   (no subclass)   000
-    *   X   invalid transform group name specification   0S   (no subclass)   000
-    *   X   locator exception   0F   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   invalid specification   001
-    *   N   no data   02   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   no additional dynamic result sets returned   001
-    *   X   prohibited statement encountered during trigger execution   0W   (no subclass)   000
-    *   X   Remote Database Access   HZ   (See Table 32, 'SQLSTATE class codes for RDA', for the definition of protocol subconditions and subclass code values)   &nbsp;
-    *   X   savepoint exception   3B   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   invalid specification   001
-    *   &nbsp;   &nbsp;   &nbsp;   too many   002
-    *   X   SQL routine exception   2F   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   function executed no return statement   005
-    *   &nbsp;   &nbsp;   &nbsp;   modifying SQL-data not permitted   002
-    *   &nbsp;   &nbsp;   &nbsp;   prohibited SQL-statement attempted   003
-    *   &nbsp;   &nbsp;   &nbsp;   reading SQL-data not permitted   004
-    *   S   successful completion   00   (no subclass)   000
-    *   X   syntax error or access rule violation   42   (no subclass)   000
-    *   X   target table disagrees with cursor specification   0T   (no subclass)   000
-    *   X   transaction rollback   40   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   integrity constraint violation   002
-    *   &nbsp;   &nbsp;   &nbsp;   serialization failure   001
-    *   &nbsp;   &nbsp;   &nbsp;   statement completion unknown   003
-    *   &nbsp;   &nbsp;   &nbsp;   triggered action exception   004
-    *   X   triggered action exception   09   (no subclass)   000
-    *   X   triggered data change violation   27   (no subclass)   000
-    *   W   warning   01   (no subclass)   000
-    *   &nbsp;   &nbsp;   &nbsp;   additional result sets returned   00D
-    *   &nbsp;   &nbsp;   &nbsp;   array data, right truncation   02F
-    *   &nbsp;   &nbsp;   &nbsp;   attempt to return too many result sets   00E
-    *   &nbsp;   &nbsp;   &nbsp;   cursor operation conflict   001
-    *   &nbsp;   &nbsp;   &nbsp;   default value too long for information schema   00B
-    *   &nbsp;   &nbsp;   &nbsp;   disconnect error   002
-    *   &nbsp;   &nbsp;   &nbsp;   dynamic result sets returned   00C
-    *   &nbsp;   &nbsp;   &nbsp;   external routine warning (the value of xx to be chosen by the author of the external routine)   Hxx
-    *   &nbsp;   &nbsp;   &nbsp;   insufficient item descriptor areas   005
-    *   &nbsp;   &nbsp;   &nbsp;   null value eliminated in set function   003
-    *   &nbsp;   &nbsp;   &nbsp;   privilege not granted   007
-    *   &nbsp;   &nbsp;   &nbsp;   privilege not revoked   006
-    *   &nbsp;   &nbsp;   &nbsp;   query expression too long for information schema   00A
-    *   &nbsp;   &nbsp;   &nbsp;   search condition too long for information schema   009
-    *   &nbsp;   &nbsp;   &nbsp;   statement too long for information schema   008
-    *   &nbsp;   &nbsp;   &nbsp;   string data, right truncation   004
-    *   X   with check option violation   44   (no subclass)   000
-
-*/
-
-/*
-
-	24 Conformance
-
-
-		 24.1 General Conformance Requirements (p1079)
-
-
-Table 33 - Implied feature relationships
-*/
-
-/*
-
-    *   Feature ID   Feature Description   Implied Feature   ID Implied Feature Description
-    *   B032   Extended dynamic SQL   B031   Basic dynamic SQL
-    *   B034   Dynamic specification of cursor attributes   B031   Basic dynamic SQL
-    *   F381   Extended schema manipulation   F491   Constraint management
-    *   F451   Character set definition   F461   Named character sets
-    *   F711   ALTER domain   F251   Domain support
-    *   F801   Full set function   F441   Extended set function support
-    *   S024   Enhanced structured types   S023   Basic structured types
-    *   S041   Basic reference types   S023   Basic structured types
-    *   S041   Basic reference types   S051   Create table of type
-    *   S043   Enhanced reference types   S041   Basic reference types
-    *   S051   Create table of type   S023   Basic structured types
-    *   S081   Subtables   S023   Basic structured types
-    *   S081   Subtables   S051   Create table of type
-    *   S092   Arrays of user_defined types   S091   Basic array support
-    *   S094   Arrays of reference types   S041   Basic reference types
-    *   S094   Arrays of reference types   S091   Basic array support
-    *   S095   Array constructors by query   S091   Basic array support
-    *   S096   Optional array bounds   S091   Basic array support
-    *   S111   ONLY in query expressions   S023   Basic structured types
-    *   S111   ONLY in query expressions   S051   Create table of type
-    *   S201   SQL-invoked routines on arrays   S091   Basic array support
-    *   S202   SQL-invoked routines on multisets   S271   Basic multiset support
-    *   S231   Structured type locators   S023   Basic structured types
-    *   S232   Array locators   S091   Basic array support
-    *   S233   Multiset locators   S271   Basic multiset support
-    *   S242   Alter transform statement   S241   Transform functions
-    *   S272   Multisets of user_defined types   S271   Basic multiset support
-    *   S274   Multisets of reference types   S041   Basic reference types
-    *   S274   Multisets of reference types   S271   Basic multiset support
-    *   S275   Advanced multiset support   S271   Basic multiset support
-    *   T042   Extended LOB data type support   T041   Basic LOB data type support
-    *   T061   UCS Support   F461   Named character sets
-    *   T071   BIGINT data type   E001-01   INTEGER and SMALLINT data types (including all spellings)
-    *   T131   Recursive query   T121   WITH (excluding RECURSIVE) in query expression
-    *   T173   Extended LIKE clause in table definition   T171   LIKE clause in table definition
-    *   T212   Enhanced trigger capability   T211   Basic trigger capability
-    *   T332   Extended roles   T331   Basic roles
-    *   T511   Transaction counts   F121   Basic diagnostics management
-    *   T571   Array-returning external SQL-invoked functions   S091   Basic array support
-    *   T571   Array-returning external SQL-invoked functions   S201   SQL-invoked routines on arrays
-    *   T572   Multiset-returning external SQLinvoked functions   S202   SQL-invoked routines on multisets
-    *   T572   Multiset-returning external SQLinvoked functions   S271   Basic multiset support
-    *   T612   Advanced OLAP operations   T611   Elementary OLAP operations
-
-*/
-
-/*
-
-	END OF SQL-2003 Part 2 (SQL/Foundation) GRAMMAR
-
-
-	Notes on Automatically Converting the SQL Grammar to a YACC Grammar
-
-
-Automatic translation of this grammar is non_trivial for a number of
-reasons.
-One is that the grammar has a number of actions '!!See the Syntax Rules'
-which cannot be translated automatically. Another is that the grammar
-contains rules that are usually better handled by the lexical analyzer
-than the grammar proper. Then there are incomplete rules such as those
-which reference parts 6 to 10 (they are not defined; indeed, part 7,
-which was going to be SQL/Temporal, is in complete abeyance), and the
-packages (almost completely undefined in the grammar). It is not clear
-whether these can be ignored, or annotated out of the way.
-*/
-
-/*
-Another complication is automatically generating rules to deal with
-optional components and repetitive components in the grammar.
-Square brackets do not contain alternative non_terminals; all those
-expressions are contained within curly brackets within the square
-brackets.
-However, some square brackets do contain alternative terminals.
-Curly brackets contain and group mandatory elements.
-However, they are usually used in conjunction with the 'one or more
-times' repeater ellipsis '...' mark.
-*/
-
-/*
-	END OF SQL 2003-2 (SQL/FOUNDATION) GRAMMAR
-*/
-

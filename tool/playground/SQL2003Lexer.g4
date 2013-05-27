@@ -1,7 +1,9 @@
-lexer grammar sql2003Lexer;
+// Douglas Godfrey posted this as ANTLR v3 grammar
+// TJP converted to v4
 
-options
-{
+lexer grammar SQL2003Lexer;
+
+options {
     language=Java;
 }
 
@@ -83,19 +85,11 @@ fragment
 Line_Comment    : '//';
 
 COMMENT
-    :   (   Start_Comment ( options {greedy=false;} : . )* End_Comment )+ 
-		{
-//			$channel=HIDDEN;
-			SKIP();
-		} 
+    :   (   Start_Comment .*? End_Comment )+ -> skip
     ;
 
 LINE_COMMENT
-    : 	(   ( Line_Comment | '--' ) ~('\n'|'\r')* '\r'? '\n')+ 
-		{
-//			$channel=HIDDEN;
-			SKIP();
-		} 
+    : 	(   ( Line_Comment | '--' ) ~('\n'|'\r')* '\r'? '\n')+ -> skip
     ;
 
 
@@ -186,6 +180,13 @@ fragment Y
 fragment Z
 	:	'Z' | 'z';
 
+Sqlstate_Class_Value  :  Sqlstate_Char Sqlstate_Char /*!! See the Syntax Rules.*/;
+
+Sqlstate_Subclass_Value  :  Sqlstate_Char Sqlstate_Char Sqlstate_Char /*!! See the Syntax Rules.*/;
+
+fragment
+Sqlstate_Char  :  Simple_Latin_Upper_Case_Letter | Digit;
+
 fragment
 Simple_Latin_Upper_Case_Letter :
 		'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 
@@ -210,8 +211,8 @@ SQL_Special_Character :
 		Space
 	|	Double_Quote
 	|	Percent
-	|	Ampersand
-	|	Quote
+	|	'@'
+	|	'\''
 	|	Left_Paren
 	|	Right_Paren
 	|	Asterisk
@@ -234,19 +235,6 @@ SQL_Special_Character :
 	|	Left_Brace
 	|	Right_Brace
 	;
-
-fragment
-Unsigned_Large_Integer
-	:	;
-fragment
-Signed_Large_Integer
-	:	;
-fragment
-Unsigned_Float
-	:	;
-fragment
-Signed_Float
-	:	;
 
 //  Keyword Tokens
 
@@ -804,7 +792,7 @@ Double_Colon
 Double_Period           
 	:	 '..';
 
-Back_Quote              
+Back_Quote
 	:	 '`';
 Tilde                   
 	:	 '~';
@@ -854,8 +842,10 @@ Vertical_Bar
 Colon                   
 	:	 ':';
 Semicolon               
-	:	 ';';
-Double_Quote            
+	:	 ';'
+;
+
+Double_Quote
 	:	 '"';
 Quote                   
 	:	 '\'';
@@ -872,8 +862,8 @@ Question_Mark
 Slash                   
 	:	 '/';
 
-fragment
 Underscore	: '_';
+
 fragment
 Back_Slash  : '\\';
 fragment
@@ -1004,7 +994,7 @@ Unicode_Forbidden_Identifier_Character  :
 // Unicode Character Ranges
 fragment
 Unicode_Character_Without_Quotes    :   Basic_Latin_Without_Quotes
-                                    |   '\u00A0' .. '\uFFFF';
+                                    |   '\u00A0' .. '\uFFFE';
 fragment
 Extended_Latin_Without_Quotes       :   '\u0001' .. '!' | '#' .. '&' | '(' .. '\u00FF';
 fragment
@@ -1014,13 +1004,13 @@ Basic_Latin                         :   '\u0020' .. '\u007F';
 fragment
 Basic_Latin_Without_Quotes          :   ' ' .. '!' | '#' .. '&' | '(' .. '~';
 fragment
-Regex_Non_Escaped_Unicode           :   ~( '|' | '*' | '+' | '-' | '?' | '\%' | '_' | '^' | ':' | '{' | '}' | '(' | ')' | '[' | '\\' ) ;
+Regex_Non_Escaped_Unicode           :   ~( '|' | '*' | '+' | '-' | '?' | '%' | '_' | '^' | ':' | '{' | '}' | '(' | ')' | '[' | '\\' ) ;
 fragment
-Regex_Escaped_Unicode               :   ' ' .. '[' | ']' .. '~' | '\u00A0' .. '\uFFFF';
+Regex_Escaped_Unicode               :   ' ' .. '[' | ']' .. '~' | '\u00A0' .. '\uFFFE';
 fragment
 Unicode_Allowed_Escape_Chracter		:	'!' | '#' .. '&' | '(' .. '/' | ':' .. '@' | '[' .. '`' | '{' .. '~' | '\u0080' .. '\u00BF';
 fragment
-Full_Unicode						:	'\u0001' .. '\uFFFF';
+Full_Unicode						:	'\u0001' .. '\uFFFE';
 fragment
 Extended_Control_Characters         :   '\u0080' .. '\u009F';
 fragment
@@ -1230,7 +1220,7 @@ Arabic_Presentation_FormsB          :   '\uFE70' .. '\uFEFF';
 fragment
 Halfwidth_and_Fullwidth_Forms       :   '\uFF00' .. '\uFFEF';   
 fragment
-Specials                            :   '\uFFF0' .. '\uFFFF';   
+Specials                            :   '\uFFF0' .. '\uFFFE';   
 
 
 
@@ -1254,210 +1244,94 @@ Escape_Character                 :  '\\' /* Unicode_Allowed_Escape_Chracter */ /
 		 5.3 <literal> (p143)
 */
 
+// TJP
+/*
+<literal> ::= <signed numeric literal> | <general literal>
 
-fragment
-HexPair     :   Hexit Hexit;
+<unsigned literal> ::= <unsigned numeric literal> | <general literal>
 
-fragment
-HexQuad     :   Hexit Hexit Hexit Hexit;
+<signed numeric literal> ::= [ <sign> ] <unsigned numeric literal>
 
-fragment
-Unsigned_Integer	:
-	(	'0'
-			(	( 'x' | 'X' ) 
-				HexPair ( HexPair ( HexQuad (HexQuad HexQuad)? )? )? 
-			|	OctalDigit ( OctalDigit )* 
-			|	{true}? 
-				( '0' )*
-			)  
-	|	( '1'..'9' ) ( Digit )* 
-	);
+<unsigned numeric literal> ::= <exact numeric literal> | <approximate numeric literal>
 
-fragment
-Signed_Integer	:
-	( Plus_Sign | Minus_Sign ) ( Digit )+ 			
-	;
+<exact numeric literal> ::=
+		<unsigned integer> [ <period> [ <unsigned integer> ] ]
+	|	<period> <unsigned integer>
 
-Number	:
-	(	'0'
-			(	( 'x' | 'X' ) 
-				HexPair ( HexPair ( HexQuad (HexQuad HexQuad)? )? )? 
-				(	('K' | 'M' |'G')
-					{
-						_type  =  Unsigned_Large_Integer;
-					}
-				|	{true}?
-					{
-						_type  =  Unsigned_Integer;
-					}
-				)
-				
-			|	( OctalDigit )* 
-				(	('K' | 'M' |'G')
-					{
-						_type  =  Unsigned_Large_Integer;
-					}
-				|	{true}?
-					{
-						_type  =  Unsigned_Integer;
-					}
-				)
-				
-			|	Period 
-				( Digit )+ ( ( 'f' | 'F' | 'd' | 'D' | 'e' | 'E' ) ( Plus_Sign | Minus_Sign )? Digit ( Digit ( Digit )? )? )?
-				{
-					_type  =  Unsigned_Float;
-				}
-				
-			|	'8'..'9' ( Digit )*
-				(	('K' | 'M' |'G')
-					{
-						_type  =  Unsigned_Large_Integer;
-					}
-				|	{true}?
-					{
-						_type  =  Unsigned_Integer;
-					}
-				)
-			)  
-	|	( Plus_Sign | Minus_Sign ) ( Digit )+ 
-			(	Period ( Digit )+ ( ( 'f' | 'F' | 'd' | 'D' | 'e' | 'E' ) ( Plus_Sign | Minus_Sign )? Digit ( Digit ( Digit )? )? )?
-				{
-					_type  =  Signed_Float;
-				}
-				
-			|	(	('K' | 'M' |'G')
-					{
-						_type  =  Signed_Large_Integer;
-					}
-				|	{true}?
-					{
-						_type  =  Signed_Integer;
-					}
-				)
-			)
-	|	( '1'..'9' ) ( Digit )* 
-			(	Period ( Digit )+ ( ( 'f' | 'F' | 'd' | 'D' | 'e' | 'E' ) ( Plus_Sign | Minus_Sign )? Digit ( Digit ( Digit )? )? )?
-				{
-					_type  =  Unsigned_Float;
-				}
-				
-			|	(	('K' | 'M' |'G')
-					{
-						_type  =  Unsigned_Large_Integer;
-					}
-				|	{true}?
-					{
-						_type  =  Unsigned_Integer;
-					}
-				)
-			)
-			
-	|	Period
-			( Digit )+ ( ( 'f' | 'F' | 'd' | 'D' | 'e' | 'E' ) ( Plus_Sign | Minus_Sign )? Digit ( Digit ( Digit )? )? )?
-				{
-					_type  =  Unsigned_Float;
-				}
-	);
+<sign> ::= <plus sign> | <minus sign>
 
+<approximate numeric literal> ::= <mantissa> E <exponent>
 
-fragment
+<mantissa> ::= <exact numeric literal>
+
+<exponent> ::= <signed integer>
+
+<signed integer> ::= [ <sign> ] <unsigned integer>
+*/
+
+Signed_Integer : [+-] [0-9]+ ;
+Unsigned_Integer : [0-9]+ ;
+
+fragment HEX_DIGIT_FRAGMENT: ( 'a'..'f' | 'A'..'F' | '0'..'9' ) ;
+
+HEX_DIGIT:
+	(  '0x'     (HEX_DIGIT_FRAGMENT)+  )
+	|
+	(  'X' '\'' (HEX_DIGIT_FRAGMENT)+ '\''  ) 
+;
+
+BIT_NUM:
+	(  '0b'    ('0'|'1')+  )
+	|
+	(  B '\'' ('0'|'1')+ '\''  ) 
+;
+
+Signed_Float : [+-] Unsigned_Float ;
+
+Unsigned_Float:
+     [0-9]+ '.' [0-9]+ Exponent?
+   | [0-9]+ '.' Exponent?
+   | '.' [0-9]+ Exponent?
+;
+
+fragment Exponent  : [Ee] [+-]? [0-9]+ ;
+
+/*
 Character_Set_Name  : ( ( ( Regular_Identifier )  Period )? 
                           ( Regular_Identifier )  Period )? 
                             Regular_Identifier ;
 
 fragment
 Character_Set		:	Underscore  Character_Set_Name;
+*/
 
-fragment
 Character_String_Literal :
-		  Quote ( Extended_Latin_Without_Quotes  )* Quote ( Quote ( Extended_Latin_Without_Quotes  )* Quote )*
+		  '\'' ( Extended_Latin_Without_Quotes  )* '\'' ( '\'' ( Extended_Latin_Without_Quotes  )* '\'' )*
 		;
 		
-fragment
 National_Character_String_Literal :
-		'N' Quote ( Extended_Latin_Without_Quotes  )* Quote ( Quote ( Extended_Latin_Without_Quotes  )* Quote )*
+		'N' '\'' ( Extended_Latin_Without_Quotes  )* '\'' ( '\'' ( Extended_Latin_Without_Quotes  )* '\'' )*
 		;
 
-fragment
 Unicode_Character_String_Literal  :
-		'U' Ampersand Quote ( Unicode_Character_Without_Quotes  )* Quote ( Quote ( Unicode_Character_Without_Quotes  )* Quote )*
+		'U' '@' '\'' ( Unicode_Character_Without_Quotes  )* '\'' ( '\'' ( Unicode_Character_Without_Quotes  )* '\'' )*
 		;
 
 fragment
 Bit :   ('0' | '1');
 
-fragment
 Bit_String_Literal  :
-		'B' Quote ( Bit Bit Bit Bit  Bit Bit Bit Bit  )* Quote ( Quote ( Bit Bit Bit Bit  Bit Bit Bit Bit  )* Quote )*
+		'B' '\''( Bit Bit Bit Bit  Bit Bit Bit Bit  )* '\'' ( '\'' ( Bit Bit Bit Bit  Bit Bit Bit Bit  )* '\'' )*
 		;
 
-fragment
 Hex_String_Literal  :
-		'X' Quote ( Hexit  Hexit  )* Quote ( Quote ( Hexit  Hexit  )* Quote )*
+		'X' '\'' ( Hexit  Hexit  )* '\'' ( '\'' ( Hexit  Hexit  )* '\'' )*
 		;
-
-String_Literal	:
-	(	Character_Set
-		(
-			Unicode_Character_String_Literal
-				{
-					_type  =  Unicode_Character_String_Literal;
-				}
-		|	Character_String_Literal
-				{
-					_type  =  Character_String_Literal;
-				}
-		)
-	|	Bit_String_Literal
-			{
-				_type  =  Bit_String_Literal;
-			}	
-	|	Hex_String_Literal
-			{
-				_type  =  Hex_String_Literal;
-			}	
-	|	National_Character_String_Literal
-			{
-				_type  =  National_Character_String_Literal;
-			}
-	|	Unicode_Character_String_Literal
-			{
-				_type  =  Unicode_Character_String_Literal;
-			}
-	|	Character_String_Literal
-			{
-				_type  =  Character_String_Literal;
-			}
-	);
 
 /*
 		 5.4 Names and identifiers (p151)
 */
-// Database        1st Character           Sunsequent Characters           Case Sensitive  Max Length
-// ============    ====================    ============================    ==============  ==========
-// Sybase ASA      Latin,'_','@','#','$'   Latin,Digit,'_','@','#','$'     no              128
-// Sybase ASE      Latin,'_','@','#'       Latin,Digit,'_','@','#','$'     no              255
-// SQL Server      Latin,'_','@','#'       Latin,Digit,'_','@','#','$'     no              128
-// Teradata        Latin,'_','#','$'       Latin,Digit,'_','#','$'         no              30
-// MySQL           Latin,Digit             Latin,Digit,'_','$'             yes             64
-// Informix        Latin,'_'               Latin,Digit,'_','$'             no              128
-// PostgreSQL      Latin,'_'               Latin,Digit,'_','$'             no              63
-// Oracle          Latin                   Latin,Digit,'_','#','$'         no              30
-// Interbase       Latin                   Latin,Digit,'_','$'             no              67
-// ANSI SQL92      Latin                   Latin,Digit,'_'                 yes             128
-// IBM DB2         same as ANSI SQL92                                      no              128
-// HP Neoview      same as ANSI SQL92                                      no              128
-
 Regular_Identifier  :  SQL92_Identifier 
-//                    |   {isSybaseASA()}? 				SybaseASA_Identifier
-//                    |   {isSQLServerOrSybaseASE()}? 	SqlServer_Identifier
-//                    |   {isTeradata()}?				Teradata_Identifier
-//                    |   {isMySQL()}?					MySQL_Identifier
-//                    |   {isInformixOrPostgreSQL()}?	Informix_PostgreSQL_Identifier 
-//                    |   {isOracle()}?					Oracle_Identifier
-//                    |   {isInterbase()}?				Interbase_Identifier
-//                    |   {true}?						SQL92_Identifier 
                     ;
 
 // Database        1st Character           Sunsequent Characters           Case Sensitive  Max Length
@@ -1555,7 +1429,7 @@ The productions for <Unicode delimited identifier> and so on are new in SQL-2003
 
 
 Unicode_Identifier  :
-		'U' Ampersand Double_Quote  ( Unicode_Identifier_Part )+ Double_Quote
+		'U' '@' Double_Quote  ( Unicode_Identifier_Part )+ Double_Quote
 		( ESCAPE Escape_Character )?
 		;
 
@@ -1563,18 +1437,9 @@ Unicode_Identifier  :
 
 // ignore all control characters and non-Ascii characters that are not enclosed in quotes
 
-Space    :  ' '
-{
-//	$channel=HIDDEN;
-	SKIP();
-};
+Space    :  ' ' -> skip ;
 
-White_Space  :	( Control_Characters  | Extended_Control_Characters )+ 
-{
-//	$channel=HIDDEN;
-	SKIP();
-};
+White_Space  :	( Control_Characters  | Extended_Control_Characters )+ -> skip ;
 
-
-BAD : . { error(UNKNOWN_CHARACTER, $text); skip(); } ;
+//BAD : . { error(UNKNOWN_CHARACTER, $text); skip(); } -> skip ;
 
