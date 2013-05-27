@@ -151,19 +151,11 @@ declaration
     ;
 
 declarationSpecifiers
-    :   declarationSpecifier+
-    ;
-
-declarationSpecifiers2
-    :   declarationSpecifier+
-    ;
-
-declarationSpecifier
-    :   storageClassSpecifier
-    |   typeSpecifier
-    |   typeQualifier
-    |   functionSpecifier
-    |   alignmentSpecifier
+    :   storageClassSpecifier declarationSpecifiers?
+    |   typeSpecifier declarationSpecifiers?
+    |   typeQualifier declarationSpecifiers?
+    |   functionSpecifier declarationSpecifiers?
+    |   alignmentSpecifier declarationSpecifiers?
     ;
 
 initDeclaratorList
@@ -186,7 +178,7 @@ storageClassSpecifier
     ;
 
 typeSpecifier
-    :   ('void'
+    :   'void'
     |   'char'
     |   'short'
     |   'int'
@@ -199,7 +191,7 @@ typeSpecifier
     |   '_Complex'
     |   '__m128'
     |   '__m128d'
-    |   '__m128i')
+    |   '__m128i'
     |   '__extension__' '(' ('__m128' | '__m128d' | '__m128i') ')'
     |   atomicTypeSpecifier
     |   structOrUnionSpecifier
@@ -275,12 +267,12 @@ typeQualifier
     ;
 
 functionSpecifier
-    :   ('inline'
+    :   'inline'
     |   '_Noreturn'
     |   '__inline__' // GCC extension
-    |   '__stdcall')
     |   gccAttributeSpecifier
     |   '__declspec' '(' Identifier ')'
+    |   '__stdcall'
     ;
 
 alignmentSpecifier
@@ -353,7 +345,7 @@ parameterList
 
 parameterDeclaration
     :   declarationSpecifiers declarator
-    |   declarationSpecifiers2 abstractDeclarator?
+    |   declarationSpecifiers abstractDeclarator?
     ;
 
 identifierList
