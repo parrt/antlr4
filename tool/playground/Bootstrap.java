@@ -95,7 +95,8 @@ public class Bootstrap {
 		new Option("TRIALS", "-trials", OptionArgType.INT, "how many trials of N samples?"),
 		new Option("N",	"-N", OptionArgType.INT, "how many files to sample from docs"),
 		new Option("inputFilePattern",	"-files", OptionArgType.STRING, "input files; e.g., '*.java'"),
-		new Option("showFileNames",	"-showfiles", "show file names as they are parsed")
+		new Option("showFileNames",	"-showfiles", "show file names as they are parsed"),
+		new Option("SLL",	"-SLL", "force pure SLL parsing")
 	};
 
 	private static class DescriptiveErrorListener extends BaseErrorListener {
@@ -210,10 +211,11 @@ public class Bootstrap {
 	public static final String TIMING_FILE = "timings.txt";
 
 	// options
-	public String inputFilePattern;
+	public String inputFilePattern = ".*\\.java";
 	public int TRIALS = 10; // how many times to sample from docs
 	public int N = 5;       // how many files in a sample
 	public boolean showFileNames = false;
+	public boolean SLL = false;
 
 	protected String grammarName;
 	protected String startRuleName;
@@ -391,18 +393,23 @@ public class Bootstrap {
 				}
 				catch (InvocationTargetException ex) {
 					if ( ex.getCause() instanceof ParseCancellationException ) {
-						// count ATN transitions from both SLL *and* LL mode since we failed over
+						if ( !SLL ) {
+							// count ATN transitions from both SLL *and* LL mode since we failed over
 //						System.err.println("FAIL OVER TO LL");
-						tokens.reset(); // rewind input stream
-						// back to standard listeners/handlers
-						parser.addErrorListener(ConsoleErrorListener.INSTANCE);
-						parser.setErrorHandler(new DefaultErrorStrategy());
-						parser.getInterpreter().setPredictionMode(PredictionMode.LL);
+							tokens.reset(); // rewind input stream
+							// back to standard listeners/handlers
+							parser.addErrorListener(ConsoleErrorListener.INSTANCE);
+							parser.setErrorHandler(new DefaultErrorStrategy());
+							parser.getInterpreter().setPredictionMode(PredictionMode.LL);
 
-						final long startTime = System.nanoTime();
-						startRule.invoke(parser, (Object[])null);
-						final long stopTime = System.nanoTime();
-						oneFileStats.timeLL = stopTime - startTime;
+							final long startTime = System.nanoTime();
+							startRule.invoke(parser, (Object[])null);
+							final long stopTime = System.nanoTime();
+							oneFileStats.timeLL = stopTime - startTime;
+						}
+						else {
+							System.err.println(doc+": syntax error: "+ex.toString());
+						}
 					}
 				}
 
@@ -488,8 +495,8 @@ public class Bootstrap {
 		}
 
 		// otherwise, if this is a java file, parse it!
-		else if ( ((f.getName().length()>5) &&
-			f.getName().substring(f.getName().length()-5).equals(".java")) &&
+		else if ( (f.getName().length()>5) &&
+			f.getName().matches(inputFilePattern) &&
 			f.getName().indexOf('-')<0 ) // don't allow preprocessor files like ByteBufferAs-X-Buffer.java
 		{
 			files.add(f.getAbsolutePath());

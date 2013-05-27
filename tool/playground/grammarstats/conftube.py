@@ -16,13 +16,11 @@ index_of_95 = trials * 0.95 - 1
 # Find max value 5% from max value in sorted list
 conf95 = [sort(filerow)[index_of_95] for filerow in stats]
 
-#plt.plot(stats[:,0])
-#plt.plot(stats[:,1])
-#plt.plot(stats[:,2])
+#TODO: add trials/N to plot
 
 plt.plot(means, linewidth=0.5)
 plt.plot(conf95, color="grey", linewidth=0.5)
-#plt.axis(ymax=.4)
+plt.axis(ymax=.3)
 plt.title(transitions_file)
 plt.xlabel('Files parsed', family="serif")
 plt.ylabel('ATN to total transitions ratio', family="serif")
