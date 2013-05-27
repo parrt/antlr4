@@ -1,4 +1,4 @@
-grammar C11;
+grammar C11SLL;
 
 primaryExpression
     :   Identifier
