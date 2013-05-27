@@ -1,4 +1,3 @@
-from Finder import trash_2d_object
 import sys
 from numpy  import *
 import matplotlib.pyplot as plt
@@ -23,7 +22,7 @@ conf95 = [sort(filerow)[index_of_95] for filerow in stats]
 
 plt.plot(means, linewidth=0.5)
 plt.plot(conf95, color="grey", linewidth=0.5)
-plt.axis(ymax=.3)
+plt.axis(ymax=.4)
 plt.title(transitions_file)
 plt.xlabel('Files parsed', family="serif")
 plt.ylabel('ATN to total transitions ratio', family="serif")

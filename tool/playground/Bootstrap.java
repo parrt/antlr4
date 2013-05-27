@@ -48,6 +48,7 @@ import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.misc.Utils;
 
 import java.io.DataInputStream;
@@ -57,6 +58,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -377,24 +379,20 @@ public class Bootstrap {
 			parser.setInterpreter(sim);
 			try {
 				Method startRule = parserClass.getMethod(startRuleName);
-				//parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
+				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
 				parser.setErrorHandler(new BailErrorStrategy());
-				parser.removeErrorListeners();
-				parser.addErrorListener(new DescriptiveErrorListener());
+//				parser.removeErrorListeners();
+//				parser.addErrorListener(new DescriptiveErrorListener());
 				try {
 					final long startTime = System.nanoTime();
 					startRule.invoke(parser, (Object[])null);
 					final long stopTime = System.nanoTime();
 					oneFileStats.timeSLL = stopTime - startTime;
 				}
-				catch (RuntimeException ex) {
-					if (ex.getClass() == RuntimeException.class &&
-						ex.getCause() instanceof RecognitionException)
-					{
-						System.err.println("FAIL OVER TO LL");
-						// The BailErrorStrategy wraps the RecognitionExceptions in
-						// RuntimeExceptions so we have to make sure we're detecting
-						// a true RecognitionException not some other kind
+				catch (InvocationTargetException ex) {
+					if ( ex.getCause() instanceof ParseCancellationException ) {
+						// count ATN transitions from both SLL *and* LL mode since we failed over
+//						System.err.println("FAIL OVER TO LL");
 						tokens.reset(); // rewind input stream
 						// back to standard listeners/handlers
 						parser.addErrorListener(ConsoleErrorListener.INSTANCE);

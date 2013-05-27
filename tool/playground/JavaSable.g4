@@ -938,9 +938,9 @@ grammar JavaSable;
 
   shift_expression :
      additive_expression |
-     shift_expression '<<' additive_expression |
-     shift_expression '>>' additive_expression |
-     shift_expression '>>>' additive_expression;
+     shift_expression '<' '<' additive_expression |
+     shift_expression '>' '>' additive_expression |
+     shift_expression '>' '>' '>' additive_expression;
 
   // 15.20
 
