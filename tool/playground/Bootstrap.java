@@ -377,8 +377,10 @@ public class Bootstrap {
 			parser.setInterpreter(sim);
 			try {
 				Method startRule = parserClass.getMethod(startRuleName);
-				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
+				//parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
 				parser.setErrorHandler(new BailErrorStrategy());
+				parser.removeErrorListeners();
+				parser.addErrorListener(new DescriptiveErrorListener());
 				try {
 					final long startTime = System.nanoTime();
 					startRule.invoke(parser, (Object[])null);

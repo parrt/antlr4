@@ -41,10 +41,8 @@ grammar JavaSable;
   // 4.1
 
   type :
-     primitive_type |
-     (type_name type_arguments?) ('.' Identifier type_arguments?)* |
-     type_variable |
-     type '[' ']';
+     (primitive_type | (type_name type_arguments?) ('.' Identifier type_arguments?)* | type_variable) ('[' ']')*
+	;
 
   // 4.2
 
@@ -68,7 +66,6 @@ grammar JavaSable;
      'double';
 
   // 4.3
-
   
   class_or_interface_type :
      (type_name type_arguments?) ('.' Identifier type_arguments?)*
@@ -151,8 +148,7 @@ grammar JavaSable;
      package_or_type_name '.' Identifier;
 
   ambiguous_name :
-     Identifier |
-     ambiguous_name '.' Identifier;
+     Identifier ('.' Identifier)*;
 
   // 7.3
 
@@ -206,7 +202,7 @@ grammar JavaSable;
      enum_declaration;
 
   normal_class_declaration :
-    class_modifiers? 'class' Identifier type_parameters? super? interfaces? class_body;
+    class_modifiers? 'class' Identifier type_parameters? super_? interfaces? class_body;
 
   class_modifiers :
      class_modifier |
@@ -229,7 +225,7 @@ grammar JavaSable;
      type_parameter_list ',' type_parameter |
      type_parameter;
 
-  super :
+  super_ :
     'extends' (type_decl_specifier type_arguments?);
 
   interfaces :
@@ -265,16 +261,14 @@ grammar JavaSable;
     field_modifiers? type variable_declarators ';';
 
   variable_declarators :
-     variable_declarator |
-     variable_declarators ',' variable_declarator;
+     variable_declarator (',' variable_declarator)*;
 
   variable_declarator :
      variable_declarator_id |
-     variable_declarator_id ':' variable_initializer;
+     variable_declarator_id '=' variable_initializer;
 
   variable_declarator_id :
-     Identifier |
-     variable_declarator_id '[' ']';
+     Identifier ('[' ']')* ;
 
   variable_initializer :
      expression |
@@ -551,7 +545,7 @@ grammar JavaSable;
      element_value_pairs ',' element_value_pair;
 
   element_value_pair :
-    Identifier ':' element_value;
+    Identifier '=' element_value;
 
   element_value :
      conditional_expression |
@@ -574,7 +568,7 @@ grammar JavaSable;
   // 10.6
 
   array_initializer :
-    '[' variable_initializers? ','? ']';
+    '{' variable_initializers? ','? '}';
 
   variable_initializers :
      variable_initializer |
@@ -655,10 +649,15 @@ grammar JavaSable;
      assignment |
      pre_increment_expression |
      pre_decrement_expression |
-     post_increment_expression |
-     post_decrement_expression |
-     method_invocation |
-     class_instance_creation_expression;
+     postfix_expression '++' |
+     postfix_expression '--' |
+     (method_name '(' argument_list? ')' |
+     primary '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
+     'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
+     class_name '.' 'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
+     type_name '.' non_wild_type_arguments Identifier '(' argument_list? ')') |
+     'new' type_arguments? type_decl_specifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
+     primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond? '(' argument_list? ')' class_body?;
 
   // 14.9
 
@@ -803,14 +802,32 @@ grammar JavaSable;
      resource ';' resources;
 
   resource :
-    variable_modifiers? type variable_declarator_id ':' expression;
+    variable_modifiers? type variable_declarator_id '=' expression;
 
   // 15.8
 
   primary :
-     primary_no_new_array |
+     literal |
+     type '.' 'class' |
+     'void' '.' 'class' |
+     'this' |
+     class_name '.' 'this' |
+     '(' expression ')' |
+     'new' type_arguments? type_decl_specifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
+     primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
+     primary '.' Identifier |
+     'super' '.' Identifier |
+     class_name '.' 'super' '.' Identifier |
+     method_name '(' argument_list? ')' |
+     primary '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
+     'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
+     class_name '.' 'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
+     type_name '.' non_wild_type_arguments Identifier '(' argument_list? ')' |
+     expression_name '[' expression ']' |
+     primary '[' expression ']' |
      array_creation_expression;
 
+  /*
   primary_no_new_array :
      literal |
      type '.' 'class' |
@@ -821,7 +838,9 @@ grammar JavaSable;
      class_instance_creation_expression |
      field_access |
      method_invocation |
-     array_access;
+     expression_name '[' expression ']' |
+     primary_no_new_array '[' expression ']';
+  */
 
   // Missing from JLS
 
@@ -830,9 +849,11 @@ grammar JavaSable;
 
   // 15.9
 
+/*
   class_instance_creation_expression :
      'new' type_arguments? type_decl_specifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
      primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond? '(' argument_list? ')' class_body?;
+    */
 
   type_arguments_or_diamond :
      type_arguments |
@@ -863,42 +884,14 @@ grammar JavaSable;
 
   // 15.11
 
-  field_access :
-     primary '.' Identifier |
-     'super' '.' Identifier |
-     class_name '.' 'super' '.' Identifier;
-
-  // 15.12
-
-  method_invocation :
-     method_name '(' argument_list? ')' |
-     primary '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
-     'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
-     class_name '.' 'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
-     type_name '.' non_wild_type_arguments Identifier '(' argument_list? ')';
-
-  // 15.13
-
-  array_access :
-     expression_name '[' expression ']' |
-     primary_no_new_array '[' expression ']';
-
-  // 15.14
-
+  
+  
+ 
   postfix_expression :
-     primary |
-     expression_name |
-     post_increment_expression |
-     post_decrement_expression;
+     (primary | expression_name) ('++' | '--')*;
 
-  post_increment_expression :
-    postfix_expression '++';
-
-  post_decrement_expression :
-    postfix_expression '--';
-
-  // 15.15
-
+  
+  
   unary_expression :
     pre_increment_expression |
     pre_decrement_expression |
@@ -1011,11 +1004,14 @@ grammar JavaSable;
 
   left_hand_side :
      expression_name |
-     field_access |
-     array_access;
+     (primary '.' Identifier |
+     'super' '.' Identifier |
+     class_name '.' 'super' '.' Identifier) |
+     (expression_name '[' expression ']' |
+     primary '[' expression ']');
 
   assignment_operator :
-     ':' |
+     '=' |
      '*=' |
      '/=' |
      '%=' |
@@ -1337,3 +1333,18 @@ JavaLetterOrDigit
 		[\uD800-\uDBFF] [\uDC00-\uDFFF]
 		{Character.isJavaIdentifierPart(Character.toCodePoint((char)_input.LA(-2), (char)_input.LA(-1)))}?
 	;
+
+//
+// Whitespace and comments
+//
+
+WS  :  [ \t\r\n\u000C]+ -> skip
+    ;
+
+COMMENT
+    :   '/*' .*? '*/' -> skip
+    ;
+
+LINE_COMMENT
+    :   '//' ~[\r\n]* -> skip
+    ;
