@@ -360,8 +360,8 @@ public class Bootstrap {
 				lexerClass.getConstructor(CharStream.class);
 			Lexer lexer = lexerCtor.newInstance(input);
 			input.name = doc.fileName;
-			lexer.removeErrorListeners();
-			lexer.addErrorListener(new DescriptiveErrorListener());
+//			lexer.removeErrorListeners();
+//			lexer.addErrorListener(new DescriptiveErrorListener());
 			Constructor<? extends Parser> parserCtor =
 				parserClass.getConstructor(TokenStream.class);
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -383,7 +383,7 @@ public class Bootstrap {
 				Method startRule = parserClass.getMethod(startRuleName);
 				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
 				parser.setErrorHandler(new BailErrorStrategy());
-//				parser.removeErrorListeners();
+				parser.removeErrorListeners();
 //				parser.addErrorListener(new DescriptiveErrorListener());
 				try {
 					final long startTime = System.nanoTime();
