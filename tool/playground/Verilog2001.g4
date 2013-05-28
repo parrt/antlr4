@@ -4,6 +4,7 @@ grammar Verilog2001;
 
 // 1 Source text
 // 1.1 Library source text
+/*
 library_text : ( library_descriptions )* ;
 
 library_descriptions
@@ -13,11 +14,12 @@ library_descriptions
 ;
 
 library_declaration :
-'library' library_identifier file_path_spec ( ( ',' file_path_spec )* )? ( -incdir file_path_spec ( ',' file_path_spec )* )? ';' ;
+'library' library_identifier File_path_spec ( ( ',' File_path_spec )* )? ( '-incdir' File_path_spec ( ',' File_path_spec )* )? ';' ;
 
-file_path_spec : _file_path_ ;
+File_path_spec : ([/~]|'./') ~[ \r\t\n]*? ;
 
-include_statement : 'include' file_path_spec ';' ;
+include_statement : 'include' File_path_spec ';' ;
+*/
 
 // 1.2 Configuration source text
 
@@ -42,8 +44,8 @@ use_clause : 'use' ( library_identifier '.' )? cell_identifier ( ':config' )? ;
 
 // 1.3 Module and primitive source text
 
-source_text : ( description )* ;
-description : module_declaration | udp_declaration ;
+source_text : description* EOF ;
+description : module_declaration ;
 
 module_declaration
 	:	( attribute_instance )* module_keyword module_identifier
@@ -65,81 +67,57 @@ list_of_port_declarations :
 '(' ')'
 ;
 
-port :
-( port_expression )?
-|
-. port_identifier '(' ( port_expression )? ')'
-;
+port: port_expression?
+    | '.' port_identifier '(' ( port_expression )? ')'
+    ;
 
 port_expression :
 port_reference
-|
-'{' port_reference ( ',' port_reference )* '}'
+| '{' port_reference ( ',' port_reference )* '}'
 ;
 
 port_reference :
 port_identifier
-|
-port_identifier '[' constant_expression ']'
-|
-port_identifier '[' range_expression ']'
+| port_identifier '[' constant_expression ']'
+| port_identifier '[' range_expression ']'
 ;
 
 port_declaration :
 ( attribute_instance )* inout_declaration
-|
-( attribute_instance )* input_declaration
-|
-( attribute_instance )* output_declaration
+| ( attribute_instance )* input_declaration
+| ( attribute_instance )* output_declaration
+;
 
 // 1.5 Module items
 
 module_item :
 module_or_generate_item
-|
-port_declaration ';'
-|
-( attribute_instance )* generated_instantiation
-|
-( attribute_instance )* local_parameter_declaration
-|
-( attribute_instance )* parameter_declaration
-|
-( attribute_instance )* specify_block
-|
-( attribute_instance )* specparam_declaration
+| port_declaration ';'
+| ( attribute_instance )* generated_instantiation
+| ( attribute_instance )* local_parameter_declaration
+| ( attribute_instance )* parameter_declaration
+| ( attribute_instance )* specify_block
+| ( attribute_instance )* specparam_declaration
 ;
 
 module_or_generate_item :
 ( attribute_instance )* module_or_generate_item_declaration
-|
-( attribute_instance )* parameter_override
-|
-( attribute_instance )* continuous_assign
-|
-( attribute_instance )* gate_instantiation
-|
-( attribute_instance )* udp_instantiation
-|
-( attribute_instance )* module_instantiation
-|
-( attribute_instance )* initial_construct
-|
-( attribute_instance )* always_construct
+| ( attribute_instance )* parameter_override
+| ( attribute_instance )* continuous_assign
+| ( attribute_instance )* gate_instantiation
+//| ( attribute_instance )* udp_instantiation
+| ( attribute_instance )* module_instantiation
+| ( attribute_instance )* initial_construct
+| ( attribute_instance )* always_construct
 ;
 
 non_port_module_item :
 ( attribute_instance )* generated_instantiation
-|
-( attribute_instance )* local_parameter_declaration
-|
-( attribute_instance )* module_or_generate_item
-|
-( attribute_instance )* parameter_declaration
-|
-( attribute_instance )* specify_block
-|
-( attribute_instance )* specparam_declaration
+| ( attribute_instance )* local_parameter_declaration
+| ( attribute_instance )* module_or_generate_item
+| ( attribute_instance )* parameter_declaration
+| ( attribute_instance )* specify_block
+| ( attribute_instance )* specparam_declaration
 ;
 
 module_or_generate_item_declaration :
@@ -171,7 +149,7 @@ parameter_override : 'defparam' list_of_param_assignments ';' ;
 // 2.1.1 Module parameter declarations
 
 local_parameter_declaration :
-'localparam' ( signed )? ( range )? list_of_param_assignments ';'
+'localparam' ( 'signed' )? ( range )? list_of_param_assignments ';'
 | 'localparam' 'integer' list_of_param_assignments ';'
 | 'localparam' 'real' list_of_param_assignments ';'
 | 'localparam' 'realtime' list_of_param_assignments ';'
@@ -179,14 +157,14 @@ local_parameter_declaration :
 ;
 
 parameter_declaration :
-'parameter' ( signed )? ( range )? list_of_param_assignments ';'
+'parameter' ( 'signed' )? ( range )? list_of_param_assignments ';'
 |'parameter' 'integer' list_of_param_assignments ';'
 |'parameter' 'real' list_of_param_assignments ';'
 |'parameter' 'realtime' list_of_param_assignments ';'
 |'parameter' 'time' list_of_param_assignments ';'
 ;
 
-specparam_declaration : specparam ( range )? list_of_specparam_assignments ';' ;
+specparam_declaration : 'specparam' ( range )? list_of_specparam_assignments ';' ;
 
 // 2.1.2 Port declarations
 
@@ -266,7 +244,7 @@ drive_strength :
 
 strength0 : 'supply0' | 'strong0' | 'pull0' | 'weak0' ;
 strength1 : 'supply1' | 'strong1' | 'pull1' | 'weak1' ;
-charge_strength : '(' 'small' ')' | '(' 'medium' ')' | '(' large ')' ;
+charge_strength : '(' 'small' ')' | '(' 'medium' ')' | '(' 'large' ')' ;
 
 // 2.2.3 Delays
 
@@ -279,13 +257,10 @@ delay2 : '#' delay_value
 ;
 
 delay_value :
-unsigned_number
-|
-parameter_identifier
-|
-specparam_identifier
-|
-mintypmax_expression
+Decimal_number
+| parameter_identifier
+| specparam_identifier
+| mintypmax_expression
 ;
 
 // 2.3 Declaration lists
@@ -342,20 +317,19 @@ limit_value : constant_mintypmax_expression ;
 
 // 2.5 Declaration ranges
 
-dimension : '[' dimension_constant_expression : dimension_constant_expression ']' ;
-range : '[' msb_constant_expression : lsb_constant_expression ']' ;
+dimension : '[' dimension_constant_expression ':' dimension_constant_expression ']' ;
+range : '[' msb_constant_expression ':' lsb_constant_expression ']' ;
 
 // 2.6 Function declarations
 
 function_declaration :
-'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier ';' function_item_declaration ( function_item_declaration )* function_statement endfunction
+'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier ';' function_item_declaration ( function_item_declaration )* function_statement 'endfunction'
 | 'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier ( function_port_list ) ';' block_item_declaration ( block_item_declaration )* function_statement 'endfunction'
 ;
 
 function_item_declaration :
 block_item_declaration
-|
-tf_input_declaration ';'
+| tf_input_declaration ';'
 ;
 
 function_port_list :
@@ -545,7 +519,7 @@ generate_case_statement :
 
 genvar_case_item :
 constant_expression ( ',' constant_expression )* ':' generate_item_or_null
-| default ( ':' )? generate_item_or_null
+| 'default' ( ':' )? generate_item_or_null
 ;
 
 generate_loop_statement :
@@ -555,6 +529,7 @@ generate_loop_statement :
 genvar_assignment : genvar_identifier '=' constant_expression ;
 generate_block : 'begin' ( ':' generate_block_identifier )? ( generate_item )* 'end' ;
 
+/*
 // 5 UDP declaration and instantiation
 // 5.1 UDP declaration
 
@@ -580,34 +555,52 @@ udp_output_declaration :
 
 udp_input_declaration : ( attribute_instance )* 'input' list_of_port_identifiers ;
 udp_reg_declaration : ( attribute_instance )* 'reg' variable_identifier ;
+*/
 
 // 5.3 UDP body
 
+/** can take out user defined primitives
 udp_body : combinational_body | sequential_body ;
-combinational_body : 'table' combinational_entry ( combinational_entry )* 'endtable' ;
-combinational_entry : level_input_list : output_symbol ';' ;
-sequential_body : ( udp_initial_statement )? 'table' sequential_entry ( sequential_entry )* 'endtable' ;
-udp_initial_statement : 'initial' output_port_identifier '=' init_val ';' ;
-init_val : '1\'b0' | '1\'b1' | '1\'bx' | '1\'bX' | '1\'B0' | '1\'B1' | '1\'Bx' | '1\'BX' | '1' | '0' ;
-sequential_entry : seq_input_list ':' current_state ':' next_state ';' ;
-seq_input_list : level_input_list | edge_input_list ;
-level_input_list : level_symbol ( level_symbol )* ;
-edge_input_list : ( level_symbol )* edge_indicator ( level_symbol )* ;
-edge_indicator : '(' level_symbol level_symbol ')' | edge_symbol ;
+combinational_body : 'table' Combinational_entry+ 'endtable' ;
+Combinational_entry : Level_input_list White_space? ':' White_space? Output_symbol White_space? ';' ;
+sequential_body : ( udp_initial_statement )? 'table' Sequential_entry+ 'endtable' ;
+udp_initial_statement : 'initial' output_port_identifier '=' Init_val ';' ;
 
-current_state : level_symbol ;
-next_state : Output_symbol | '-' ;
+Init_val : '1\'b0' | '1\'b1' | '1\'bx' | '1\'bX' | '1\'B0' | '1\'B1' | '1\'Bx' | '1\'BX' | '1' | '0' ;
 
+Sequential_entry : Seq_input_list White_space? ':' White_space? Current_state White_space? ':' White_space? Next_state White_space? ';' ;
+
+fragment
+Seq_input_list : Level_input_list | Edge_input_list ;
+
+fragment
+Level_input_list : Level_symbol+ ;
+
+fragment
+Edge_input_list : Level_symbol* Edge_indicator Level_symbol* ;
+fragment
+Edge_indicator : '(' Level_symbol Level_symbol ')' | Edge_symbol ;
+
+fragment
+Current_state : Level_symbol ;
+fragment
+Next_state : Output_symbol | '-' ;
+
+fragment
 Output_symbol : [01xX] ;
+fragment
 Level_symbol : [01xX?bB] ;
+fragment
 Edge_symbol : [rRfFpPnN*] ;
 
 // 5.4 UDP instantiation
 
 udp_instantiation : udp_identifier ( drive_strength )? ( delay2 )? udp_instance ( ',' udp_instance )* ';' ;
-udp_instance : ( name_of_udp_instance )? '(' output_terminal ',' input_terminal ( ',' input_terminal )* ) ;
+udp_instance : ( name_of_udp_instance )? '(' output_terminal ',' input_terminal ( ',' input_terminal )* ')' ;
 name_of_udp_instance : udp_instance_identifier ( range )? ;
 
+*/
+    
 // 6 Behavioral statements
 // 6.1 Continuous assignment statements
 
@@ -617,10 +610,10 @@ net_assignment : net_lvalue '=' expression ;
 
 // 6.2 Procedural blocks and assignments
 
-initial_construct : initial statement ;
-always_construct : always statement ;
+initial_construct : 'initial' statement ;
+always_construct : 'always' statement ;
 blocking_assignment : variable_lvalue '=' ( delay_or_event_control )? expression ;
-nonblocking_assignment : variable_lvalue <= ( delay_or_event_control )? expression ;
+nonblocking_assignment : variable_lvalue '<=' ( delay_or_event_control )? expression ;
 
 procedural_continuous_assignments :
 'assign' variable_assignment
@@ -665,23 +658,17 @@ statement_or_null : statement | ( attribute_instance )* ';' ;
 
 function_statement :
 ( attribute_instance )* function_blocking_assignment ';'
-|
-( attribute_instance )* function_case_statement
-|
-( attribute_instance )* function_conditional_statement
-|
-( attribute_instance )* function_loop_statement
-|
-( attribute_instance )* function_seq_block
-|
-( attribute_instance )* disable_statement
-|
-( attribute_instance )* system_task_enable
+| ( attribute_instance )* function_case_statement
+| ( attribute_instance )* function_conditional_statement
+| ( attribute_instance )* function_loop_statement
+| ( attribute_instance )* function_seq_block
+| ( attribute_instance )* disable_statement
+| ( attribute_instance )* system_task_enable
 ;
 
 // 6.5 Timing control statements
 
-delay_or_event_control : delay_control | event_control | repeat ( expression ) event_control ;
+delay_or_event_control : delay_control | event_control | 'repeat' '(' expression ')' event_control ;
 
 delay_control : '#' delay_value
 | '#' '(' mintypmax_expression ')'
@@ -689,18 +676,14 @@ delay_control : '#' delay_value
 
 disable_statement :
 'disable' hierarchical_task_identifier ';'
-|
-'disable' hierarchical_block_identifier ';'
+| 'disable' hierarchical_block_identifier ';'
 ;
 
 event_control :
 '@' event_identifier
-|
-'@' ( event_expression )
-|
-'@' *
-|
-'@' ( * )
+| '@' '(' event_expression ')'
+| '@' '*'
+| '@' '(' '*' ')'
 ;
 
 event_trigger : '->' hierarchical_event_identifier ';' ;
@@ -747,54 +730,43 @@ function_if_else_if_statement :
 // 6.7 Case statements
 
 case_statement :
-'case '(' expression ')' case_item ( case_item )* 'endcase'
-|
-'casez' '(' expression ')' case_item ( case_item )* 'endcase'
-|
-'casex' '(' expression ')' case_item ( case_item )* 'endcase'
+'case' '(' expression ')' case_item ( case_item )* 'endcase'
+| 'casez' '(' expression ')' case_item ( case_item )* 'endcase'
+| 'casex' '(' expression ')' case_item ( case_item )* 'endcase'
 ;
 
-case_item : expression ( ',' expression )* : statement_or_null | default ( : )? statement_or_null ;
+case_item : expression ( ',' expression )* ':' statement_or_null | 'default' ( ':' )? statement_or_null ;
 function_case_statement :
-case ( expression ) function_case_item ( function_case_item )* 'endcase'
-|
-'casez' '(' expression ')' function_case_item ( function_case_item )* 'endcase'
-|
-'casex' '(' expression ')' function_case_item ( function_case_item )* 'endcase'
+'case' '(' expression ')' function_case_item ( function_case_item )* 'endcase'
+| 'casez' '(' expression ')' function_case_item ( function_case_item )* 'endcase'
+| 'casex' '(' expression ')' function_case_item ( function_case_item )* 'endcase'
 ;
 
 function_case_item :
 expression ( ',' expression )* ':' function_statement_or_null
-|
-'default' ( ':' )? function_statement_or_null
+| 'default' ( ':' )? function_statement_or_null
 ;
 
 // 6.8 Looping statements
 
 function_loop_statement :
 'forever' function_statement
-|
-'repeat' ( expression ) function_statement
-|
-'while' ( expression ) function_statement
-|
-'for' ( variable_assignment ';' expression ';' variable_assignment ) function_statement
+| 'repeat' ( expression ) function_statement
+| 'while' ( expression ) function_statement
+| 'for' ( variable_assignment ';' expression ';' variable_assignment ) function_statement
 ;
 
 loop_statement :
 'forever' statement
-|
-'repeat' '(' expression ')' statement
-|
-'while' '(' expression ')' statement
-|
-'for' '(' variable_assignment ';' expression ';' variable_assignment ) statement
+| 'repeat' '(' expression ')' statement
+| 'while' '(' expression ')' statement
+| 'for' '(' variable_assignment ';' expression ';' variable_assignment ')' statement
 ;
 
 // 6.9 Task enable statements
 
-system_task_enable : system_task_identifier ( ( expression ( ',' expression )* ) )? ';' ;
-task_enable : hierarchical_task_identifier ( ( expression ( ',' expression )* ) )? ';' ;
+system_task_enable : system_task_identifier ( '(' expression ( ',' expression )* ')' )? ';' ;
+task_enable : hierarchical_task_identifier ( '(' expression ( ',' expression )* ')' )? ';' ;
 
 // 7 Specify section
 // 7.1 Specify block declaration
@@ -802,49 +774,40 @@ task_enable : hierarchical_task_identifier ( ( expression ( ',' expression )* ) 
 specify_block : 'specify' ( specify_item )* 'endspecify' ;
 specify_item :
 specparam_declaration
-|
-pulsestyle_declaration
-|
-showcancelled_declaration
-|
-path_declaration
-|
-system_timing_check
+| pulsestyle_declaration
+| showcancelled_declaration
+| path_declaration
+| system_timing_check
 ;
 
 pulsestyle_declaration :
 'pulsestyle_onevent' list_of_path_outputs ';'
-|
-'pulsestyle_ondetect' list_of_path_outputs ';'
+| 'pulsestyle_ondetect' list_of_path_outputs ';'
 ;
 
 showcancelled_declaration :
 'showcancelled' list_of_path_outputs ';'
-|
-'noshowcancelled' list_of_path_outputs ';'
+| 'noshowcancelled' list_of_path_outputs ';'
 ;
 
 // 7.2 Specify path declarations
 
 path_declaration :
 simple_path_declaration ';'
-|
-edge_sensitive_path_declaration ';'
-|
-state_dependent_path_declaration ';'
+| edge_sensitive_path_declaration ';'
+| state_dependent_path_declaration ';'
 ;
 
 simple_path_declaration :
 parallel_path_description '=' path_delay_value
-|
-full_path_description '=' path_delay_value
+| full_path_description '=' path_delay_value
 ;
 
 parallel_path_description :
 ( specify_input_terminal_descriptor ( polarity_operator )? '=>' specify_output_terminal_descriptor )
 ;
 
-full_path_description : ( list_of_path_inputs ( polarity_operator )? *> list_of_path_outputs ) ;
+full_path_description : '(' list_of_path_inputs ( polarity_operator )? '*>' list_of_path_outputs ')' ;
 list_of_path_inputs : specify_input_terminal_descriptor ( ',' specify_input_terminal_descriptor )* ;
 list_of_path_outputs : specify_output_terminal_descriptor ( ',' specify_output_terminal_descriptor )* ;
 
@@ -852,50 +815,39 @@ list_of_path_outputs : specify_output_terminal_descriptor ( ',' specify_output_t
 
 specify_input_terminal_descriptor :
 input_identifier
-|
-input_identifier '[' constant_expression ]
-|
-input_identifier '[' range_expression ]
+| input_identifier '[' constant_expression ]
+| input_identifier '[' range_expression ]
 ;
 
 specify_output_terminal_descriptor :
 output_identifier
-|
-output_identifier '[' constant_expression ]
-|
-output_identifier '[' range_expression ]
+| output_identifier '[' constant_expression ]
+| output_identifier '[' range_expression ]
 ;
 
 input_identifier :
 input_port_identifier
-|
-inout_port_identifier
+| inout_port_identifier
 ;
 
 output_identifier :
 output_port_identifier
-|
-inout_port_identifier
+| inout_port_identifier
 ;
 
 // 7.4 Specify path delays
 
 path_delay_value :
 list_of_path_delay_expressions
-|
-'(' list_of_path_delay_expressions ')'
+| '(' list_of_path_delay_expressions ')'
 ;
 
 list_of_path_delay_expressions :
 t_path_delay_expression
-|
-trise_path_delay_expression ',' tfall_path_delay_expression
-|
-trise_path_delay_expression ',' tfall_path_delay_expression ',' tz_path_delay_expression
-|
-t01_path_delay_expression ',' t10_path_delay_expression ',' t0z_path_delay_expression ',' tz1_path_delay_expression ',' t1z_path_delay_expression ',' tz0_path_delay_expression
-|
-t01_path_delay_expression ',' t10_path_delay_expression ',' t0z_path_delay_expression ',' tz1_path_delay_expression ',' t1z_path_delay_expression ',' tz0_path_delay_expression ',' t0x_path_delay_expression ',' tx1_path_delay_expression ',' t1x_path_delay_expression ',' tx0_path_delay_expression ',' txz_path_delay_expression ',' tzx_path_delay_expression
+| trise_path_delay_expression ',' tfall_path_delay_expression
+| trise_path_delay_expression ',' tfall_path_delay_expression ',' tz_path_delay_expression
+| t01_path_delay_expression ',' t10_path_delay_expression ',' t0z_path_delay_expression ',' tz1_path_delay_expression ',' t1z_path_delay_expression ',' tz0_path_delay_expression
+| t01_path_delay_expression ',' t10_path_delay_expression ',' t0z_path_delay_expression ',' tz1_path_delay_expression ',' t1z_path_delay_expression ',' tz0_path_delay_expression ',' t0x_path_delay_expression ',' tx1_path_delay_expression ',' t1x_path_delay_expression ',' tx0_path_delay_expression ',' txz_path_delay_expression ',' tzx_path_delay_expression
 ;
 
 t_path_delay_expression : path_delay_expression ;
@@ -915,18 +867,18 @@ tx0_path_delay_expression : path_delay_expression ;
 txz_path_delay_expression : path_delay_expression ;
 tzx_path_delay_expression : path_delay_expression ;
 path_delay_expression : constant_mintypmax_expression ;
+
 edge_sensitive_path_declaration :
 parallel_edge_sensitive_path_description '=' path_delay_value
-|
-full_edge_sensitive_path_description '=' path_delay_value
+| full_edge_sensitive_path_description '=' path_delay_value
 ;
 
 parallel_edge_sensitive_path_description :
-'(' ( edge_identifier )? specify_input_terminal_descriptor '=>' specify_output_terminal_descriptor ( polarity_operator )? : data_source_expression ')'
+'(' ( edge_identifier )? specify_input_terminal_descriptor '=>' specify_output_terminal_descriptor ( polarity_operator )? ':' data_source_expression ')'
 ;
 
 full_edge_sensitive_path_description :
-'(' ( edge_identifier )? list_of_path_inputs '*>' list_of_path_outputs ( polarity_operator )? : data_source_expression ')'
+'(' ( edge_identifier )? list_of_path_inputs '*>' list_of_path_outputs ( polarity_operator )? ':' data_source_expression ')'
 ;
 
 data_source_expression : expression ;
@@ -964,7 +916,7 @@ setuphold_timing_check :
 '$setuphold' '(' reference_event ',' data_event ',' timing_check_limit ',' timing_check_limit ( ',' ( notify_reg )? ( ',' ( stamptime_condition )? ( ',' ( checktime_condition )? ( ',' ( delayed_reference )? ( ',' ( delayed_data )? )? )? )? )? )? ')' ';'
 ;
 
-recovery_timing_check : '$recovery' ( reference_event ',' data_event ',' timing_check_limit ( ',' ( notify_reg )? )? ')' ';' ;
+recovery_timing_check : '$recovery' '(' reference_event ',' data_event ',' timing_check_limit ( ',' ( notify_reg )? )? ')' ';' ;
 removal_timing_check : '$removal' '(' reference_event ',' data_event ',' timing_check_limit ( ',' ( notify_reg )? )? ')' ';' ;
 
 recrem_timing_check :
@@ -1030,51 +982,42 @@ timing_check_event_control specify_terminal_descriptor ( '&&&' timing_check_cond
 
 timing_check_event_control :
 'posedge'
-|
-'negedge'
-|
-edge_control_specifier
+| 'negedge'
+//| edge_control_specifier
 ;
 
 specify_terminal_descriptor :
 specify_input_terminal_descriptor
-|
-specify_output_terminal_descriptor
+| specify_output_terminal_descriptor
 ;
 
-edge_control_specifier : 'edge' '[' edge_descriptor ( ',' edge_descriptor )? ']' ;
+/* context-sensitive, leave for now
+edge_control_specifier : 'edge' '[' Edge_descriptor ( ',' Edge_descriptor )? ']' ;
 
-edge_descriptor :
+fragment
+Edge_descriptor :
 '01'
 | '10'
-| z_or_x zero_or_one
-| zero_or_one z_or_x
+| [xXzZ] [01]
+| [01] [xXzZ]
 ;
-
-zero_or_one : '0' | '1' ;
-Z_or_x : [xXzZ] ;
+*/
 
 timing_check_condition :
 scalar_timing_check_condition
-|
-'(' scalar_timing_check_condition ')'
+| '(' scalar_timing_check_condition ')'
 ;
 
 scalar_timing_check_condition :
 expression
-|
-'~' expression
-|
-expression '==' scalar_constant
-|
-expression '===' scalar_constant
-|
-expression '!=' scalar_constant
-|
-expression '!==' scalar_constant
+| '~' expression
+| expression '==' Scalar_constant
+| expression '===' Scalar_constant
+| expression '!=' Scalar_constant
+| expression '!==' Scalar_constant
 ;
 
-scalar_constant : '1\'b0' | '1\'b1' | '1\'B0' | '1\'B1' | 'b0' | 'b1' | 'B0' | 'B1' | '1' | '0' ;
+Scalar_constant : '1\'b0' | '1\'b1' | '1\'B0' | '1\'B1' | 'b0' | 'b1' | 'B0' | 'B1' | '1' | '0' ;
 
 // 8 Expressions
 // 8.1 Concatenations
@@ -1125,59 +1068,68 @@ genvar_function_call : genvar_function_identifier ( attribute_instance )* '(' co
 // 8.3 Expressions
 
 base_expression : expression ;
-conditional_expression : expression1 '?' ( attribute_instance )* expression2 ':' expression3 ;
-constant_base_expression : constant_expression ;
-constant_expression : constant_primary
-| unary_operator ( attribute_instance )* constant_primary
-| constant_expression binary_operator ( attribute_instance )* constant_expression
-| constant_expression ? ( attribute_instance )* constant_expression : constant_expression
-| string
-;
 
-constant_mintypmax_expression : constant_expression |
-constant_expression : constant_expression : constant_expression
+constant_base_expression : constant_expression ;
+
+constant_expression : expression ;
+
+/*
+constant_expression
+    : constant_primary
+    | unary_operator attribute_instance* constant_primary
+    | constant_expression binary_operator ( attribute_instance )* constant_expression
+    | constant_expression ? ( attribute_instance )* constant_expression ':' constant_expression
+    | String
+    ;
+*/
+
+constant_mintypmax_expression :
+ constant_expression
+| constant_expression ':' constant_expression ':' constant_expression
 ;
 
 constant_range_expression :
 constant_expression
-| msb_constant_expression : lsb_constant_expression
+| msb_constant_expression ':' lsb_constant_expression
 | constant_base_expression '+:' width_constant_expression
 | constant_base_expression '-:' width_constant_expression
 ;
 
 dimension_constant_expression : constant_expression ;
-expression1 : expression ;
-expression2 : expression ;
-expression3 : expression ;
 
-expression :
-primary
-| unary_operator ( attribute_instance )* primary
-| expression binary_operator ( attribute_instance )* expression
-| conditional_expression
-| string
-;
+expression
+    :   (   unary_operator attribute_instance* primary
+        |   primary
+        |   String
+        )
+        (   binary_operator attribute_instance* expression
+        |   '?' attribute_instance* expression ':' expression
+        )*
+    ;
 
-lsb_constant_expression : constant_expression
-mintypmax_expression : expression
-| expression : expression : expression
-;
+lsb_constant_expression : constant_expression ;
 
-module_path_conditional_expression :
-module_path_expression '?' ( attribute_instance )* module_path_expression : module_path_expression
-;
+mintypmax_expression
+    : expression (':' expression ':' expression)?
+    ;
 
-module_path_expression :
-module_path_primary
-| unary_module_path_operator ( attribute_instance )* module_path_primary
-| module_path_expression binary_module_path_operator ( attribute_instance )* module_path_expression
-| module_path_conditional_expression
-;
+module_path_conditional_expression
+    : module_path_expression '?' attribute_instance* module_path_expression
+      ':' module_path_expression
+    ;
 
-module_path_mintypmax_expression :
 module_path_expression
-| module_path_expression ':' module_path_expression ':' module_path_expression
-;
+    :   ( module_path_primary
+        | unary_module_path_operator attribute_instance* module_path_primary
+        )
+        ( binary_module_path_operator attribute_instance* module_path_expression
+        | '?' attribute_instance* module_path_expression ':' module_path_expression
+        )*
+    ;
+
+module_path_mintypmax_expression
+    : module_path_expression (':' module_path_expression ':' module_path_expression)?
+    ;
 
 msb_constant_expression : constant_expression ;
 
@@ -1205,70 +1157,45 @@ constant_concatenation
 
 module_path_primary :
 number
-|
-identifier
-|
-module_path_concatenation
-|
-module_path_multiple_concatenation
-|
-function_call
-|
-system_function_call
-|
-constant_function_call
-|
-'(' module_path_mintypmax_expression ')'
+| identifier
+| module_path_concatenation
+| module_path_multiple_concatenation
+| function_call
+| system_function_call
+| constant_function_call
+| '(' module_path_mintypmax_expression ')'
 ;
 
 primary :
 number
-|
-hierarchical_identifier
-|
-hierarchical_identifier '[' expression ']' ( '[' expression ']' )*
-|
-hierarchical_identifier '[' expression ']' ( '[' expression ']' )* '[' range_expression ]
-|
-hierarchical_identifier '[' range_expression ]
-|
-concatenation
-|
-multiple_concatenation
-|
-function_call
-|
-system_function_call
-|
-constant_function_call
-|
-( mintypmax_expression )
+| hierarchical_identifier
+| hierarchical_identifier '[' expression ']' ( '[' expression ']' )*
+| hierarchical_identifier '[' expression ']' ( '[' expression ']' )* '[' range_expression ]
+| hierarchical_identifier '[' range_expression ]
+| concatenation
+| multiple_concatenation
+| function_call
+| system_function_call
+| constant_function_call
+| '(' mintypmax_expression ')'
 ;
 
 // 8.5 Expression left-side values
 
 net_lvalue :
 hierarchical_net_identifier
-|
-hierarchical_net_identifier '[' constant_expression ']' ( '[' constant_expression ']' )*
-|
-hierarchical_net_identifier '[' constant_expression ']' ( '[' constant_expression ']' )* '[' constant_range_expression ]
-|
-hierarchical_net_identifier '[' constant_range_expression ]
-|
-net_concatenation
+| hierarchical_net_identifier '[' constant_expression ']' ( '[' constant_expression ']' )*
+| hierarchical_net_identifier '[' constant_expression ']' ( '[' constant_expression ']' )* '[' constant_range_expression ]
+| hierarchical_net_identifier '[' constant_range_expression ]
+| net_concatenation
 ;
 
 variable_lvalue :
 hierarchical_variable_identifier
-|
-hierarchical_variable_identifier '[' expression ']' ( '[' expression ']' )*
-|
-hierarchical_variable_identifier '[' expression ']' ( '[' expression ']' )* '[' range_expression ]
-|
-hierarchical_variable_identifier '[' range_expression ]
-|
-variable_concatenation
+| hierarchical_variable_identifier '[' expression ']' ( '[' expression ']' )*
+| hierarchical_variable_identifier '[' expression ']' ( '[' expression ']' )* '[' range_expression ]
+| hierarchical_variable_identifier '[' range_expression ]
+| variable_concatenation
 ;
 
 // 8.6 Operators
@@ -1276,66 +1203,72 @@ variable_concatenation
 unary_operator : '+' | '-' | '!' | '~' | '&' | '~&' | '|' | '~|' | '^' | '~^' | '^~' ;
 binary_operator : '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '===' | '!==' | '&&' | '||' | '**' | '<' | '<=' | '>' | '>=' | '&' | '|' | '^' | '^~' | '~^' | '>>' | '<<' | '>>>' | '<<<' ;
 unary_module_path_operator : '!' | '~' | '&' | '~&' | '|' | '~|' | '^' | '~^' | '^~' ;
-binary_module_path_operator : '==' | '!=' | '&&' | '||' | '&' | '|' | '^' | '^~' | '~^ ;
+binary_module_path_operator : '==' | '!=' | '&&' | '||' | '&' | '|' | '^' | '^~' | '~^' ;
 
 // 8.7 Numbers
 
-number :
-decimal_number
-| octal_number
-| binary_number
-| hex_number
-| real_number real_number
-;
+number
+    :   Decimal_number
+    |   Octal_number
+    |   Binary_number
+    |   Hex_number
+    |   Real_number Real_number
+    ;
 
-real_number :
-unsigned_number '.' unsigned_number
-| unsigned_number ( '.' unsigned_number )? Exp ( sign )? unsigned_number
-;
+Real_number
+    :   Unsigned_number '.' Unsigned_number
+    |   Unsigned_number ( '.' Unsigned_number )? [eE] ( [+-] )? Unsigned_number
+    ;
 
-Exp : [eE] ;
+Decimal_number
+    :   Unsigned_number
+    | ( Size )? Decimal_base Unsigned_number
+    | ( Size )? Decimal_base X_digit ( '_' )*
+    | ( Size )? Decimal_base Z_digit ( '_' )*
+    ;
 
-decimal_number :
-unsigned_number
-| ( size )? decimal_base unsigned_number
-| ( size )? decimal_base x_digit ( '_' )*
-| ( size )? decimal_base z_digit ( '_' )*
-;
+Binary_number : ( Size )? Binary_base Binary_value ;
+Octal_number : ( Size )? Octal_base Octal_value ;
+Hex_number : ( Size )? Hex_base Hex_value ;
 
-binary_number : ( size )? binary_base binary_value ;
-octal_number : ( size )? octal_base octal_value ;
-hex_number : ( size )? hex_base hex_value ;
+fragment
 Sign : [+-] ;
-size : non_zero_unsigned_number ;
-non_zero_unsigned_number : non_zero_decimal_digit ( '_' | decimal_digit )* ;
-unsigned_number : decimal_digit ( '_' | decimal_digit )* ;
-binary_value : binary_digit ( '_' | binary_digit )* ;
-octal_value : octal_digit ( '_' | octal_digit )* ;
-hex_value : hex_digit ( '_' | hex_digit )* ;
-decimal_base :
-'\'' [sS] d
-| '\'' [sS] D
-;
+fragment
+Size : Non_zero_unsigned_number ;
+fragment
+Non_zero_unsigned_number : Non_zero_decimal_digit ( '_' | Decimal_digit )* ;
+fragment
+Unsigned_number : Decimal_digit ( '_' | Decimal_digit )* ;
+fragment
+Binary_value : Binary_digit ( '_' | Binary_digit )* ;
+fragment
+Octal_value : Octal_digit ( '_' | Octal_digit )* ;
+fragment
+Hex_value : Hex_digit ( '_' | Hex_digit )* ;
 
-binary_base :
-'\'' [sS] 'b'
-| '\'' [sS] 'B'
-;
+fragment
+Decimal_base : '\'' [sS] [dD] ;
+fragment
+Binary_base : '\'' [sS] [bB] ;
+fragment
+Octal_base : '\'' [sS] [oO] ;
+fragment
+Hex_base : '\'' [sS] [hH] ;
 
-octal_base :
-'\'' [sS] 'o'
-| '\'' [sS] 'O'
-;
-
-hex_base : '\'' [sS] [hH] ;
-
-non_zero_decimal_digit : [1-9] ;
-decimal_digit : [0-9] ;
-binary_digit : x_digit | z_digit | [01] ;
-octal_digit : x_digit | z_digit | [0-7] ;
-hex_digit : x_digit | z_digit | [0-9a-fA-F] ;
-x_digit : x | X ;
-z_digit : [zZ?] ;
+fragment
+Non_zero_decimal_digit : [1-9] ;
+fragment
+Decimal_digit : [0-9] ;
+fragment
+Binary_digit : X_digit | Z_digit | [01] ;
+fragment
+Octal_digit : X_digit | Z_digit | [0-7] ;
+fragment
+Hex_digit : X_digit | Z_digit | [0-9a-fA-F] ;
+fragment
+X_digit : [xX] ;
+fragment
+Z_digit : [zZ?] ;
 
 // 8.8 Strings
 
@@ -1344,7 +1277,7 @@ String : '"' ( ~[\n\r] )* '"' ;
 // 9 General
 // 9.1 Attributes
 
-attribute_instance : (* attr_spec ( ',' attr_spec )* *) ;
+attribute_instance : '(*' attr_spec ( ',' attr_spec )* '*)' ;
 attr_spec : attr_name '=' constant_expression
 | attr_name
 ;
@@ -1352,12 +1285,8 @@ attr_spec : attr_name '=' constant_expression
 attr_name : identifier ;
 
 // 9.2 Comments
-comment : one_line_comment
-| block_comment
-;
-
-One_line_comment : '//' .*? '\r'? \n ;
-Block_comment : /* .*? */ ;
+One_line_comment : '//' .*? '\r'? '\n' -> channel(HIDDEN);
+Block_comment : '/*' .*? '*/' -> channel(HIDDEN);
 
 // 9.3 Identifiers
 
@@ -1369,22 +1298,27 @@ simple_arrayed_identifier
 block_identifier : identifier ;
 cell_identifier : identifier ;
 config_identifier : identifier ;
-escaped_arrayed_identifier : escaped_identifier ( range )? ;
+escaped_arrayed_identifier : Escaped_identifier ( range )? ;
 escaped_hierarchical_identifier :
 escaped_hierarchical_branch ( '.' simple_hierarchical_branch | '.' escaped_hierarchical_branch )*
 ;
 
-escaped_identifier : '\\' ~[ \r\t\n]* [ \r\t\n] ;
+Escaped_identifier
+	:	'\\' ~[ \r\t\n]*
+        {_input.LA(1)!=' '&&_input.LA(1)!='\t'&&_input.LA(1)!='\t'&&_input.LA(1)!='\n'}?
+    ;
+
 event_identifier : identifier ;
 function_identifier : identifier ;
 gate_instance_identifier : arrayed_identifier ;
 generate_block_identifier : identifier ;
-genvar_function_identifier : identifier f ;
+genvar_function_identifier : identifier ;
 genvar_identifier : identifier ;
 hierarchical_block_identifier : hierarchical_identifier ;
 hierarchical_event_identifier : hierarchical_identifier ;
 hierarchical_function_identifier : hierarchical_identifier ;
-hierarchical_identifier : simple_hierarchical_identifier ;
+hierarchical_identifier :
+ simple_hierarchical_identifier 
 | escaped_hierarchical_identifier
 ;
 
@@ -1393,8 +1327,8 @@ hierarchical_variable_identifier : hierarchical_identifier ;
 hierarchical_task_identifier : hierarchical_identifier ;
  
 identifier :
-simple_identifier
-| escaped_identifier
+Simple_identifier
+| Escaped_identifier
 ;
 
 inout_port_identifier : identifier ;
@@ -1409,15 +1343,16 @@ output_port_identifier : identifier ;
 parameter_identifier : identifier ;
 port_identifier : identifier ;
 real_identifier : identifier ;
-simple_arrayed_identifier : simple_identifier ( range )? ;
-simple_hierarchical_identifier : simple_hierarchical_branch ( '.' escaped_identifier )? ;
-simple_identifier : [a-zA-Z_] ( [a-zA-Z0-9_$] )* ;
+simple_arrayed_identifier : Simple_identifier ( range )? ;
+simple_hierarchical_identifier : simple_hierarchical_branch ( '.' Escaped_identifier )? ;
 specparam_identifier : identifier ;
-system_function_identifier : '$' [a-zA-Z0-9_$] ( [a-zA-Z0-9_$] )* ;
-system_task_identifier : '$' [a-zA-Z0-9_$] ( [a-zA-Z0-9_$] )* ;
+Simple_identifier : [a-zA-Z_] [a-zA-Z0-9_$]* ;
+Dollar_Identifier : '$' [a-zA-Z0-9_$] [a-zA-Z0-9_$]* ;
+system_function_identifier : Dollar_Identifier ;
+system_task_identifier : Dollar_Identifier ;
 task_identifier : identifier ;
 terminal_identifier : identifier ;
-text_macro_identifier : simple_identifier ;
+text_macro_identifier : Simple_identifier ;
 topmodule_identifier : identifier ;
 udp_identifier : identifier ;
 udp_instance_identifier : arrayed_identifier ;
@@ -1426,13 +1361,13 @@ variable_identifier : identifier ;
 // 9.4 Identifier branches
 
 simple_hierarchical_branch :
-simple_identifier ( '[' unsigned_number ']' )? ( ( '.' simple_identifier ( '[' unsigned_number ']' )? )* )?
+Simple_identifier ( '[' Decimal_number ']' )? ( ( '.' Simple_identifier ( '[' Decimal_number ']' )? )* )?
 ;
 
 escaped_hierarchical_branch :
-escaped_identifier ( '[' unsigned_number ']' )? ( ( '.' escaped_identifier ( '[' unsigned_number ']' )? )* )?
+Escaped_identifier ( '[' Decimal_number ']' )? ( ( '.' Escaped_identifier ( '[' Decimal_number ']' )? )* )?
 ;
 
 // 9.5 White space
 
-white_space : [ \t\n\r] EOF ;
+White_space : [ \t\n\r]+ -> channel(HIDDEN) ;
