@@ -1,6 +1,6 @@
 // Listing 5.24
 module altera_dual_port_ram_true
-   #(
+#(
     parameter DATA_WIDTH = 8, // number of bits
               ADDR_WIDTH = 10  // number of address bits
    )

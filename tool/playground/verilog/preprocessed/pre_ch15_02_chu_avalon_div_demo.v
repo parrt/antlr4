@@ -8,7 +8,7 @@
 //    0x05: bit 0: 1-bit ready (cpu read)  
 //    0x06: bit 0: 1-bit done_tick (cpu read/write)
 module chu_avalon_div_demo 
-   #(
+#(
      parameter W = 32,
                CBIT = 6  // CBIT=log2(W)+1
     )

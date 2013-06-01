@@ -1,6 +1,6 @@
 //Listing 8.17
 module bin_gen
-   #(parameter N=8, T=20)
+#(parameter N=8, T=20)
    (
     output reg clk, reset,
     output reg syn_clr, load, en, up,
@@ -13,9 +13,9 @@ module bin_gen
    always
    begin
       clk = 1'b1;
-      #(T/2);
+#(T/2);
       clk = 1'b0;
-      #(T/2);
+#(T/2);
    end
 
 
@@ -42,7 +42,7 @@ module bin_gen
    begin
       @(negedge clk);   // wait for failing edge
       reset = 1'b1;
-      #(T/4);           // assert 4/T
+#(T/4);           // assert 4/T
       reset = 1'b0;
    end
    endtask

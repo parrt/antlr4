@@ -20,12 +20,12 @@
 
 
 
-  #ifdef OVL_COVER_ON
-    #ifdef OVL_SHARED_CODE
-    #else
-      #define OVL_SHARED_CODE
-    #endif
-  #endif
+
+
+
+
+
+
 
 
 // specifying interface for System Verilog
@@ -33,15 +33,15 @@
 
 
 
-  #define module module
-  #define endmodule endmodule
+
+
 
 
 // Selecting global reset or local reset for the checker reset signal
 
 
 
-  #define OVL_RESET_SIGNAL reset_n
+
 
 
 // active edges
@@ -54,7 +54,7 @@
 
 
 
-  #define OVL_EDGE_TYPE_DEFAULT `0
+
 
 
 
@@ -68,7 +68,7 @@
 
 
 
-  #define OVL_SEVERITY_DEFAULT `1
+
 
 
 // coverage levels (note that 3 would set both SANITY & BASIC)
@@ -83,7 +83,7 @@
 
 
 
-  #define OVL_COVER_DEFAULT `2
+
 
 
 // property type
@@ -106,14 +106,14 @@
 
 
 
-  #define OVL_PROPERTY_DEFAULT `0
+
 
 
 // default message
 
 
 
-  #define OVL_MSG_DEFAULT "VIOLATION"
+
 
 
 // necessary condition
@@ -125,7 +125,7 @@
 
 
 
-  #define OVL_NECESSARY_CONDITION_DEFAULT `0
+
 
 
 // action on new start
@@ -137,7 +137,7 @@
 
 
 
-  #define OVL_ACTION_ON_NEW_START_DEFAULT `0
+
 
 
 // inactive levels
@@ -149,7 +149,7 @@
 
 
 
-  #define OVL_INACTIVE_DEFAULT `2
+
 
 
 // new interface (ovl 2)
@@ -165,7 +165,7 @@
 
 
 
-  #define OVL_CLOCK_EDGE_DEFAULT `1
+
 
 
 
@@ -198,41 +198,41 @@
 // Ensure x-checking logic disabled if ASSERTs are off
 
 
-  #define OVL_XCHECK_OFF
-  #define OVL_IMPLICIT_XCHECK_OFF
+
+
 
 
 
 module ovl_next_state (clock, reset, enable, test_expr, curr_state, next_state, fire);
 
-  parameter severity_level   = OVL_SEVERITY_DEFAULT;
+  parameter severity_level   = 1;
   parameter next_count       = 1;
   parameter width            = 1;
   parameter min_hold         = 1;
   parameter max_hold         = 1;
   parameter disallow         = 0;
-  parameter property_type    = OVL_PROPERTY_DEFAULT;
-  parameter msg              = OVL_MSG_DEFAULT;
-  parameter coverage_level   = OVL_COVER_DEFAULT;
+  parameter property_type    = 0;
+  parameter msg              = "VIOLATION";
+  parameter coverage_level   = 2;
 
-  parameter clock_edge       = OVL_CLOCK_EDGE_DEFAULT;
-  parameter reset_polarity   = ``0;
-  parameter gating_type      = ``1;
+  parameter clock_edge       = 1;
+  parameter reset_polarity   = 0;
+  parameter gating_type      = 1;
 
   input                            clock, reset, enable;
   input  [width-1 : 0]             test_expr;
   input  [width-1 : 0]             curr_state;
   input  [next_count*width-1:0]    next_state;
-  output [`3-1 : 0]   fire;
+  output [3-1 : 0]   fire;
 
   // Parameters that should not be edited
   parameter assert_name = "ASSERT_NEXT_STATE";
 
-  #include "std_ovl_reset.h"
-  #include "std_ovl_clock.h"
-  #include "std_ovl_cover.h"
-  #include "std_ovl_task.h"
-  #include "std_ovl_init.h"
+
+
+
+
+
 
 
 

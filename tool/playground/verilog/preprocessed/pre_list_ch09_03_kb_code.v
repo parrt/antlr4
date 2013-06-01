@@ -1,6 +1,6 @@
 //Listing 9.3
 module kb_code
-   #(parameter W_SIZE = 2)  // 2^W_SIZE words in FIFO
+#(parameter W_SIZE = 2)  // 2^W_SIZE words in FIFO
    (
     input wire clk, reset,
     input wire ps2d, ps2c, rd_key_code,

@@ -1,6 +1,6 @@
 // Listing 7.12
 module mod_m_counter_fc
-   #(parameter M=10) // mod-M
+#(parameter M=10) // mod-M
    (
     input wire clk, reset,
     output wire max_tick,

@@ -1,5 +1,5 @@
 module fifo
-   #(
+#(
     parameter DATA_WIDTH=8, // number of bits in a word
               ADDR_WIDTH=4  // number of address bits
    )

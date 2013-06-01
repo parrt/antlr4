@@ -1,5 +1,5 @@
 module frac_engine 
-   #(
+#(
     parameter W = 32,   // width (# bits) of Qm.f format
     parameter M= 4      // # of bits in m
    )

@@ -1,5 +1,5 @@
 module codec_top 
-   #(parameter FIFO_SIZE = 3)
+#(parameter FIFO_SIZE = 3)
    (
     input wire clk, reset,
     // to WM8731

@@ -44,7 +44,7 @@ module bitmap_gen
        .db_level(), .db_tick(load_tick));
    // instantiate dual-port video RAM (2^12-by-7)
    xilinx_dual_port_ram_sync
-      #(.ADDR_WIDTH(14), .DATA_WIDTH(3)) video_ram
+#(.ADDR_WIDTH(14), .DATA_WIDTH(3)) video_ram
       (.clk(clk), .we(we), .addr_a(addr_w), .addr_b(addr_r),
        .din_a(din), .dout_a(), .dout_b(dout));
    // video ram interface

@@ -1,6 +1,6 @@
 // Listing 3.11
 module adder_carry_para
-   #(parameter N=4)
+#(parameter N=4)
    (
      input wire [N-1:0] a, b,
      output wire [N-1:0] sum,

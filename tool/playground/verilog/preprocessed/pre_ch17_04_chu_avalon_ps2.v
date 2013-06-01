@@ -1,5 +1,5 @@
 module chu_avalon_ps2 
-   #(parameter W_SIZE = 2)   // # address bits in FIFO buffer
+#(parameter W_SIZE = 2)   // # address bits in FIFO buffer
    (
     input wire clk, reset,
     // avalon-MM slave interface

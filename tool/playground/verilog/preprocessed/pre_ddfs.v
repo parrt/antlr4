@@ -1,5 +1,5 @@
 module ddfs 
-   #(parameter PW = 26)       // width of phase accumulator
+#(parameter PW = 26)       // width of phase accumulator
    (
     input wire clk, reset,
     input wire [PW-1:0] fccw, // carrier frequency control word

@@ -1,6 +1,6 @@
 // Listing 7.11
 module div_combined
-   #(
+#(
      parameter W = 8,
                CBIT = 4   // CBIT=log2(W)+1
     )

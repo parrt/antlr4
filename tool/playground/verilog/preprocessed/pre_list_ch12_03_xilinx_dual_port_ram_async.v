@@ -3,7 +3,7 @@
 // Modified from XST 8.1i v_rams_09
 
 module xilinx_dual_port_ram_async
-   #(
+#(
      parameter ADDR_WIDTH = 6,
                DATA_WIDTH = 8
    )

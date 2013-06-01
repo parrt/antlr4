@@ -49,7 +49,7 @@ module text_screen_gen
       (.clk(clk), .addr(rom_addr), .data(font_word));
    // instantiate dual-port video RAM (2^12-by-7)
    xilinx_dual_port_ram_sync
-      #(.ADDR_WIDTH(12), .DATA_WIDTH(7)) video_ram
+#(.ADDR_WIDTH(12), .DATA_WIDTH(7)) video_ram
       (.clk(clk), .we(we), .addr_a(addr_w), .addr_b(addr_r),
        .din_a(din), .dout_a(), .dout_b(dout));
 

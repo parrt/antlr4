@@ -1,6 +1,6 @@
 // Listing A.8
 module reg_file
-   #(
+#(
     parameter B = 8, // number of bits
               W = 2  // number of address bits
    )

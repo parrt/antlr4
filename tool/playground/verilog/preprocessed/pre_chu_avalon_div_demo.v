@@ -1,5 +1,5 @@
 module chu_avalon_div_demo 
-   #(
+#(
      parameter W = 32,
                CBIT = 6  // CBIT=log2(W)+1
     )

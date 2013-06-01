@@ -1,6 +1,6 @@
 //Listing 8.18
 module bin_monitor
-   #(parameter N=3)
+#(parameter N=3)
    (
     input wire clk, reset,
     input wire syn_clr, load, en, up,

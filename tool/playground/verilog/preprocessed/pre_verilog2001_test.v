@@ -322,7 +322,7 @@ endmodule
 
 
 module paramter_port_list 
-  #( parameter integer p1 = 1 , p2 = { 2'b01, 1'b01 } ,
+
      parameter real p3 = (34 * 72.9),
      parameter p4 = 5 , p5 = 6 )
   ( input  a,

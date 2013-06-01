@@ -1,6 +1,6 @@
 // Listing 5.18
 module fifo_ctrl
-   #(
+#(
     parameter ADDR_WIDTH=4  // number of address bits
    )
    (

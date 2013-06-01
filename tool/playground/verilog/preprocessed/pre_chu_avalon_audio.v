@@ -1,5 +1,5 @@
 module chu_avalon_audio 
-   #(parameter FIFO_SIZE = 3) // 2^FIFO_SIZE words 
+#(parameter FIFO_SIZE = 3) // 2^FIFO_SIZE words 
    (
     input wire clk, reset,
     // Avalon MM interface

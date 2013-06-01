@@ -1,6 +1,6 @@
 // Listing 6.5
 module div
-   #(
+#(
      parameter W = 8,
                CBIT = 4   // CBIT=log2(W)+1
     )

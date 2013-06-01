@@ -22,7 +22,7 @@ task equ_tsk
     output eq1
    );
    begin
-      #delay eq1 = (~i0 & ~i1) | (i0 & i1);
+#delay eq1 = (~i0 & ~i1) | (i0 & i1);
    end
 endtask
 

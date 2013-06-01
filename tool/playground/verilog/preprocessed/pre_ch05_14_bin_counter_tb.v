@@ -25,16 +25,16 @@ module bin_counter_tb();
    always
    begin
       clk = 1'b1;
-      #(T/2);
+#(T/2);
       clk = 1'b0;
-      #(T/2);
+#(T/2);
    end
 
    // reset for the first half cycle
    initial
    begin
      reset = 1'b1;
-     #(T/2);
+#(T/2);
      reset = 1'b0;
    end
 
@@ -81,9 +81,9 @@ module bin_counter_tb();
       @(negedge clk);
       up = 1'b0;
       // ==== absolute delay  ====
-      #(4*T);  //  wait for 80 ns
+#(4*T);  //  wait for 80 ns
       en = 1'b0; // pause
-      #(4*T);  //  wait for 80 ns
+#(4*T);  //  wait for 80 ns
       // ==== stop simulation  ====
       // return to interactive simulation mode
       $stop;

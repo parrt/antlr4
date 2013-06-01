@@ -27,7 +27,7 @@ module top();
    initial
      clk = 1'b0;
    always
-     #5 clk = ~clk;
+#5 clk = ~clk;
 
    initial
      begin

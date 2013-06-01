@@ -1,6 +1,6 @@
 // Listing 5.20
 module altera_one_port_ram
-   #(
+#(
     parameter DATA_WIDTH = 8, // number of bits
               ADDR_WIDTH = 10  // number of address bits
    )

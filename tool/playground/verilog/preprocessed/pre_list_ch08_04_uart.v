@@ -1,6 +1,6 @@
 //Listing 8.4
 module uart
-   #( // Default setting:
+#( // Default setting:
       // 19,200 baud, 8 data bits, 1 stop bit, 2^2 FIFO
       parameter DBIT = 8,     // # data bits
                 SB_TICK = 16, // # ticks for stop bits, 16/24/32

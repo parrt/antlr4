@@ -1,6 +1,6 @@
 // Listing 5.28
 module fifo_ram
-   #(
+#(
     parameter DATA_WIDTH=8,    // number of bits in a word
               ADDR_WIDTH=10  // number of address bits
    )
@@ -29,7 +29,7 @@ module fifo_ram
 
    // instantiate synchronous SRAM
    altera_dual_port_ram_simple 
-      #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) ram_unit
+#(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) ram_unit
       (.clk(clk), .we(wr_en), .w_addr(w_addr), .r_addr(r_addr_next), 
        .d(w_data), .q(r_data));
 endmodule

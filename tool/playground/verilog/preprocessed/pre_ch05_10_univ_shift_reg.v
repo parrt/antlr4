@@ -1,6 +1,6 @@
 // Listing 5.10
 module univ_shift_reg
-   #(parameter N=8)
+#(parameter N=8)
    (
     input wire clk, reset,
     input wire [1:0] ctrl,

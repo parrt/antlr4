@@ -1,5 +1,5 @@
 module ps2_tx_rx_buf
-   #(parameter W_SIZE = 2)   // # address bits in FIFO buffer
+#(parameter W_SIZE = 2)   // # address bits in FIFO buffer
    (
     input wire clk, reset,
     input wire wr_ps2, rd_ps2_packet,

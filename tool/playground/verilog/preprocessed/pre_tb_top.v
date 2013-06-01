@@ -22,7 +22,7 @@ initial
     @(posedge clk);
     @(negedge clk);
     rst = 1'b0;
-    #200;
+#200;
     $finish;
   end
   

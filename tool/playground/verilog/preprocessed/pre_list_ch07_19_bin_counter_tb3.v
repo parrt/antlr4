@@ -1,5 +1,4 @@
 //Listing 7.19
-`timescale 1 ns/10 ps
 
 module bin_counter_tb3();
 

@@ -1,6 +1,6 @@
 //Listing 8.3
 module uart_tx
-   #(
+#(
      parameter DBIT = 8,     // # data bits
                SB_TICK = 16  // # ticks for stop bits
    )

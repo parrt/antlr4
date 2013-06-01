@@ -20,12 +20,12 @@
 
 
 
-  #ifdef OVL_COVER_ON
-    #ifdef OVL_SHARED_CODE
-    #else
-      #define OVL_SHARED_CODE
-    #endif
-  #endif
+
+
+
+
+
+
 
 
 // specifying interface for System Verilog
@@ -33,15 +33,15 @@
 
 
 
-  #define module module
-  #define endmodule endmodule
+
+
 
 
 // Selecting global reset or local reset for the checker reset signal
 
 
 
-  #define OVL_RESET_SIGNAL reset_n
+
 
 
 // active edges
@@ -54,7 +54,7 @@
 
 
 
-  #define OVL_EDGE_TYPE_DEFAULT `0
+
 
 
 
@@ -68,7 +68,7 @@
 
 
 
-  #define OVL_SEVERITY_DEFAULT `1
+
 
 
 // coverage levels (note that 3 would set both SANITY & BASIC)
@@ -83,7 +83,7 @@
 
 
 
-  #define OVL_COVER_DEFAULT `2
+
 
 
 // property type
@@ -106,14 +106,14 @@
 
 
 
-  #define OVL_PROPERTY_DEFAULT `0
+
 
 
 // default message
 
 
 
-  #define OVL_MSG_DEFAULT "VIOLATION"
+
 
 
 // necessary condition
@@ -125,7 +125,7 @@
 
 
 
-  #define OVL_NECESSARY_CONDITION_DEFAULT `0
+
 
 
 // action on new start
@@ -137,7 +137,7 @@
 
 
 
-  #define OVL_ACTION_ON_NEW_START_DEFAULT `0
+
 
 
 // inactive levels
@@ -149,7 +149,7 @@
 
 
 
-  #define OVL_INACTIVE_DEFAULT `2
+
 
 
 // new interface (ovl 2)
@@ -165,7 +165,7 @@
 
 
 
-  #define OVL_CLOCK_EDGE_DEFAULT `1
+
 
 
 
@@ -198,15 +198,15 @@
 // Ensure x-checking logic disabled if ASSERTs are off
 
 
-  #define OVL_XCHECK_OFF
-  #define OVL_IMPLICIT_XCHECK_OFF
+
+
 
 
 
 module ovl_memory_async (reset, enable, start_addr, end_addr, ren, raddr, rdata, wen, waddr,
                           wdata, fire);
 
-  parameter severity_level   = OVL_SEVERITY_DEFAULT;
+  parameter severity_level   = 1;
   parameter data_width       = 1;
   parameter addr_width       = 1;
   parameter mem_size         = 2;
@@ -215,14 +215,14 @@ module ovl_memory_async (reset, enable, start_addr, end_addr, ren, raddr, rdata,
   parameter one_read_check        = 0;
   parameter one_write_check       = 0;
   parameter value_check        = 0;
-  parameter property_type    = OVL_PROPERTY_DEFAULT;
-  parameter msg              = OVL_MSG_DEFAULT;
-  parameter coverage_level   = OVL_COVER_DEFAULT;
+  parameter property_type    = 0;
+  parameter msg              = "VIOLATION";
+  parameter coverage_level   = 2;
 
-  parameter wen_edge     = OVL_CLOCK_EDGE_DEFAULT;
-  parameter ren_edge     = OVL_CLOCK_EDGE_DEFAULT;
-  parameter reset_polarity   = ``0;
-  parameter gating_type      = ``1;
+  parameter wen_edge     = 1;
+  parameter ren_edge     = 1;
+  parameter reset_polarity   = 0;
+  parameter gating_type      = 1;
 
   input                            reset, enable;
   input                            ren, wen;
@@ -233,7 +233,7 @@ module ovl_memory_async (reset, enable, start_addr, end_addr, ren, raddr, rdata,
   input  [addr_width-1 : 0]        waddr;
   input  [data_width-1 : 0]        wdata;
 
-  output [`3-1 : 0]   fire;
+  output [3-1 : 0]   fire;
 
   // Parameters that should not be edited
   parameter assert_name = "OVL_MEMORY_ASYNC";
@@ -256,29 +256,29 @@ module ovl_memory_async (reset, enable, start_addr, end_addr, ren, raddr, rdata,
       wen_clken <= enable;
   end
 
-  assign ren_gclk = (gating_type == `1) ? ren & ren_clken : ren;
-  assign wen_gclk = (gating_type == `1) ? wen & wen_clken : wen;
+  assign ren_gclk = (gating_type == 1) ? ren & ren_clken : ren;
+  assign wen_gclk = (gating_type == 1) ? wen & wen_clken : wen;
 
 
   // clk (programmable edge)
 
   wire   ren_clk, wen_clk;
 
-  assign ren_clk = (ren_edge == `1) ? ren_gclk : ~ren_gclk;
-  assign wen_clk = (wen_edge == `1) ? wen_gclk : ~wen_gclk;
+  assign ren_clk = (ren_edge == 1) ? ren_gclk : ~ren_gclk;
+  assign wen_clk = (wen_edge == 1) ? wen_gclk : ~wen_gclk;
 
 
   // reset_n (programmable polarity & optional gating)
 
   wire   reset_n;
-  assign reset_n = (gating_type == `2) ? ((reset_polarity == `0) ? reset & enable : ~reset & enable)
-                                                    : ((reset_polarity == `0) ? reset          : ~reset);
+  assign reset_n = (gating_type == 2) ? ((reset_polarity == 0) ? reset & enable : ~reset & enable)
+                                                    : ((reset_polarity == 0) ? reset          : ~reset);
 
 
 
-  #include "std_ovl_cover.h"
-  #include "std_ovl_task.h"
-  #include "std_ovl_init.h"
+
+
+
 
 
 
