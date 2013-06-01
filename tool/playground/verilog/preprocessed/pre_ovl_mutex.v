@@ -203,7 +203,7 @@
 
 
 
-`module ovl_mutex (clock, reset, enable, test_expr, fire);
+module ovl_mutex (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 2;
@@ -233,4 +233,4 @@
 
 
 
-  `endmodule // ovl_mutex
+  endmodule // ovl_mutex

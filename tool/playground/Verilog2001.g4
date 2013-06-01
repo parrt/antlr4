@@ -1084,14 +1084,17 @@ variable_concatenation
 ;
 
 // 8.2 Function calls
+// spec is wrong here too: didn't allow empty arg lists like f()
 
 constant_function_call :
-function_identifier attribute_instance* '(' constant_expression ( ',' constant_expression )* ')'
+function_identifier attribute_instance* '(' (constant_expression ( ',' constant_expression )*)? ')'
 ;
 
-function_call : hierarchical_function_identifier attribute_instance* '(' expression ( ',' expression )* ')' ;
-system_function_call : system_function_identifier ( '(' expression ( ',' expression )* ')' )? ;
-genvar_function_call : genvar_function_identifier attribute_instance* '(' constant_expression ( ',' constant_expression )* ')'
+function_call : hierarchical_function_identifier attribute_instance*
+  '(' (expression ( ',' expression )*)? ')' ;
+system_function_call : system_function_identifier ( (expression ( ',' expression )*)? )? ;
+genvar_function_call : genvar_function_identifier attribute_instance*
+                       '(' (constant_expression ( ',' constant_expression )*)? ')'
 ;
 
 // 8.3 Expressions

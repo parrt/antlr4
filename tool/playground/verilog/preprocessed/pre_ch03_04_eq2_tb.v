@@ -1,8 +1,4 @@
 // Listing 3.4
-// The `timescale directive specifies that
-// the simulation time unit is 1 ns  and
-// the simulation timestep is 10 ps
-`timescale 1 ns/10 ps
 
 module eq2_testbench;
    // signal declaration

@@ -203,7 +203,7 @@
 
 
 
-`module ovl_fifo (clock, reset, enable, enq, enq_data, deq, deq_data, full, empty,
+module ovl_fifo (clock, reset, enable, enq, enq_data, deq, deq_data, full, empty,
                   preload, fire);
 
   parameter severity_level  = OVL_SEVERITY_DEFAULT;
@@ -248,5 +248,5 @@
 
 
 
-`endmodule // ovl_fifo
+endmodule // ovl_fifo
 

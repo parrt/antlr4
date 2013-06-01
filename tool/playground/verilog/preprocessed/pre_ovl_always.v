@@ -203,7 +203,7 @@
 
 
 
-`module ovl_always (clock, reset, enable, test_expr, fire);
+module ovl_always (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter property_type  = OVL_PROPERTY_DEFAULT;
@@ -240,4 +240,4 @@
 
 
   assign fire = {fire_cover, fire_xcheck, fire_2state};
-  `endmodule // ovl_always
+  endmodule // ovl_always

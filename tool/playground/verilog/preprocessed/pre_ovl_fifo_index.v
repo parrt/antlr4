@@ -203,7 +203,7 @@
 
 
 
-`module ovl_fifo_index (clock, reset, enable, push, pop, fire);
+module ovl_fifo_index (clock, reset, enable, push, pop, fire);
 
   parameter severity_level        = OVL_SEVERITY_DEFAULT;
   parameter depth                 = 1;
@@ -256,4 +256,4 @@
 
 
 
-  `endmodule // ovl_fifo_index
+  endmodule // ovl_fifo_index

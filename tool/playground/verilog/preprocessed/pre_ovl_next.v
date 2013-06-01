@@ -203,7 +203,7 @@
 
 
 
-`module ovl_next (clock, reset, enable, start_event, test_expr, fire);
+module ovl_next (clock, reset, enable, start_event, test_expr, fire);
 
   parameter severity_level      = OVL_SEVERITY_DEFAULT;
   parameter num_cks             = 1;
@@ -256,4 +256,4 @@
 
 
   assign fire = {fire_cover, fire_xcheck, fire_2state};
-  `endmodule // ovl_next
+  endmodule // ovl_next

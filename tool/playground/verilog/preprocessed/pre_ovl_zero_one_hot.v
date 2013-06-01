@@ -203,7 +203,7 @@
 
 
 
-`module ovl_zero_one_hot (clock, reset, enable, test_expr, fire);
+module ovl_zero_one_hot (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 32;
@@ -241,4 +241,4 @@
 
 
   assign fire = {fire_cover, fire_xcheck, fire_2state};
-  `endmodule // ovl_zero_one_hot
+  endmodule // ovl_zero_one_hot

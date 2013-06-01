@@ -203,7 +203,7 @@
 
 
 
-`module ovl_memory_async (reset, enable, start_addr, end_addr, ren, raddr, rdata, wen, waddr,
+module ovl_memory_async (reset, enable, start_addr, end_addr, ren, raddr, rdata, wen, waddr,
                           wdata, fire);
 
   parameter severity_level   = OVL_SEVERITY_DEFAULT;
@@ -285,5 +285,5 @@
 
 
 
-`endmodule // ovl_memory_async
+endmodule // ovl_memory_async
 

@@ -203,7 +203,7 @@
 
 
 
-`module ovl_no_overflow (clock, reset, enable, test_expr, fire);
+module ovl_no_overflow (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 1;
@@ -244,4 +244,4 @@
 
 
 
-  `endmodule // ovl_no_overflow
+  endmodule // ovl_no_overflow

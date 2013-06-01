@@ -203,7 +203,7 @@
 
 
 
-`module ovl_reg_loaded (clock, reset, enable, start_event, end_event, src_expr, dest_expr, fire);
+module ovl_reg_loaded (clock, reset, enable, start_event, end_event, src_expr, dest_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 4;
@@ -236,5 +236,5 @@
 
 
 
-`endmodule // ovl_reg_loaded
+endmodule // ovl_reg_loaded
 

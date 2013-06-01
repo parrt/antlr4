@@ -203,7 +203,7 @@
 
 
 
-`module ovl_quiescent_state (clock, reset, enable, state_expr, check_value, sample_event, fire);
+module ovl_quiescent_state (clock, reset, enable, state_expr, check_value, sample_event, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 1;
@@ -243,4 +243,4 @@
 
 
 
-  `endmodule // ovl_quiescent_state
+  endmodule // ovl_quiescent_state

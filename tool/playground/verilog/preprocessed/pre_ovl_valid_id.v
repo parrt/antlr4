@@ -203,7 +203,7 @@
 
 
 
-`module ovl_valid_id (clock, reset, enable, issued, issued_id, returned, returned_id, flush, flush_id, issued_count, fire);
+module ovl_valid_id (clock, reset, enable, issued, issued_id, returned, returned_id, flush, flush_id, issued_count, fire);
 
   parameter severity_level   = OVL_SEVERITY_DEFAULT;
   parameter min_cks          = 1;
@@ -243,5 +243,5 @@
 
 
 
-`endmodule // ovl_valid_id
+endmodule // ovl_valid_id
 

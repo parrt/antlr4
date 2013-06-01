@@ -203,7 +203,7 @@
 
 
 
-`module ovl_one_cold (clock, reset, enable, test_expr, fire);
+module ovl_one_cold (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 32;
@@ -243,4 +243,4 @@
 
 
 
-  `endmodule // ovl_one_cold
+  endmodule // ovl_one_cold

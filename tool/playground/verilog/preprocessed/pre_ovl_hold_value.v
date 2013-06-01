@@ -203,7 +203,7 @@
 
 
 
-`module ovl_hold_value (clock, reset, enable, test_expr, value, fire);
+module ovl_hold_value (clock, reset, enable, test_expr, value, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter min            = 0;
@@ -237,5 +237,5 @@
 
 
 
-`endmodule // ovl_hold_value
+endmodule // ovl_hold_value
 

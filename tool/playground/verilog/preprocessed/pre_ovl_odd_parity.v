@@ -203,7 +203,7 @@
 
 
 
-`module ovl_odd_parity (clock, reset, enable, test_expr, fire);
+module ovl_odd_parity (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 1;
@@ -242,4 +242,4 @@
 
 
 
-  `endmodule // ovl_odd_parity
+  endmodule // ovl_odd_parity

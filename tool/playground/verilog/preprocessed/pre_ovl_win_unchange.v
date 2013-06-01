@@ -203,7 +203,7 @@
 
 
 
-`module ovl_win_unchange (clock, reset, enable, start_event, test_expr, end_event, fire);
+module ovl_win_unchange (clock, reset, enable, start_event, test_expr, end_event, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 1;
@@ -243,4 +243,4 @@
 
 
   assign fire = {fire_cover, fire_xcheck, fire_2state};
-  `endmodule // ovl_win_unchange
+  endmodule // ovl_win_unchange

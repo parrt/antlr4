@@ -203,7 +203,7 @@
 
 
 
-`module ovl_proposition (reset, enable, test_expr, fire);
+module ovl_proposition (reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter property_type  = OVL_PROPERTY_DEFAULT;
@@ -240,4 +240,4 @@
 
 
 
-  `endmodule // ovl_proposition
+  endmodule // ovl_proposition

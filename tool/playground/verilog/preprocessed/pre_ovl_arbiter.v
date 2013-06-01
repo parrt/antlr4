@@ -203,7 +203,7 @@
 
 
 
-`module ovl_arbiter (clock, reset, enable, reqs, priorities, gnts, fire);
+module ovl_arbiter (clock, reset, enable, reqs, priorities, gnts, fire);
 
   parameter severity_level      = OVL_SEVERITY_DEFAULT;
   parameter width               = 2;
@@ -241,5 +241,5 @@
 
 
 
-`endmodule // ovl_arbiter
+endmodule // ovl_arbiter
 

@@ -203,7 +203,7 @@
 
 
 
-`module ovl_cycle_sequence (clock, reset, enable, event_sequence, fire);
+module ovl_cycle_sequence (clock, reset, enable, event_sequence, fire);
 
   parameter severity_level      = OVL_SEVERITY_DEFAULT;
   parameter num_cks             = 2;
@@ -252,4 +252,4 @@
 
 
   assign fire = {fire_cover, fire_xcheck, fire_2state};
-  `endmodule // ovl_cycle_sequence
+  endmodule // ovl_cycle_sequence

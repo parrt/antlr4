@@ -203,7 +203,7 @@
 
 
 
-`module ovl_transition (clock, reset, enable, test_expr, start_state, next_state, fire);
+module ovl_transition (clock, reset, enable, test_expr, start_state, next_state, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter width          = 1;
@@ -242,4 +242,4 @@
 
 
 
-  `endmodule // ovl_transition
+  endmodule // ovl_transition

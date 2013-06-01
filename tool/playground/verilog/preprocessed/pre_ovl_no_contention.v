@@ -203,7 +203,7 @@
 
 
 
-`module ovl_no_contention (clock, reset, enable, test_expr, driver_enables, fire);
+module ovl_no_contention (clock, reset, enable, test_expr, driver_enables, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter min_quiet      = 0;
@@ -237,5 +237,5 @@
 
 
 
-`endmodule // ovl_no_contention
+endmodule // ovl_no_contention
 

@@ -116,7 +116,7 @@ module vram_ctrl
             state_next = wr;
          wr:
             state_next = idle;
-      endcase;
+      endcase
    end   
    // look-ahead output
    assign we_n_next = (state_next==wr) ? 1'b0 : 1'b1; 

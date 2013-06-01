@@ -203,7 +203,7 @@
 
 
 
-`module ovl_handshake (clock, reset, enable, req, ack, fire);
+module ovl_handshake (clock, reset, enable, req, ack, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter min_ack_cycle  = 0;
@@ -247,4 +247,4 @@
 
 
 
-  `endmodule // ovl_handshake
+  endmodule // ovl_handshake

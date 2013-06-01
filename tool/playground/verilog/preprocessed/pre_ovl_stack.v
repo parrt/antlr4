@@ -203,7 +203,7 @@
 
 
 
-`module ovl_stack (clock, reset, enable, push, push_data, pop, pop_data, full, empty, fire);
+module ovl_stack (clock, reset, enable, push, push_data, pop, pop_data, full, empty, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter depth          = 2;
@@ -238,4 +238,4 @@
 
 
 
-`endmodule // ovl_stack
+endmodule // ovl_stack

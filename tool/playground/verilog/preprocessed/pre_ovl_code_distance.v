@@ -203,7 +203,7 @@
 
 
 
-`module ovl_code_distance (clock, reset, enable, test_expr1, test_expr2, fire);
+module ovl_code_distance (clock, reset, enable, test_expr1, test_expr2, fire);
 
   parameter severity_level   = OVL_SEVERITY_DEFAULT;
   parameter min              = 1;
@@ -236,5 +236,5 @@
 
 
 
-`endmodule // ovl_code_distance
+endmodule // ovl_code_distance
 

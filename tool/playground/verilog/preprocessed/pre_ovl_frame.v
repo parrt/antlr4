@@ -203,7 +203,7 @@
 
 
 
-`module ovl_frame (clock, reset, enable, start_event, test_expr, fire);
+module ovl_frame (clock, reset, enable, start_event, test_expr, fire);
 
   parameter severity_level      = OVL_SEVERITY_DEFAULT;
   parameter min_cks             = 0;
@@ -262,4 +262,4 @@
 
 
 
-  `endmodule // ovl_frame
+  endmodule // ovl_frame

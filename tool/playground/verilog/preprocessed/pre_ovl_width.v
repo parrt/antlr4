@@ -203,7 +203,7 @@
 
 
 
-`module ovl_width (clock, reset, enable, test_expr, fire);
+module ovl_width (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter min_cks        = 1;
@@ -253,4 +253,4 @@
 
 
 
-  `endmodule // ovl_width
+  endmodule // ovl_width

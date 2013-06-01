@@ -203,7 +203,7 @@
 
 
 
-`module ovl_bits (clock, reset, enable, test_expr, fire);
+module ovl_bits (clock, reset, enable, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter min            = 1;
@@ -246,4 +246,4 @@
 
 
 
-`endmodule // ovl_bits
+endmodule // ovl_bits

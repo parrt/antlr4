@@ -1,5 +1,4 @@
 //Listing 8.14
-`timescale 1 ns/10 ps
 
 module eq2_file_tb;
    // signal declaration

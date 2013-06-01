@@ -203,7 +203,7 @@
 
 
 
-`module ovl_memory_sync (reset, enable, start_addr, end_addr, r_clock, ren, raddr, rdata,
+module ovl_memory_sync (reset, enable, start_addr, end_addr, r_clock, ren, raddr, rdata,
                          w_clock, wen, waddr, wdata, fire);
 
   parameter severity_level   = OVL_SEVERITY_DEFAULT;
@@ -285,5 +285,5 @@
 
 
 
-`endmodule // ovl_memory_sync
+endmodule // ovl_memory_sync
 

@@ -203,7 +203,7 @@
 
 
 
-`module ovl_multiport_fifo (clock, reset, enable, enq, deq, enq_data, deq_data, full, empty,
+module ovl_multiport_fifo (clock, reset, enable, enq, deq, enq_data, deq_data, full, empty,
                             preload, fire);
 
   parameter severity_level   = OVL_SEVERITY_DEFAULT;
@@ -251,5 +251,5 @@
 
 
 
-`endmodule // ovl_multiport_fifo
+endmodule // ovl_multiport_fifo
 

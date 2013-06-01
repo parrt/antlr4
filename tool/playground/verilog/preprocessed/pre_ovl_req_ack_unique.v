@@ -203,7 +203,7 @@
 
 
 
-`module ovl_req_ack_unique (clock, reset, enable, req, ack, fire);
+module ovl_req_ack_unique (clock, reset, enable, req, ack, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter min_cks        = 1;
@@ -235,5 +235,5 @@
 
 
 
-`endmodule // ovl_req_ack_unique
+endmodule // ovl_req_ack_unique
 

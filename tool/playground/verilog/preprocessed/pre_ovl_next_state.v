@@ -203,7 +203,7 @@
 
 
 
-`module ovl_next_state (clock, reset, enable, test_expr, curr_state, next_state, fire);
+module ovl_next_state (clock, reset, enable, test_expr, curr_state, next_state, fire);
 
   parameter severity_level   = OVL_SEVERITY_DEFAULT;
   parameter next_count       = 1;
@@ -239,5 +239,5 @@
 
 
 
-`endmodule // ovl_next_state
+endmodule // ovl_next_state
 

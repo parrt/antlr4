@@ -203,7 +203,7 @@
 
 
 
-`module ovl_always_on_edge (clock, reset, enable, sampling_event, test_expr, fire);
+module ovl_always_on_edge (clock, reset, enable, sampling_event, test_expr, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter edge_type      = `0;
@@ -242,4 +242,4 @@
 
 
 
-  `endmodule // ovl_always_on_edge
+  endmodule // ovl_always_on_edge

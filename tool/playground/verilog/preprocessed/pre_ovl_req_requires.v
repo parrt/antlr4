@@ -203,7 +203,7 @@
 
 
 
-`module ovl_req_requires (clock, reset, enable, req_trigger, req_follower, resp_leader,
+module ovl_req_requires (clock, reset, enable, req_trigger, req_follower, resp_leader,
                           resp_trigger, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
@@ -236,5 +236,5 @@
 
 
 
-`endmodule // ovl_req_requires
+endmodule // ovl_req_requires
 

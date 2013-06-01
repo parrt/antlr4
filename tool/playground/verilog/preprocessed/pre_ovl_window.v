@@ -203,7 +203,7 @@
 
 
 
-`module ovl_window (clock, reset, enable, start_event, test_expr, end_event, fire);
+module ovl_window (clock, reset, enable, start_event, test_expr, end_event, fire);
 
   parameter severity_level = OVL_SEVERITY_DEFAULT;
   parameter property_type  = OVL_PROPERTY_DEFAULT;
@@ -241,4 +241,4 @@
 
 
 
-  `endmodule // ovl_window
+  endmodule // ovl_window
