@@ -9,8 +9,8 @@ module eq2_function
 
   always @*
   begin
- e0 = equ_fnc(a[0], b[0]);
- e1 = equ_fnc(a[1], b[1]);
+ #0 e0 = equ_fnc(a[0], b[0]);
+ #1 e1 = equ_fnc(a[1], b[1]);
      aeqb = e0 & e1;
   end
 

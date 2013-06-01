@@ -333,13 +333,14 @@ range : '[' msb_constant_expression ':' lsb_constant_expression ']' ;
 // 2.6 Function declarations
 
 // spec didn't allow optional block_item_declaration and function_item_declaration
+// spec didn't allow temp funcs.
 function_declaration
     :   'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier ';'
-        function_item_declaration* function_statement
+        function_item_declaration* function_statement?
         'endfunction'
     |   'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier
         '(' function_port_list ')' ';' block_item_declaration*
-        function_statement
+        function_statement?
         'endfunction'
 ;
 
@@ -1231,7 +1232,7 @@ number
     |   Octal_number
     |   Binary_number
     |   Hex_number
-    |   Real_number Real_number
+    |   Real_number
     ;
 
 Real_number

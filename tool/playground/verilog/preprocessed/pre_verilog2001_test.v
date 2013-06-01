@@ -64,7 +64,7 @@ module ram (address, write, chip_select, data);
 
 parameter WIDTH = 8;
 parameter SIZE = 256;
-localparam ADDRESS_SIZE = clogb2(SIZE);
+localparam ADDRESS_SIZE = SIZE;
 input [ADDRESS_SIZE-1:0] address;
 input write, chip_select;
 inout [WIDTH-1:0] data;
@@ -119,9 +119,6 @@ module signed_test (i);
 reg signed [63:0] data;
 wire signed [7:0] vector;
 input signed [31:0] a;
-
-function signed [128:0] alu;
-endfunction
 
 endmodule
 
@@ -244,42 +241,6 @@ ansi_port_list c1 (y,a,b,c,en);
 endmodule
 
 
-module reg_init_assign_test;
-
-
-
-reg clock = 0;
-reg clock2 =
-	     0;
-
-
-always
-	begin
-	#10 clock = ~clock;
-	#10 clock2 = ~clock2;
-	end
-
-reg t1,t2,t3,t4;
-
-always @(*)
-	begin
-	t1 <= t2;
-	end
-always @(*)
-	begin
-	t3 <= t4;
-	end
-
-
-(* new_attribute *)
-
-(*
-   multi,
-   line,
-   attribute = true
-*)
-
-endmodule
 
 module new_sigs;
 
@@ -302,8 +263,6 @@ endmodule
 
 module paramter_port_list 
 
-     parameter real p3 = (34 * 72.9),
-     parameter p4 = 5 , p5 = 6 )
   ( input  a,
     output b );
 
