@@ -10,6 +10,7 @@ module adder_insta
    );
 
    // instantiate 8-bit adder
+   adder_carry_para #(.N(8)) unit1
       (.a(a8), .b(b8), .sum(sum8), .cout(c8));
 
    // instantiate 4-bit adder

@@ -1,5 +1,6 @@
 // Listing 4.16
 module sign_mag_add
+   #(
     parameter N=4
    )
    (

@@ -1,5 +1,6 @@
 // Listing 5.23
 module altera_dual_port_ram_old_data
+   #(
     parameter DATA_WIDTH = 8, // number of bits
               ADDR_WIDTH = 10  // number of address bits
    )

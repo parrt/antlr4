@@ -19,24 +19,31 @@ module eq2_testbench;
       // test vector 1
       test_in0 = 2'b00;
       test_in1 = 2'b00;
+      # 200;
       // test vector 2
       test_in0 = 2'b01;
       test_in1 = 2'b00;
+      # 200;
       // test vector 3
       test_in0 = 2'b01;
       test_in1 = 2'b11;
+      # 200;
       // test vector 4
       test_in0 = 2'b10;
       test_in1 = 2'b10;
+      # 200;
       // test vector 5
       test_in0 = 2'b10;
       test_in1 = 2'b00;
+      # 200;
       // test vector 6
       test_in0 = 2'b11;
       test_in1 = 2'b11;
+      # 200;
       // test vector 7
       test_in0 = 2'b11;
       test_in1 = 2'b01;
+      # 200;
       // stop simulation
       $stop;
    end

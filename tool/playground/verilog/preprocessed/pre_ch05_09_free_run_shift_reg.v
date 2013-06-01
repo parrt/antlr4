@@ -1,5 +1,6 @@
 // Listing 5.9
 module free_run_shift_reg
+   #(parameter N=8)
    (
     input wire clk, reset,
     input wire s_in,

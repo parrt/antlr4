@@ -1,5 +1,6 @@
 // Listing 7.9
 module univ_bin_counter_merged
+   #(parameter N=8)
    (
     input wire clk, reset,
     input wire syn_clr, load, en, up,

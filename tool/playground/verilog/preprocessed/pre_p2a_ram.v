@@ -1,4 +1,5 @@
 module altera_ram_lut
+   #(
     parameter DATA_WIDTH = 16, // number of bits
               ADDR_WIDTH = 8   // number of address bits
    )

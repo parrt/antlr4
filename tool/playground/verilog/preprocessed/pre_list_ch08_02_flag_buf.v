@@ -1,5 +1,6 @@
 //Listing 8.2
 module flag_buf
+   #(parameter W = 8) // # buffer bits
    (
     input wire clk, reset,
     input wire clr_flag, set_flag,

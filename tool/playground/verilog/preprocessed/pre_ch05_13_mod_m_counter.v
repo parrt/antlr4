@@ -1,5 +1,6 @@
 // Listing 5.13
 module mod_m_counter
+   #(
     parameter N=4, // number of bits in counter
               M=10 // mod-M
    )

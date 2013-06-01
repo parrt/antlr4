@@ -13,6 +13,7 @@ module sm_add_test
    wire [7:0] led3, led2, led1, led0;
 
    // instantiate adder
+   sign_mag_add #(.N(4)) sm_adder_unit
      (.a(sw[3:0]), .b(sw[7:4]), .sum(sum));
 
    //  magnitude displayed on rightmost 7-seg LED

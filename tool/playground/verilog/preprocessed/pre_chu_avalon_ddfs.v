@@ -18,6 +18,7 @@ module chu_avalon_ddfs
    //==================================================================
    // instantiate ddfs unit 
    //==================================================================
+   ddfs #(.PW(26)) ddfs_unit
       (.clk(clk), .reset(reset), 
        .fccw(fccw_reg), .focw(focw_reg), .pha(pha_reg), .env(env_reg), 
        .p2a_we(wr_p2a_ram), .p2a_waddr(ddfs_address[7:0]),

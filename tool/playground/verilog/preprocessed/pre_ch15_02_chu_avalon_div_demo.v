@@ -8,6 +8,7 @@
 //    0x05: bit 0: 1-bit ready (cpu read)  
 //    0x06: bit 0: 1-bit done_tick (cpu read/write)
 module chu_avalon_div_demo 
+   #(
      parameter W = 32,
                CBIT = 6  // CBIT=log2(W)+1
     )
@@ -37,6 +38,7 @@ module chu_avalon_div_demo
    //==================================================================
    // instantiate division circuit  
    //==================================================================
+   div #(.W(W), .CBIT(CBIT)) d_unit
      (.clk(clk), .reset(1'b0), .start(div_start),
       .dvsr(dvsr_reg), .dvnd(dvnd_reg), .quo(quo), .rmd(rmd),
       .ready(div_ready), .done_tick(set_done_tick));

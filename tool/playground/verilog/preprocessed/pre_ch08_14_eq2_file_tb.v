@@ -29,6 +29,7 @@ module eq2_file_tb;
       for(i=0; i<8; i=i+1)
         begin
            {test_in0, test_in1} = v_mem[i];
+           #200;
         end
 
       // stop simulation

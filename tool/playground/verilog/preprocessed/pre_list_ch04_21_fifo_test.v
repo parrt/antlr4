@@ -19,6 +19,7 @@ module fifo_test
       (.clk(clk), .reset(reset), .sw(btn[1]),
        .db_level(), .db_tick(db_btn[1]));
    // instantiate a 2^2-by-3 fifo
+   fifo #(.B(3), .W(2)) fifo_unit
       (.clk(clk), .reset(reset),
       .rd(db_btn[0]), .wr(db_btn[1]), .w_data(sw),
       .r_data(led[2:0]), .full(led[7]), .empty(led[6]));

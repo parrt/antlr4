@@ -12,11 +12,14 @@
 
 
 
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
+  #else
   wire valid_start_event;
   wire valid_test_expr;
   assign valid_start_event = ~(start_event^start_event);
   assign valid_test_expr = ~((^test_expr)^(^test_expr));
+ #endif // OVL_IMPLICIT_XCHECK_OFF
 
 
 

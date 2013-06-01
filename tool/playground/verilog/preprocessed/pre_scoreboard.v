@@ -27,6 +27,7 @@ module scoreboard(
 );
 
 // synopsys template
+// ### Please start your Verilog code here ###
 // synopsys template
 // synopsys template
 parameter NOTHING     = 0,

@@ -1,4 +1,5 @@
 module altera_dual_port_ram_simple
+   #(
     parameter DATA_WIDTH = 8, // number of bits
               ADDR_WIDTH = 10  // number of address bits
    )

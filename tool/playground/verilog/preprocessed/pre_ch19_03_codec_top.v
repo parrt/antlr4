@@ -1,4 +1,5 @@
 module codec_top 
+   #(parameter FIFO_SIZE = 3)
    (
     input wire clk, reset,
     // to WM8731
@@ -39,10 +40,12 @@ module codec_top
        .adc_lr_clk(adc_lr_clk), .load_done_tick(dac_done_tick),
        .dacdat(dacdat), .adcdat(adcdat));        
    // instantiate adc fifo 
+   fifo #(.DATA_WIDTH(32), .ADDR_WIDTH(FIFO_SIZE)) f_unit0
       (.clk(clk), .reset(reset), .rd(rd_adc_fifo),
        .wr(dac_done_tick), .w_data(adc_data_out),
        . empty(adc_fifo_empty), .full(), .r_data(adc_fifo_out));                          
    // instantiate dac fifo
+   fifo #(.DATA_WIDTH(32), .ADDR_WIDTH(FIFO_SIZE)) f_unit1
       (.clk(clk), .reset(reset), .rd(dac_done_tick),
        .wr(wr_dac_fifo), .w_data(dac_fifo_in),
        . empty(), .full(dac_fifo_full), .r_data(dac_data_in)); 

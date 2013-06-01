@@ -63,6 +63,7 @@ cpubus_sm cpubus_int(
    .reset           (reset)
 ); 
 
+testrunner #(0,1,2,3) testprogram( 
    .cpubus_data_reg (cpubus_data_reg), 
    .transaction_req (transaction_req), 
    .go              (go), 

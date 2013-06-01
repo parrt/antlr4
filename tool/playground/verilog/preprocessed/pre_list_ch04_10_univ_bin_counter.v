@@ -1,5 +1,6 @@
 // Listing 4.10
 module univ_bin_counter
+   #(parameter N=8)
    (
     input wire clk, reset,
     input wire syn_clr, load, en, up,

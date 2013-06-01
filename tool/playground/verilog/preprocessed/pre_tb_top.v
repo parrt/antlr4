@@ -12,6 +12,7 @@ threebitcounter DUT (.clk(clk),
                      .data_in(3'b0),
                      .data_out(data_out));
 
+always #10 clk = ~clk;
 
 initial
   begin
@@ -21,6 +22,7 @@ initial
     @(posedge clk);
     @(negedge clk);
     rst = 1'b0;
+    #200;
     $finish;
   end
   

@@ -10,6 +10,7 @@
 //     0     0    0    q     pause
 //---------------------------------------------
 module bin_counter
+   #(parameter N=8)   // default 8
    (
     input wire clk, reset,         // clock & reset
     input wire syn_clr, load, en,  // input control

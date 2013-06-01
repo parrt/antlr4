@@ -14,11 +14,14 @@
 
 
 
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
+  #else
   wire valid_push;
   wire valid_pop;
 
   assign valid_push = ~((^push) ^ (^push));
   assign valid_pop = ~((^pop) ^ (^pop));
+ #endif // OVL_IMPLICIT_XCHECK_OFF
 
 

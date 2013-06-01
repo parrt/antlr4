@@ -1,4 +1,5 @@
 module fifo_ram
+   #(
     parameter DATA_WIDTH=8,    // number of bits in a word
               ADDR_WIDTH=10  // number of address bits
    )
@@ -20,12 +21,14 @@ module fifo_ram
    assign full = full_tmp;
    
    // instantiate fifo control unit
+   fifo_ctrl #(.ADDR_WIDTH(ADDR_WIDTH)) c_unit
       (.clk(clk), .reset(reset), .rd(rd), .wr(wr), .empty(empty), 
        .full(full_tmp), .w_addr(w_addr), 
        .r_addr(), .r_addr_next(r_addr_next));
 
    // instantiate synchronous SRAM
    altera_dual_port_ram_simple 
+      #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH)) ram_unit
       (.clk(clk), .we(wr_en), .w_addr(w_addr), .r_addr(r_addr_next), 
        .d(w_data), .q(r_data));
 endmodule

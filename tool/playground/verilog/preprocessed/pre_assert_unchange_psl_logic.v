@@ -1,9 +1,9 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-  wire ignore_new_start = (action_on_new_start == `OVL_IGNORE_NEW_START);
-  wire reset_on_new_start = (action_on_new_start == `OVL_RESET_ON_NEW_START);
-  wire error_on_new_start = (action_on_new_start == `OVL_ERROR_ON_NEW_START);
+  wire ignore_new_start = (action_on_new_start == OVL_IGNORE_NEW_START);
+  wire reset_on_new_start = (action_on_new_start == OVL_RESET_ON_NEW_START);
+  wire error_on_new_start = (action_on_new_start == OVL_ERROR_ON_NEW_START);
 
 
 

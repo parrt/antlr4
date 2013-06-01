@@ -1,5 +1,6 @@
 // Listing 5.26
 module altera_sync_ram_init
+   #(
     parameter DATA_WIDTH = 8, // number of bits
               ADDR_WIDTH = 10  // number of address bits
    )

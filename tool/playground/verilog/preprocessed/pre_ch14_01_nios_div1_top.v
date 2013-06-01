@@ -36,6 +36,7 @@ module nios_div1_top
       .sram_we_n_from_the_sram(sram_we_n)
     );   
    // instantiate division circuit
+   div #(.W(32), .CBIT(6)) d_unit
      (.clk(clk), .reset(1'b0), .start(start),
       .dvsr(dvsr), .dvnd(dvnd), .quo(quo), .rmd(rmd),
       .ready(ready), .done_tick(done_tick));

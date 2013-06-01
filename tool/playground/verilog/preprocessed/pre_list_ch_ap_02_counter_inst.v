@@ -10,6 +10,7 @@ module counter_inst
 
    // body
    // instantiation of 16-bit counter, all ports used
+   bin_counter #(.N(16)) counter_16_unit
       (.clk(clk), .reset(reset),
        .syn_clr(syn_clr16), .load(load16), .en(en16),
        .d(d), .max_tick(max_tick16), .q(q));

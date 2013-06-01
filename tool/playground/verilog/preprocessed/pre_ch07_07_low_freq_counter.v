@@ -28,6 +28,7 @@ module low_freq_counter
       (.clk(clk), .reset(reset), .start(prd_start), .si(si),
        .ready(), .done_tick(prd_done_tick), .prd(prd));
    // instantiate division circuit
+   div #(.W(20), .CBIT(5)) div_unit
       (.clk(clk), .reset(reset), .start(div_start),
        .dvsr(dvsr), .dvnd(dvnd), .quo(quo), .rmd(),
        .ready(), .done_tick(div_done_tick));

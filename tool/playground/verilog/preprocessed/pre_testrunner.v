@@ -18,10 +18,12 @@ module testrunner(
   rst
   );
   
+  #include "test_tasks.vh"
   
   initial
   begin : tests
     rst = 0;
+    #100;
     rst = 1;
     reset();
     for (i = 0; i<=7;i=i+1) 

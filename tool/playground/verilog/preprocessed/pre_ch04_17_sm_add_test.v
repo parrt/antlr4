@@ -10,6 +10,7 @@ module sm_add_test
 
    //body
    // instantiate adder
+   sign_mag_add #(.N(4)) sm_adder_unit
      (.a(sw[3:0]), .b(sw[7:4]), .sum(sum));
    //  magnitude displayed on rightmost 7-seg LED
    assign oct = {1'b0, sum[2:0]};

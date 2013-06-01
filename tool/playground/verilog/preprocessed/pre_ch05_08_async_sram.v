@@ -1,6 +1,7 @@
 // Listing 5.8
 // for demonstration only; not to be used with FPGA
 module async_sram
+   #(
     parameter DATA_WIDTH = 8, // number of bits
               ADDR_WIDTH = 2  // number of address bits
    )

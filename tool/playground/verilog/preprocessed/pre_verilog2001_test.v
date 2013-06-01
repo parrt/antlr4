@@ -190,6 +190,7 @@ parameter [2:0]    // new width
 	ERROR = 3'd4;
 
 
+RAM #(.SIZE(1023)) ram2 (); // parameter
 
 endmodule
 
@@ -275,6 +276,8 @@ reg clock2 =
 
 always
 	begin
+	#10 clock = ~clock;
+	#10 clock2 = ~clock2;
 	end
 
 reg t1,t2,t3,t4;
@@ -319,6 +322,7 @@ endmodule
 
 
 module paramter_port_list 
+  #( parameter integer p1 = 1 , p2 = { 2'b01, 1'b01 } ,
      parameter real p3 = (34 * 72.9),
      parameter p4 = 5 , p5 = 6 )
   ( input  a,
@@ -328,9 +332,13 @@ module paramter_port_list
 initial
 	begin
 	b = p1;
+	#10
 	b = p2 > 4;
+	#10
 	b = (p3 < 75.743);
+	#10;
 	b = p4 < 2;
+	#10;
 	b = p5 > 1;
 	end
 

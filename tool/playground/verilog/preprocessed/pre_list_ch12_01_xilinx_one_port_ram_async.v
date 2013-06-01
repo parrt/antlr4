@@ -3,6 +3,7 @@
 // Modified from XST 8.1i v_rams_04
 
 module xilinx_one_port_ram_async
+   #(
      parameter ADDR_WIDTH = 8,
                DATA_WIDTH = 1
    )

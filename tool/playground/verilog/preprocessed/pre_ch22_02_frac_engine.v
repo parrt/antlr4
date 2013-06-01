@@ -1,5 +1,8 @@
 
 module frac_engine 
+   #(
+    parameter W = 32,   // width (# bits) of Qm.f format
+    parameter M= 4      // # of bits in m
    )
    (
     input wire clk, reset,
@@ -11,6 +14,7 @@ module frac_engine
    );
 
    // constant declaration
+   localparam F = W - M; // # of bits in fraction
    
    // symbolic state declaration
    localparam [1:0]

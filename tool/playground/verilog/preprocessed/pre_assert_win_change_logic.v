@@ -11,7 +11,9 @@
 
 
 
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
+  #else
    wire valid_start_event;
    wire valid_test_expr;
    wire valid_end_event;
@@ -19,6 +21,7 @@
    assign valid_start_event = ~(start_event^start_event);
    assign valid_test_expr = ~((^test_expr)^(^test_expr));
    assign valid_end_event = ~(end_event^end_event);
+ #endif // OVL_IMPLICIT_XCHECK_OFF
 
 
 

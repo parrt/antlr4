@@ -1,5 +1,6 @@
 // Listing 4.9
 module free_run_bin_counter
+   #(parameter N=8)
    (
     input wire clk, reset,
     output wire max_tick,

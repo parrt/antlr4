@@ -3,6 +3,7 @@
 // Modified from XST 8.1i v_rams_11
 
 module xilinx_dual_port_ram_sync
+   #(
      parameter ADDR_WIDTH = 6,
                DATA_WIDTH = 8
    )

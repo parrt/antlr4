@@ -1,5 +1,8 @@
 //Listing 8.1
 module uart_rx
+   #(
+     parameter DBIT = 8,     // # data bits
+               SB_TICK = 16  // # ticks for stop bits
    )
    (
     input wire clk, reset,

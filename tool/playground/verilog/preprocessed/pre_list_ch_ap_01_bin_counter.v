@@ -1,6 +1,7 @@
 // Listing A.1
 module bin_counter
    // optional parameter declaration
+   #(parameter N=8)   // default 8
    // port declaration
    (
     input wire clk, reset,         // clock & reset

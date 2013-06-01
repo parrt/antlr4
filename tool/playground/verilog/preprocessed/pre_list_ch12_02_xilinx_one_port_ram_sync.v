@@ -3,6 +3,7 @@
 // Modified from XST 8.1i v_rams_07
 
 module xilinx_one_port_ram_sync
+   #(
      parameter ADDR_WIDTH = 12,
                DATA_WIDTH = 8
    )

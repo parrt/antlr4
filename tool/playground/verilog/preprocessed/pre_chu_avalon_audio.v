@@ -1,4 +1,5 @@
 module chu_avalon_audio 
+   #(parameter FIFO_SIZE = 3) // 2^FIFO_SIZE words 
    (
     input wire clk, reset,
     // Avalon MM interface
@@ -30,6 +31,7 @@ module chu_avalon_audio
    //==================================================================
    // instantiate codec controller   
    //==================================================================
+   codec_top #(.FIFO_SIZE(FIFO_SIZE)) codec_unit
       (.clk(clk), .reset(reset), 
        .i2c_sclk(i2c_sclk), .i2c_sdat(i2c_sdat),      
        .m_clk(m_clk), .b_clk(b_clk), .dac_lr_clk(dac_lr_clk), 

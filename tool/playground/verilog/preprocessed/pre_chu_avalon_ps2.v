@@ -1,4 +1,5 @@
 module chu_avalon_ps2 
+   #(parameter W_SIZE = 2)   // # address bits in FIFO buffer
    (
     input wire clk, reset,
     // avalon-MM slave interface
@@ -19,6 +20,7 @@ module chu_avalon_ps2
    //==================================================================
    // instantiate PS2 controller   
    //==================================================================
+   ps2_tx_rx_buf #(.W_SIZE(W_SIZE)) ps2_unit
       (.clk(clk), .reset(reset), .wr_ps2(wr_ps2),
        .rd_ps2_packet(rd_fifo), .ps2_tx_data(ps2_writedata[7:0]),
        .ps2_rx_data(ps2_rx_data), .ps2_tx_idle(ps2_tx_idle),

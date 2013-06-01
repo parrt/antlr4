@@ -33,6 +33,7 @@ wire memory_rd;
 wire memory_wr;
 wire [7:0] memory_data;
 
+// ### Please start your Verilog code here ### 
 
 reg [7:0] RAM [255:0];
 reg [8:0] adr;

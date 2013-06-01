@@ -1,5 +1,6 @@
 //Listing 9.3
 module kb_code
+   #(parameter W_SIZE = 2)  // 2^W_SIZE words in FIFO
    (
     input wire clk, reset,
     input wire ps2d, ps2c, rd_key_code,
@@ -32,6 +33,7 @@ module kb_code
        .rx_done_tick(scan_done_tick), .dout(scan_out));
 
    // instantiate fifo buffer
+   fifo #(.B(8), .W(W_SIZE)) fifo_key_unit
      (.clk(clk), .reset(reset), .rd(rd_key_code),
       .wr(got_code_tick), .w_data(scan_out),
       .empty(kb_buf_empty), .full(),

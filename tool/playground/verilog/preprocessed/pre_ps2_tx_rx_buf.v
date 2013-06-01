@@ -1,4 +1,5 @@
 module ps2_tx_rx_buf
+   #(parameter W_SIZE = 2)   // # address bits in FIFO buffer
    (
     input wire clk, reset,
     input wire wr_ps2, rd_ps2_packet,
@@ -24,6 +25,7 @@ module ps2_tx_rx_buf
        .ps2d(ps2d), .ps2c(ps2c), .rx_idle(rx_idle),
        .rx_done_tick(rx_done_tick), .dout(rx_data));
    // instantiate FIFO buffer
+   fifo #(.DATA_WIDTH(8), .ADDR_WIDTH(W_SIZE)) fifo_unit
       (.clk(clk), .reset(reset), .rd(rd_ps2_packet),
        .wr(rx_done_tick), .w_data(rx_data), .empty(ps2_rx_buf_empty),
        .full(), .r_data(ps2_rx_data));

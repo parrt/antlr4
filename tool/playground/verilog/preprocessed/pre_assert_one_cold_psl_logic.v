@@ -16,7 +16,7 @@
 //This module is bound to the PSL vunits with assert checks
 module assert_one_cold_assert (clk, reset_n, test_expr, xzcheck_enable, inactive_val);
        parameter width = 8;
-       parameter inactive = `OVL_ONE_COLD;
+       parameter inactive = OVL_ONE_COLD;
        input clk, reset_n, xzcheck_enable, inactive_val;
        input [width-1:0] test_expr;
 endmodule
@@ -25,7 +25,7 @@ endmodule
 //This module is bound to a PSL vunits with assume checks
 module assert_one_cold_assume (clk, reset_n, test_expr, xzcheck_enable, inactive_val);
        parameter width = 8;
-       parameter inactive = `OVL_ONE_COLD;
+       parameter inactive = OVL_ONE_COLD;
        input clk, reset_n, xzcheck_enable, inactive_val;
        input [width-1:0] test_expr;
 endmodule
@@ -34,7 +34,7 @@ endmodule
 //This module is bound to a PSL vunit with cover properties
 module assert_one_cold_cover (clk, reset_n, test_expr, one_colds_checked, inactive_val);
        parameter width = 8;
-       parameter inactive = `OVL_ONE_COLD;
+       parameter inactive = OVL_ONE_COLD;
        parameter OVL_COVER_SANITY_ON = 1;
        parameter OVL_COVER_CORNER_ON = 1;
        input clk, reset_n, inactive_val;

@@ -3,8 +3,6 @@
 
 
 
-`endmodule //Required to pair up with already used "`module" in file assert_always_on_edge.vlib
-
 //Module to be replicated for assert checks
 //This module is bound to the PSL vunits with assert checks
 module assert_always_on_edge_assert (clk, reset_n, test_expr, sampling_event, noedge_type, posedge_type, negedge_type, anyedge_type, xzcheck_enable);
