@@ -16,20 +16,3 @@ module shift4(R, L, w, Clock, Q);
 			end
 		
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

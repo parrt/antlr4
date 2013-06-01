@@ -4,7 +4,7 @@ module mod_m_counter_fc
    (
     input wire clk, reset,
     output wire max_tick,
-    output wire [log2(M)-1:0] q
+    output wire [log2(M)-1:0]
    );
 
    //signal declaration

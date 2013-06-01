@@ -8,4 +8,5 @@ module chu_avalon_vga_de2
     output wire [31:0] vga_readdata,
     // conduit (to VGA monitor)
     output wire vsync, hsync,
-    /
+
+endmodule

@@ -37,6 +37,7 @@ module dut_dummy(
   inout wire [7:0] xbus_data,
   input wire xbus_wait,
   input wire xbus_error);
+
   bit[2:0]   st;
 
   // Basic arbiter, supports two masters, 0 has priority over 1

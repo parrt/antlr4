@@ -16,7 +16,7 @@ always #10 clk = ~clk;
 
 initial
   begin
-    $monitor ($time,,"data_out: ",data_out);
+    $monitor ($time,"data_out: ",data_out);
     rst = 1'b1;
     clk = 1'b0;
     @(posedge clk);

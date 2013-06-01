@@ -87,7 +87,7 @@ module spi
                      bit_next = bit_reg + 1;
                      c_next = 8'b1;
                   end
-      endcase;
+      endcase
    end   
    // lookahead output decoding
    assign spi_clk_next = (state_next==sclk1);

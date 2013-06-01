@@ -17,20 +17,3 @@ module shiftn(R, L, w, Clock, Q);
 			end
 			
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

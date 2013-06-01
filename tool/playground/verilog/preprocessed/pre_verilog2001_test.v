@@ -1,25 +1,4 @@
 
-config cfg4
-
-   
-   design rtlLib.top   
-
-   
-
-   default liblist rtlLib gateLib;
-
-  
-
-  instance test.dut.a2 liblist gateLib; 
-endconfig 
-
-
-library rtlLib "./*.v";  
-
-library gateLib "./synth_out/*.v";
-
-
-
 
 module Nbit_adder (co, sum, a, b, ci);
 

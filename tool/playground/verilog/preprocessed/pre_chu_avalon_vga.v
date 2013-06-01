@@ -2,7 +2,6 @@
 // the cpu read data is available either two or three clock cycles,
 // set readWaittime=2 in SOPC editor 
 
- /
 
 module chu_avalon_vga 
    (

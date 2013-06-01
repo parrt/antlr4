@@ -77,7 +77,7 @@ module gcd_engine
                         a_next = a_reg - b_reg; 
                      else
                         b_next = b_reg - a_reg;
-      endcase;
+      endcase
    end 
    //output
    assign ready = (state_reg==idle);
