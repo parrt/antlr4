@@ -1,7 +1,7 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`include "std_ovl_defines.h"
+#include "std_ovl_defines.h"
 
 `module ovl_memory_sync (reset, enable, start_addr, end_addr, r_clock, ren, raddr, rdata,
                          w_clock, wen, waddr, wdata, fire);
@@ -39,9 +39,9 @@
   // Parameters that should not be edited
   parameter assert_name = "OVL_MEMORY_SYNC";
 
-`ifdef OVL_EVERYTHING_OFF
+#ifdef OVL_EVERYTHING_OFF
   // No logic if ASSERT & COVER both OFF
-`else
+#else
   // latch based gated clock
 
   wire rd_gclk, wr_gclk;
@@ -74,16 +74,16 @@
   wire   reset_n;
   assign reset_n = (gating_type == `OVL_GATE_RESET) ? ((reset_polarity == `OVL_ACTIVE_LOW) ? reset & enable : ~reset & enable)
                                                     : ((reset_polarity == `OVL_ACTIVE_LOW) ? reset          : ~reset);
-`endif
+#endif
 
-  `include "std_ovl_cover.h"
-  `include "std_ovl_task.h"
-  `include "std_ovl_init.h"
+  #include "std_ovl_cover.h"
+  #include "std_ovl_task.h"
+  #include "std_ovl_init.h"
 
-`ifdef OVL_SVA
-  `include "./sva05/ovl_memory_sync_logic.sv"
+#ifdef OVL_SVA
+  #include "./sva05/ovl_memory_sync_logic.sv"
   assign fire = {`OVL_FIRE_WIDTH{1'b0}}; // Tied low in V2.3
-`endif
+#endif
 
 `endmodule // ovl_memory_sync
 

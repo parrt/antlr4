@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 // ASSERTION
 //------------------------------------------------------------------------------
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   // 2-STATE
   // =======
@@ -31,10 +31,10 @@
 
   // X-CHECK
   // =======
-  `ifdef OVL_XCHECK_OFF
-  `else
-    `ifdef OVL_IMPLICIT_XCHECK_OFF
-    `else
+  #ifdef OVL_XCHECK_OFF
+  #else
+    #ifdef OVL_IMPLICIT_XCHECK_OFF
+    #else
       reg fire_xcheck_1;
       always @(posedge clk) begin
         if (`OVL_RESET_SIGNAL == 1'b0) begin
@@ -58,16 +58,16 @@
         end
       end
 
-    `endif // OVL_IMPLICIT_XCHECK_OFF
-  `endif // OVL_XCHECK_OFF
+    #endif // OVL_IMPLICIT_XCHECK_OFF
+  #endif // OVL_XCHECK_OFF
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
 
 //------------------------------------------------------------------------------
 // COVERAGE
 //------------------------------------------------------------------------------
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   // Auxiliary logic
   reg [width-1:0] prev_test_expr;
@@ -98,4 +98,4 @@
   assign fire_cover_2 = ((OVL_COVER_CORNER_ON > 0) && (test_expr == min));
   assign fire_cover_3 = ((OVL_COVER_CORNER_ON > 0) && (test_expr == max));
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON

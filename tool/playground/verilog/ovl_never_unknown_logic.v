@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 // ASSERTION
 //------------------------------------------------------------------------------
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   // 2-STATE
   // =======
@@ -19,9 +19,9 @@
 
   // X-CHECK
   // =======
-  `ifdef OVL_XCHECK_OFF
+  #ifdef OVL_XCHECK_OFF
     wire fire_xcheck = 1'b0;
-  `else
+  #else
     reg fire_xcheck_1;
     reg fire_xcheck;
     always @(posedge clk) begin
@@ -51,18 +51,18 @@
       end
     end
 
-  `endif // OVL_XCHECK_OFF
+  #endif // OVL_XCHECK_OFF
 
-`else
+#else
   wire fire_2state = 1'b0;
   wire fire_xcheck = 1'b0;
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
 
 //------------------------------------------------------------------------------
 // COVERAGE
 //------------------------------------------------------------------------------
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   // Auxiliary logic
   reg [width-1:0] prev_test_expr;
@@ -103,6 +103,6 @@
   assign fire_cover_1 = ((OVL_COVER_BASIC_ON  > 0) && (qualifier == 1'b1));
   assign fire_cover_2 = ((OVL_COVER_SANITY_ON > 0) && (qualifier == 1'b1) && (test_expr != prev_test_expr));
 
-`else
+#else
   wire fire_cover = 1'b0;
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON

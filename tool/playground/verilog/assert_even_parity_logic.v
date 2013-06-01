@@ -3,18 +3,18 @@
 
 
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
   wire valid_test_expr;
   assign valid_test_expr = ~((^test_expr) ^ (^test_expr));
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
   always @(posedge clk) begin
       if (`OVL_RESET_SIGNAL != 1'b0) begin
         if ((^(test_expr)) == 1'b1) begin
@@ -23,15 +23,15 @@
       end
   end // always
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
- `ifdef OVL_ASSERT_ON
+  #else
+ #ifdef OVL_ASSERT_ON
   always @(posedge clk)
     begin
       if (`OVL_RESET_SIGNAL != 1'b0)
@@ -44,11 +44,11 @@
             ovl_error_t(`OVL_FIRE_XCHECK,"test_expr contains X or Z");
         end
     end
- `endif // OVL_ASSERT_ON
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_ASSERT_ON
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   reg [width-1:0] prev_test_expr;
 
@@ -67,11 +67,11 @@
     end // OVL_COVER_NONE
    end
    else begin
-`ifdef OVL_INIT_REG
+#ifdef OVL_INIT_REG
       prev_test_expr <= {width{1'b0}};
-`endif
+#endif
    end
   end //always
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON
 

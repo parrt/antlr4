@@ -1,7 +1,7 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   parameter REQ_ACK_START    = 2'b00;
   parameter REQ_ACK_WAIT     = 2'b01;
@@ -15,22 +15,22 @@
   integer i;
   integer j;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
   wire valid_req;
   wire valid_ack;
 
   assign valid_req = ~( req ^ req );
   assign valid_ack = ~( ack ^ ack );
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   initial begin
     r_state=REQ_ACK_START;
     r_r_state=REQ_ACK_START;
@@ -39,7 +39,7 @@
     i = 0;
     j = 0;
   end
-`endif
+#endif
 
   always @(posedge clk) begin
       if (`OVL_RESET_SIGNAL != 1'b0) begin // active low reset
@@ -195,12 +195,12 @@
         r_ack <= ack;
         r_req <= req;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
 
         if ( valid_req == 1'b1 )
           begin
@@ -220,8 +220,8 @@
             ovl_error_t(`OVL_FIRE_XCHECK,"ack contains X or Z");
           end
 
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
       end
       else begin
@@ -235,9 +235,9 @@
 
   end // always
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   reg prev_req, prev_ack;
 
@@ -259,12 +259,12 @@
     end // OVL_COVER_NONE
    end
    else begin
-`ifdef OVL_INIT_REG
+#ifdef OVL_INIT_REG
      prev_req <= 0;
      prev_ack <= 0;
-`endif
+#endif
    end
   end //always
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON
 

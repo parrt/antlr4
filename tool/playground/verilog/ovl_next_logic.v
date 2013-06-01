@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 // SHARED CODE
 //------------------------------------------------------------------------------
-`ifdef OVL_SHARED_CODE
+#ifdef OVL_SHARED_CODE
   reg  [NUM_CKS_1:0] monitor;
   wire [NUM_CKS_1:0] monitor_1 = (monitor << 1);
 
@@ -20,13 +20,13 @@
       monitor <= (monitor_1 | start_event);
     end
   end
-`endif
+#endif
 
 
 //------------------------------------------------------------------------------
 // ASSERTION
 //------------------------------------------------------------------------------
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   // 2-STATE
   // =======
@@ -63,12 +63,12 @@
 
   // X-CHECK
   // =======
-  `ifdef OVL_XCHECK_OFF
+  #ifdef OVL_XCHECK_OFF
     wire fire_xcheck = 1'b0;
-  `else
-    `ifdef OVL_IMPLICIT_XCHECK_OFF
+  #else
+    #ifdef OVL_IMPLICIT_XCHECK_OFF
       wire fire_xcheck = 1'b0;
-    `else
+    #else
       reg fire_xcheck_1, fire_xcheck_2;
       reg fire_xcheck;
       always @(posedge clk) begin
@@ -113,19 +113,19 @@
         end
       end
 
-    `endif // OVL_IMPLICIT_XCHECK_OFF
-  `endif // OVL_XCHECK_OFF
+    #endif // OVL_IMPLICIT_XCHECK_OFF
+  #endif // OVL_XCHECK_OFF
 
-`else
+#else
   wire fire_2state = 1'b0;
   wire fire_xcheck = 1'b0;
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
 
 //------------------------------------------------------------------------------
 // COVERAGE
 //------------------------------------------------------------------------------
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   wire fire_cover_1, fire_cover_2;
   reg  fire_cover;
@@ -153,6 +153,6 @@
   assign fire_cover_1 = ((OVL_COVER_BASIC_ON  > 0) && (start_event == 1'b1));
   assign fire_cover_2 = ((OVL_COVER_CORNER_ON > 0) && ((check_overlapping==1) && (monitor_1 != {num_cks{1'b0}}) && start_event));
 
-`else
+#else
   wire fire_cover = 1'b0;
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON

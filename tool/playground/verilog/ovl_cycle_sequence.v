@@ -1,7 +1,7 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`include "std_ovl_defines.h"
+#include "std_ovl_defines.h"
 
 `module ovl_cycle_sequence (clock, reset, enable, event_sequence, fire);
 
@@ -23,34 +23,34 @@
   // Parameters that should not be edited
   parameter assert_name = "OVL_CYCLE_SEQUENCE";
 
-  `include "std_ovl_reset.h"
-  `include "std_ovl_clock.h"
-  `include "std_ovl_cover.h"
-  `include "std_ovl_task.h"
-  `include "std_ovl_init.h"
+  #include "std_ovl_reset.h"
+  #include "std_ovl_clock.h"
+  #include "std_ovl_cover.h"
+  #include "std_ovl_task.h"
+  #include "std_ovl_init.h"
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   // Sanity Checks
   initial begin
     if (num_cks < 2) begin
       ovl_error_t(`OVL_FIRE_2STATE,"Illegal value for parameter num_cks which must be set to value greater than 1");
     end
   end
-`endif
+#endif
 
-`ifdef OVL_VERILOG
-  `include "./vlog95/ovl_cycle_sequence_logic.v"
-`endif
+#ifdef OVL_VERILOG
+  #include "./vlog95/ovl_cycle_sequence_logic.v"
+#endif
 
-`ifdef OVL_SVA
-  `include "./sva05/ovl_cycle_sequence_logic.sv"
-`endif
+#ifdef OVL_SVA
+  #include "./sva05/ovl_cycle_sequence_logic.sv"
+#endif
 
-`ifdef OVL_PSL
-  `include "./psl05/assert_cycle_sequence_psl_logic.v"
+#ifdef OVL_PSL
+  #include "./psl05/assert_cycle_sequence_psl_logic.v"
 
-`else
+#else
   assign fire = {fire_cover, fire_xcheck, fire_2state};
   `endmodule // ovl_cycle_sequence
-`endif
+#endif

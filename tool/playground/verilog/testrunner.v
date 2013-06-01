@@ -32,7 +32,7 @@ module testrunner(
   rst
   );
   
-  `include "test_tasks.vh"
+  #include "test_tasks.vh"
   
   initial
   begin : tests

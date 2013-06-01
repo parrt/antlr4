@@ -8,12 +8,12 @@
   parameter WIN_CHANGE_START = 1'b0;
   parameter WIN_CHANGE_CHECK = 1'b1;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    wire valid_start_event;
    wire valid_test_expr;
    wire valid_end_event;
@@ -21,19 +21,19 @@
    assign valid_start_event = ~(start_event^start_event);
    assign valid_test_expr = ~((^test_expr)^(^test_expr));
    assign valid_end_event = ~(end_event^end_event);
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   initial begin
     r_state=WIN_CHANGE_START;
     r_change=1'b0;
   end
-`endif
+#endif
 
 
-`ifdef OVL_SHARED_CODE
+#ifdef OVL_SHARED_CODE
 
   always @(posedge clk) begin
     if (`OVL_RESET_SIGNAL != 1'b0) begin
@@ -45,22 +45,22 @@
             r_state <= WIN_CHANGE_CHECK;
             r_test_expr <= test_expr;
 
- `ifdef OVL_COVER_ON
+ #ifdef OVL_COVER_ON
             if (coverage_level != `OVL_COVER_NONE) begin
              if (OVL_COVER_BASIC_ON) begin //basic coverage
               ovl_cover_t("window_open covered");
              end
             end
- `endif // OVL_COVER_ON
+ #endif // OVL_COVER_ON
           end
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
-  `ifdef OVL_ASSERT_ON
+  #else
+  #ifdef OVL_ASSERT_ON
           if (valid_start_event == 1'b1)
             begin
               //Do Nothing
@@ -69,9 +69,9 @@
             begin
               ovl_error_t(`OVL_FIRE_XCHECK,"start_event contains X or Z");
             end
-  `endif // OVL_ASSERT_ON
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+  #endif // OVL_ASSERT_ON
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
         end
         WIN_CHANGE_CHECK: begin
@@ -84,31 +84,31 @@
             if (end_event == 1'b1) begin
               r_state <= WIN_CHANGE_START;
 
- `ifdef OVL_COVER_ON
+ #ifdef OVL_COVER_ON
               if (coverage_level != `OVL_COVER_NONE) begin
                if (OVL_COVER_BASIC_ON) begin //basic coverage
                 ovl_cover_t("window covered");
                end
               end
- `endif // OVL_COVER_ON
+ #endif // OVL_COVER_ON
 
               // Check that the property is true
- `ifdef OVL_ASSERT_ON
+ #ifdef OVL_ASSERT_ON
               if ((r_change != 1'b1) && (r_test_expr == test_expr)) begin
                 ovl_error_t(`OVL_FIRE_2STATE,"Test expression has not changed value before window is closed");
               end
- `endif // OVL_ASSERT_ON
+ #endif // OVL_ASSERT_ON
             end
 
             r_test_expr <= test_expr;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
-  `ifdef OVL_ASSERT_ON
+  #else
+  #ifdef OVL_ASSERT_ON
             if (valid_test_expr == 1'b1)
               begin
                 //Do Nothing
@@ -126,9 +126,9 @@
               begin
                 ovl_error_t(`OVL_FIRE_XCHECK,"end_event contains X or Z");
               end
-  `endif // OVL_ASSERT_ON
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+  #endif // OVL_ASSERT_ON
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
           end
       endcase
@@ -141,5 +141,5 @@
 
   end // always
 
-`endif // OVL_SHARED_CODE
+#endif // OVL_SHARED_CODE
 

@@ -1,7 +1,7 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`include "std_ovl_defines.h"
+#include "std_ovl_defines.h"
 
 `module ovl_bits (clock, reset, enable, test_expr, fire);
 
@@ -25,25 +25,25 @@
   // Parameters that should not be edited
   parameter assert_name = "OVL_BITS";
 
-  `include "std_ovl_reset.h"
-  `include "std_ovl_clock.h"
-  `include "std_ovl_cover.h"
-  `include "std_ovl_task.h"
-  `include "std_ovl_init.h"
+  #include "std_ovl_reset.h"
+  #include "std_ovl_clock.h"
+  #include "std_ovl_cover.h"
+  #include "std_ovl_task.h"
+  #include "std_ovl_init.h"
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   // Sanity Checks
   initial begin
     if ((max > 0) && (min > max)) begin
        ovl_error_t(`OVL_FIRE_2STATE,"Illegal parameter values set where min > max");
     end
   end
-`endif
+#endif
 
-`ifdef OVL_SVA
-  `include "./sva05/ovl_bits_logic.sv"
+#ifdef OVL_SVA
+  #include "./sva05/ovl_bits_logic.sv"
   assign fire = {`OVL_FIRE_WIDTH{1'b0}}; // Tied low in V2.3
-`endif
+#endif
 
 `endmodule // ovl_bits

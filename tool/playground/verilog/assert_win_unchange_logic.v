@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 // SHARED CODE
 //------------------------------------------------------------------------------
-`ifdef OVL_SHARED_CODE
+#ifdef OVL_SHARED_CODE
   reg [width-1:0] r_test_expr;
   reg             r_state;
 
@@ -30,13 +30,13 @@
       endcase
     end
   end
-`endif
+#endif
 
 
 //------------------------------------------------------------------------------
 // ASSERTION
 //------------------------------------------------------------------------------
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   // 2-STATE
   // =======
@@ -57,10 +57,10 @@
 
   // X-CHECK
   // =======
-  `ifdef OVL_XCHECK_OFF
-  `else
-    `ifdef OVL_IMPLICIT_XCHECK_OFF
-    `else
+  #ifdef OVL_XCHECK_OFF
+  #else
+    #ifdef OVL_IMPLICIT_XCHECK_OFF
+    #else
       reg fire_xcheck_1, fire_xcheck_2, fire_xcheck_3;
       always @(posedge clk) begin
         if (`OVL_RESET_SIGNAL == 1'b0) begin
@@ -110,16 +110,16 @@
         end
       end
 
-    `endif // OVL_IMPLICIT_XCHECK_OFF
-  `endif // OVL_XCHECK_OFF
+    #endif // OVL_IMPLICIT_XCHECK_OFF
+  #endif // OVL_XCHECK_OFF
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
 
 //------------------------------------------------------------------------------
 // COVERAGE
 //------------------------------------------------------------------------------
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   wire fire_cover_1, fire_cover_2;
   always @ (posedge clk) begin
@@ -139,4 +139,4 @@
   assign fire_cover_1 = ((OVL_COVER_BASIC_ON > 0) && (start_event == 1'b1) && (r_state == WIN_UNCHANGE_START));
   assign fire_cover_2 = ((OVL_COVER_BASIC_ON > 0) && (end_event   == 1'b1) && (r_state == WIN_UNCHANGE_CHECK));
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON

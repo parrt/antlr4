@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 **************************************************************************/
-`include "std_ovl_defines.h"
+#include "std_ovl_defines.h"
 
 module threebitcounter (input clk, input rst, 
     input ld, input inc, 
@@ -21,10 +21,10 @@ module threebitcounter (input clk, input rst,
     output reg [2:0] data_out
     ,output wire assert_fire);
     
-    `ifndef OVL_ASSERT_ON
+    #ifndef OVL_ASSERT_ON
 	assign assert_fire = 0;		
 
-    `else
+    #else
         wire [2:0] 	fire;
         assign 	assert_fire = fire [0];
 
@@ -38,7 +38,7 @@ module threebitcounter (input clk, input rst,
 		 .test_expr((data_out == 3'h7) && inc),
 		 .fire(fire)
 		 );		  
-     `endif
+     #endif
 
 always @(posedge clk)
      if (rst) begin

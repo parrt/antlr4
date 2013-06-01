@@ -2,21 +2,21 @@
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
   wire valid_start_event;
   wire valid_test_expr;
   assign valid_start_event = ~(start_event ^ start_event);
   assign valid_test_expr   = ~(test_expr   ^ test_expr);
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   // local parameters
   parameter num_cks = (max_cks>min_cks)?max_cks:min_cks;
@@ -39,12 +39,12 @@
         case (r_state)
           FRAME_START: begin
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    // Do the x/z checking
             if (valid_start_event == 1'b1)
               begin
@@ -54,19 +54,19 @@
               begin
                 ovl_error_t(`OVL_FIRE_XCHECK,"start_event contains X or Z");
               end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
             // assert_frame() behaves like assert_implication()
             //     when min_cks==0 and max_cks==0
             if ((min_cks==0) && (max_cks==0)) begin
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    // Do the x/z checking
               if ( (r_start_event == 1'b0) && (start_event == 1'b1) )
                 begin
@@ -79,8 +79,8 @@
                       ovl_error_t(`OVL_FIRE_XCHECK,"test_expr contains X or Z");
                     end
                 end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
               if ((r_start_event == 1'b0) && (start_event==1'b1) &&
                   (test_expr==1'b0)) begin
@@ -91,12 +91,12 @@
             // wait for start_event (0->1)
             else if ((r_start_event == 1'b0) && (start_event == 1'b1)) begin
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    // Do the x/z checking
               if (valid_test_expr == 1'b1)
                 begin
@@ -106,8 +106,8 @@
                 begin
                   ovl_error_t(`OVL_FIRE_XCHECK,"test_expr contains X or Z");
                 end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
               if ((min_cks != 0) && (test_expr==1'b1)) begin
                 // FAIL, test_expr should not happen before min_cks
@@ -125,12 +125,12 @@
             begin
               // Count clock ticks
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    // Do the x/z checking
               if (action_on_new_start != `OVL_IGNORE_NEW_START)
                 begin
@@ -143,8 +143,8 @@
                       ovl_error_t(`OVL_FIRE_XCHECK,"start_event contains X or Z");
                     end
                 end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
               if ((r_start_event == 1'b0) && (start_event == 1'b1)) begin
                 if ((min_cks != 0) && (test_expr==1'b1) &&
@@ -181,12 +181,12 @@
                 end
                 else begin // max_cks > 0
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    // Do the x/z checking
                   if (valid_test_expr == 1'b1)
                     begin
@@ -196,8 +196,8 @@
                     begin
                         ovl_error_t(`OVL_FIRE_XCHECK,"test_expr contains X or Z");
                     end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
                   // (0,M): (min_cks==0, max_cks>0)
                   if (test_expr == 1'b1) begin
@@ -233,12 +233,12 @@
                       r_state <= FRAME_START;
                     end
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    // Do the x/z checking
                     if (valid_test_expr == 1'b1)
                       begin
@@ -248,8 +248,8 @@
                       begin
                           ovl_error_t(`OVL_FIRE_XCHECK,"test_expr contains X or Z");
                       end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
                   end
                 end
@@ -276,12 +276,12 @@
                       r_state <= FRAME_START;
                     end
                   end
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
    // Do the x/z checking
                   if (valid_test_expr == 1'b1)
                     begin
@@ -291,8 +291,8 @@
                     begin
                         ovl_error_t(`OVL_FIRE_XCHECK,"test_expr contains X or Z");
                     end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
                 end
               end
@@ -305,9 +305,9 @@
       end
   end // always
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   reg prev_start_event;
 
@@ -329,4 +329,4 @@
    end
   end //always
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON

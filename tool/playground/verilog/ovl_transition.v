@@ -1,7 +1,7 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`include "std_ovl_defines.h"
+#include "std_ovl_defines.h"
 
 `module ovl_transition (clock, reset, enable, test_expr, start_state, next_state, fire);
 
@@ -22,25 +22,25 @@
   // Parameters that should not be edited
   parameter assert_name = "OVL_TRANSITION";
 
-  `include "std_ovl_reset.h"
-  `include "std_ovl_clock.h"
-  `include "std_ovl_cover.h"
-  `include "std_ovl_task.h"
-  `include "std_ovl_init.h"
+  #include "std_ovl_reset.h"
+  #include "std_ovl_clock.h"
+  #include "std_ovl_cover.h"
+  #include "std_ovl_task.h"
+  #include "std_ovl_init.h"
 
-`ifdef OVL_VERILOG
-  `include "./vlog95/assert_transition_logic.v"
+#ifdef OVL_VERILOG
+  #include "./vlog95/assert_transition_logic.v"
   assign fire = {`OVL_FIRE_WIDTH{1'b0}}; // Tied low in V2.3
-`endif
+#endif
 
-`ifdef OVL_SVA
-  `include "./sva05/assert_transition_logic.sv"
+#ifdef OVL_SVA
+  #include "./sva05/assert_transition_logic.sv"
   assign fire = {`OVL_FIRE_WIDTH{1'b0}}; // Tied low in V2.3
-`endif
+#endif
 
-`ifdef OVL_PSL
+#ifdef OVL_PSL
   assign fire = {`OVL_FIRE_WIDTH{1'b0}}; // Tied low in V2.3
-  `include "./psl05/assert_transition_psl_logic.v"
-`else
+  #include "./psl05/assert_transition_psl_logic.v"
+#else
   `endmodule // ovl_transition
-`endif
+#endif

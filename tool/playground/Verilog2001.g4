@@ -2,6 +2,7 @@
 // and standards ref http://www.eda.org/vlog-synth/vlogrtl.pdf
 // Start symbol is source_text. Converted to ANTLR v4 by Terence Parr (in a hurry)
 // blech: spec is wrong. see rule parameter_declaration_ for example.
+// COMPILER DIRECTIVES should be converted to C preproc and preprocessed with gcc -E.
 
 grammar Verilog2001;
 
@@ -1400,25 +1401,3 @@ Escaped_identifier ( '[' Decimal_number ']' )? ( ( '.' Escaped_identifier ( '[' 
 
 White_space : [ \t\n\r]+ -> channel(HIDDEN) ;
 
-// COMPILER DIRECTIVES (had to find syntax / examples and add here):
-
-conditional_compilation_directive :
-ifdef_directive
-| ifndef_directive
- ;
-
-ifdef_directive :
-'`ifdef' text_macro_identifier
-ifdef_group_of_lines
-( '`elsif' text_macro_identifier elsif_group_of_lines )*
-( '`else' else_group_of_lines )?
-'`endif'
-;
-
-ifndef_directive :
-'`ifndef' text_macro_identifier
-ifndef_group_of_lines
-( '`elsif' text_macro_identifier elsif_group_of_lines )*
-( '`else' else_group_of_lines )?
-'`endif'
-;

@@ -1,19 +1,19 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`ifdef OVL_SHARED_CODE
+#ifdef OVL_SHARED_CODE
 
   parameter NUM_CKS_1 = (num_cks-1);
   parameter NUM_CKS_2 = (NUM_CKS_1 > 0) ? (NUM_CKS_1 - 1) : 0;
 
   reg [NUM_CKS_1:0]  seq_queue;
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   initial begin
     seq_queue = {num_cks{1'b0}};
   end
-`endif
+#endif
 
   always @ (posedge clk) begin
     if (`OVL_RESET_SIGNAL != 1'b1) begin
@@ -26,22 +26,22 @@
     end
   end
 
-`endif // OVL_SHARED_CODE
+#endif // OVL_SHARED_CODE
 
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
  wire xzcheck_enable;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
   assign xzcheck_enable = 1'b0;
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     assign xzcheck_enable = 1'b0;
-  `else
+  #else
     assign xzcheck_enable = 1'b1;
-  `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+  #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
  generate
    case (property_type)
@@ -76,9 +76,9 @@
    endcase
  endgenerate
 
-`endif
+#endif
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
  generate
   if (coverage_level != `OVL_COVER_NONE)
    begin: cover_checks
@@ -94,7 +94,7 @@
 
    end
  endgenerate
-`endif
+#endif
 
 `endmodule //Required to pair up with already used "`module" in file assert_cycle_sequence.vlib
 

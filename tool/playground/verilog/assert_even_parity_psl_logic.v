@@ -2,19 +2,19 @@
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
  wire xzcheck_enable;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
   assign xzcheck_enable = 1'b0;
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     assign xzcheck_enable = 1'b0;
-  `else
+  #else
     assign xzcheck_enable = 1'b1;
-  `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+  #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
 
  generate
@@ -45,9 +45,9 @@
      default: initial ovl_error_t(`OVL_FIRE_2STATE,"");
    endcase
  endgenerate
-`endif
+#endif
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
  generate
   if (coverage_level != `OVL_COVER_NONE)
@@ -62,7 +62,7 @@
                   end
  endgenerate
 
-`endif
+#endif
 
 `endmodule //Required to pair up with already used "`module" in file assert_even_parity.vlib
 

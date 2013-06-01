@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 **************************************************************************/
-`include "std_ovl_defines.h"
+#include "std_ovl_defines.h"
 
 module protocol_monitor(
    input clk,

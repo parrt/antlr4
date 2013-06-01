@@ -3,15 +3,15 @@
 
 
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
  wire xzcheck_enable;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
   assign xzcheck_enable = 1'b0;
-`else
+#else
   assign xzcheck_enable = 1'b1;
-`endif // OVL_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
  generate
    case (property_type)
@@ -43,9 +43,9 @@
      default: initial ovl_error_t(`OVL_FIRE_2STATE,"");
    endcase
  endgenerate
-`endif
+#endif
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
  generate
   if (coverage_level != `OVL_COVER_NONE)
    begin: cover_checks
@@ -60,7 +60,7 @@
                        .test_expr(test_expr));
    end
  endgenerate
-`endif
+#endif
 
 `endmodule //Required to pair up with already used "`module" in file assert_never.vlib
 

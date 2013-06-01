@@ -4,12 +4,12 @@
   reg sampling_event_prev;
   reg r_reset_n;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
   wire valid_sampling_event;
   wire valid_test_expr;
   wire valid_sampling_event_prev;
@@ -17,17 +17,17 @@
   assign valid_test_expr = ~(test_expr^test_expr);
   assign valid_sampling_event_prev = ~(sampling_event_prev ^
                                        sampling_event_prev);
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   initial begin
     r_reset_n = 1'b0;
   end
-`endif
+#endif
 
   always @(posedge clk) begin
     if (`OVL_RESET_SIGNAL != 1'b0) begin
@@ -47,12 +47,12 @@
                r_reset_n)
         ovl_error_t(`OVL_FIRE_2STATE,"Test expression is FALSE on any edge of sampling event");
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
 
 //x/z checking for test_expr
 
@@ -108,17 +108,17 @@
               ovl_error_t(`OVL_FIRE_XCHECK,"sampling_event contains X or Z");
             end
         end
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
     end
     else begin
       r_reset_n <= 1'b0;
-`ifdef OVL_INIT_REG
+#ifdef OVL_INIT_REG
       sampling_event_prev <= 1'b0;
-`endif
+#endif
     end
   end
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 

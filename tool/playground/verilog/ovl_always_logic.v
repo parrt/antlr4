@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 // ASSERTION
 //------------------------------------------------------------------------------
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   // 2-STATE
   // =======
@@ -37,12 +37,12 @@
 
   // X-CHECK
   // =======
-  `ifdef OVL_XCHECK_OFF
+  #ifdef OVL_XCHECK_OFF
     wire fire_xcheck = 1'b0;
-  `else
-    `ifdef OVL_IMPLICIT_XCHECK_OFF
+  #else
+    #ifdef OVL_IMPLICIT_XCHECK_OFF
       wire fire_xcheck = 1'b0;
-    `else
+    #else
       reg fire_xcheck_1;
       reg fire_xcheck;
       always @(posedge clk) begin
@@ -72,13 +72,13 @@
         end
       end
 
-    `endif // OVL_IMPLICIT_XCHECK_OFF
-  `endif // OVL_XCHECK_OFF
+    #endif // OVL_IMPLICIT_XCHECK_OFF
+  #endif // OVL_XCHECK_OFF
 
-`else
+#else
   wire fire_2state = 1'b0;
   wire fire_xcheck = 1'b0;
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
 
 //------------------------------------------------------------------------------

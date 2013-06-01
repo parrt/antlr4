@@ -3,26 +3,26 @@
 
 
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
 wire end_of_simulation;
-`ifdef OVL_END_OF_SIMULATION
+#ifdef OVL_END_OF_SIMULATION
 assign end_of_simulation = `OVL_END_OF_SIMULATION;
-`else
+#else
 assign end_of_simulation = 1'b0;
-`endif
+#endif
 
  wire xzcheck_enable;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
   assign xzcheck_enable = 1'b0;
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     assign xzcheck_enable = 1'b0;
-  `else
+  #else
     assign xzcheck_enable = 1'b1;
-  `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+  #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
  generate
    case (property_type)
@@ -59,7 +59,7 @@ assign end_of_simulation = 1'b0;
    endcase
  endgenerate
 
-`endif
+#endif
 
 `endmodule //Required to pair up with already used "`module" in file assert_quiescent_state.vlib
 

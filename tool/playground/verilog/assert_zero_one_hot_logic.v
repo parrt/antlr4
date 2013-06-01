@@ -5,17 +5,17 @@
 //------------------------------------------------------------------------------
 // SHARED CODE
 //------------------------------------------------------------------------------
-`ifdef OVL_SHARED_CODE
+#ifdef OVL_SHARED_CODE
   wire [width-1:0]   dec_test_expr =   test_expr -                {{width-1{1'b0}},1'b1};
   wire               zoh_test_expr = ((test_expr & dec_test_expr) == {width{1'b0}});
   wire             valid_test_expr = ((test_expr ^     test_expr) == {width{1'b0}});
-`endif
+#endif
 
 
 //------------------------------------------------------------------------------
 // ASSERTION
 //------------------------------------------------------------------------------
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   // 2-STATE
   // =======
@@ -35,10 +35,10 @@
 
   // X-CHECK
   // =======
-  `ifdef OVL_XCHECK_OFF
-  `else
-    `ifdef OVL_IMPLICIT_XCHECK_OFF
-    `else
+  #ifdef OVL_XCHECK_OFF
+  #else
+    #ifdef OVL_IMPLICIT_XCHECK_OFF
+    #else
       reg fire_xcheck_1;
       always @(posedge clk) begin
         if (`OVL_RESET_SIGNAL == 1'b0) begin
@@ -60,16 +60,16 @@
         end
       end
 
-    `endif // OVL_IMPLICIT_XCHECK_OFF
-  `endif // OVL_XCHECK_OFF
+    #endif // OVL_IMPLICIT_XCHECK_OFF
+  #endif // OVL_XCHECK_OFF
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
 
 //------------------------------------------------------------------------------
 // COVERAGE
 //------------------------------------------------------------------------------
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   // Auxiliary logic
   reg [width-1:0]      one_hots_checked;
@@ -111,4 +111,4 @@
   assign fire_cover_2 = ((OVL_COVER_CORNER_ON > 0) && (one_hots_checked == {width{1'b1}}) && (one_hots_checked != prev_one_hots_checked));
   assign fire_cover_3 = ((OVL_COVER_CORNER_ON > 0) && (test_expr == {width{1'b0}}) && (prev_test_expr != {width{1'b0}}));
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON

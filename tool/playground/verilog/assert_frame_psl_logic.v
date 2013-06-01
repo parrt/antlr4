@@ -6,7 +6,7 @@
   wire error_on_new_start = (action_on_new_start == `OVL_ERROR_ON_NEW_START);
 
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   integer ii;
   reg win;
@@ -75,15 +75,15 @@
 
  wire xzcheck_enable;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
   assign xzcheck_enable = 1'b0;
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     assign xzcheck_enable = 1'b0;
-  `else
+  #else
     assign xzcheck_enable = 1'b1;
-  `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+  #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
  generate
    case (property_type)
@@ -126,9 +126,9 @@
    endcase
  endgenerate
 
-`endif
+#endif
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
  generate
   if (coverage_level != `OVL_COVER_NONE)
    begin: cover_checks
@@ -140,7 +140,7 @@
                        .start_event(start_event));
    end
  endgenerate
-`endif
+#endif
 
 `endmodule //Required to pair up with already used "`module" in file assert_frame.vlib
 

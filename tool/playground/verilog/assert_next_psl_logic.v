@@ -1,7 +1,7 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`ifdef OVL_SHARED_CODE
+#ifdef OVL_SHARED_CODE
 
   integer i = 0;
 
@@ -19,21 +19,21 @@
     end
   end
 
-`endif // OVL_SHARED_CODE
+#endif // OVL_SHARED_CODE
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
  wire xzcheck_enable;
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
   assign xzcheck_enable = 1'b0;
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     assign xzcheck_enable = 1'b0;
-  `else
+  #else
     assign xzcheck_enable = 1'b1;
-  `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+  #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
  generate
    case (property_type)
@@ -72,9 +72,9 @@
    endcase
  endgenerate
 
-`endif
+#endif
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
  generate
   if (coverage_level != `OVL_COVER_NONE)
    begin: cover_checks
@@ -89,7 +89,7 @@
                        .no_overlapping(i <= 0));
    end
  endgenerate
-`endif
+#endif
 
 `endmodule //Required to pair up with already used "`module" in file assert_next.vlib
 

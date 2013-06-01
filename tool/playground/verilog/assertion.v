@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 **************************************************************************/
-`include "std_ovl_defines.h"
+#include "std_ovl_defines.h"
 module assertion (input clk, input rst, input ld, input inc,
                  input [2:0] data_in, input [2:0] data_out,
                  output error);

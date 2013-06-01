@@ -17,7 +17,7 @@ module threebitcounter_firewall(
       input clk, input rst, input ld, input inc, input [2:0] data_in,
       input [2:0] data_out);
 
-`ifdef VERILOG
+#ifdef VERILOG
     task assert;
       input condition;
       begin
@@ -25,7 +25,7 @@ module threebitcounter_firewall(
             $display("Assertion Error");
       end
     endtask
-`endif
+#endif
 
 always @(posedge clk)
    if (!rst && !ld && inc)

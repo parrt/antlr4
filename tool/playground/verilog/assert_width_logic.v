@@ -10,27 +10,27 @@
   reg [1:0] r_state;
   integer num_cks;
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   initial begin
     r_state=WIDTH_START;
     num_cks = 0;
   end
-`endif
+#endif
 
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
   wire valid_test_expr;
   assign valid_test_expr = ~(test_expr ^ test_expr);
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   always @(posedge clk) begin
     r_test_expr <= test_expr;
@@ -82,15 +82,15 @@
       end
   end // always
 
-`endif // OVL_ASSERT_ON
+#endif // OVL_ASSERT_ON
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
- `ifdef OVL_ASSERT_ON
+  #else
+ #ifdef OVL_ASSERT_ON
   always @(posedge clk)
     begin
       if (`OVL_RESET_SIGNAL != 1'b0)
@@ -104,22 +104,22 @@
         end
     end
 
- `endif // OVL_ASSERT_ON
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_ASSERT_ON
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   reg r_test_expr_cover;
   reg timer_started;
   integer num_cks_cover;
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   initial begin
     num_cks_cover = 0;
   end
-`endif
+#endif
 
   always @(posedge clk) begin
     r_test_expr_cover <= test_expr;
@@ -156,4 +156,4 @@
     end // OVL_COVER_NONE
   end // always
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON

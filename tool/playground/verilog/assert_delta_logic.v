@@ -1,30 +1,30 @@
 // Accellera Standard V2.3 Open Verification Library (OVL).
 // Accellera Copyright (c) 2005-2008. All rights reserved.
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
+  #else
   wire valid_test_expr;
   assign valid_test_expr = ~((^test_expr) ^ (^test_expr));
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_ASSERT_ON
+#ifdef OVL_ASSERT_ON
 
   reg [width-1:0] last_test_expr;
   reg [width:0] temp_expr1;
   reg [width:0] temp_expr2;
   reg r_reset_n;
 
-`ifdef OVL_SYNTHESIS
-`else
+#ifdef OVL_SYNTHESIS
+#else
   initial begin
     r_reset_n = 1'b0;
   end
-`endif
+#endif
 
   always @(posedge clk) begin
     if (`OVL_RESET_SIGNAL != 1'b0) begin
@@ -45,23 +45,23 @@
     end
     else begin
       r_reset_n <= 0;
-`ifdef OVL_INIT_REG
+#ifdef OVL_INIT_REG
       last_test_expr <= {width{1'b0}};
       temp_expr1 = {(width+1){1'b0}};
       temp_expr2 = {(width+1){1'b0}};
-`endif
+#endif
     end
   end // always
 
-`endif // ASSERT_ON
+#endif // ASSERT_ON
 
-`ifdef OVL_XCHECK_OFF
+#ifdef OVL_XCHECK_OFF
    //Do nothing
-`else
-  `ifdef OVL_IMPLICIT_XCHECK_OFF
+#else
+  #ifdef OVL_IMPLICIT_XCHECK_OFF
     //Do nothing
-  `else
- `ifdef OVL_ASSERT_ON
+  #else
+ #ifdef OVL_ASSERT_ON
 
   always @(posedge clk)
     begin
@@ -76,11 +76,11 @@
         end
     end
 
- `endif // OVL_ASSERT_ON
- `endif // OVL_IMPLICIT_XCHECK_OFF
-`endif // OVL_XCHECK_OFF
+ #endif // OVL_ASSERT_ON
+ #endif // OVL_IMPLICIT_XCHECK_OFF
+#endif // OVL_XCHECK_OFF
 
-`ifdef OVL_COVER_ON
+#ifdef OVL_COVER_ON
 
   reg [width-1:0] prev_test_expr;
 
@@ -98,11 +98,11 @@
     end // OVL_COVER_NONE
    end
    else begin
-`ifdef OVL_INIT_REG
+#ifdef OVL_INIT_REG
       prev_test_expr <= {width{1'b0}};
-`endif
+#endif
    end
   end //always
 
-`endif // OVL_COVER_ON
+#endif // OVL_COVER_ON
 

@@ -19,12 +19,12 @@ module threebitcounter (input clk, input rst,
    output reg [2:0] data_out);
 
 
-`ifndef ASSERTIONS_OFF
+#ifndef ASSERTIONS_OFF
 threebitcounter_firewall U_FW (.clk(clk), .rst(rst),
                .ld(ld), .inc(inc),
                .data_in(data_in),
                .data_out(data_out));
-`endif
+#endif
 
    always @(posedge clk)
       if (rst)
