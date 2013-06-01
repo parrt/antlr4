@@ -1399,3 +1399,26 @@ Escaped_identifier ( '[' Decimal_number ']' )? ( ( '.' Escaped_identifier ( '[' 
 // 9.5 White space
 
 White_space : [ \t\n\r]+ -> channel(HIDDEN) ;
+
+// COMPILER DIRECTIVES (had to find syntax / examples and add here):
+
+conditional_compilation_directive :
+ifdef_directive
+| ifndef_directive
+ ;
+
+ifdef_directive :
+'`ifdef' text_macro_identifier
+ifdef_group_of_lines
+( '`elsif' text_macro_identifier elsif_group_of_lines )*
+( '`else' else_group_of_lines )?
+'`endif'
+;
+
+ifndef_directive :
+'`ifndef' text_macro_identifier
+ifndef_group_of_lines
+( '`elsif' text_macro_identifier elsif_group_of_lines )*
+( '`else' else_group_of_lines )?
+'`endif'
+;
