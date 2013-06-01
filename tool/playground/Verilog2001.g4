@@ -2,7 +2,7 @@
 // and standards ref http://www.eda.org/vlog-synth/vlogrtl.pdf
 // Start symbol is source_text. Converted to ANTLR v4 by Terence Parr (in a hurry)
 // blech: spec is wrong. see rule parameter_declaration_ for example.
-// COMPILER DIRECTIVES should be converted to C preproc and preprocessed with gcc -E.
+// COMPILER DIRECTIVES should be converted to C preproc and preprocessed.
 
 grammar Verilog2001;
 
