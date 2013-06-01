@@ -18,8 +18,6 @@ module testrunner(
   rst
   );
   
-#include "test_tasks.vh"
-  
   initial
   begin : tests
     rst = 0;

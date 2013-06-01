@@ -332,85 +332,70 @@ range : '[' msb_constant_expression ':' lsb_constant_expression ']' ;
 
 // 2.6 Function declarations
 
-function_declaration :
-'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier ';'
-function_item_declaration ( function_item_declaration )* function_statement 'endfunction'
-| 'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier
-  '(' function_port_list ')' ';' block_item_declaration ( block_item_declaration )*
-  function_statement 'endfunction'
+// spec didn't allow optional block_item_declaration and function_item_declaration
+function_declaration
+    :   'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier ';'
+        function_item_declaration* function_statement
+        'endfunction'
+    |   'function' ( 'automatic' )? ( 'signed' )? ( range_or_type )? function_identifier
+        '(' function_port_list ')' ';' block_item_declaration*
+        function_statement
+        'endfunction'
 ;
 
 function_item_declaration :
 block_item_declaration
-| tf_input_declaration ';'
+| tf_declaration ';'
 ;
 
-function_port_list :
-attribute_instance* tf_input_declaration ( ',' attribute_instance* tf_input_declaration )*
-;
+function_port_list : function_port ( ',' function_port )* ;
+
+function_port : attribute_instance* tf_declaration ;
 
 range_or_type : range | 'integer' | 'real' | 'realtime' | 'time' ;
 
 // 2.7 Task declarations
 
 task_declaration :
-'task' ( 'automatic' )? task_identifier ';' ( task_item_declaration )* statement 'endtask'
-|
-'task' ( 'automatic' )? task_identifier '(' task_port_list ')' ';' ( block_item_declaration )* statement 'endtask'
+  'task' ( 'automatic' )? task_identifier ';' ( task_item_declaration )* statement 'endtask'
+| 'task' ( 'automatic' )? task_identifier '(' task_port_list? ')' ';'
+  ( block_item_declaration )* statement 'endtask'
 ;
 
 task_item_declaration :
 block_item_declaration
-| attribute_instance* tf_input_declaration ';'
-| attribute_instance* tf_output_declaration ';'
-| attribute_instance* tf_inout_declaration ';'
+| attribute_instance* tf_declaration ';'
 ;
 
 task_port_list : task_port_item ( ',' task_port_item )* ;
+
 task_port_item :
-attribute_instance* tf_input_declaration
-|
-attribute_instance* tf_output_declaration
-|
-attribute_instance* tf_inout_declaration
+attribute_instance* tf_declaration
 ;
 
-tf_input_declaration :
-'input' ( 'reg' )? ( 'signed' )? ( range )? list_of_port_identifiers
-|
-'input' ( task_port_type )? list_of_port_identifiers
-;
+// TJP added net_type? to these input/output/inout decls. wasn't in spec.
+// factored out header
+tf_decl_header
+    :   ('input'|'output'|'inout') net_type? ( 'reg' )? ( 'signed' )? ( range )?
+    |   ('input'|'output'|'inout') net_type? ( task_port_type )? 
+    ;
 
-tf_output_declaration :
-'output' ( 'reg' )? ( 'signed' )? ( range )? list_of_port_identifiers
-|
-'output' ( task_port_type )? list_of_port_identifiers
-;
-
-tf_inout_declaration :
-'inout' ( 'reg' )? ( 'signed' )? ( range )? list_of_port_identifiers
-| 'inout' ( task_port_type )? list_of_port_identifiers
+tf_declaration :
+  tf_decl_header list_of_port_identifiers
 ;
 
 task_port_type : 'time' | 'real' | 'realtime' | 'integer' ;
 
 // 2.8 Block item declarations
 block_item_declaration :
-attribute_instance* block_reg_declaration
-|
-attribute_instance* event_declaration
-|
-attribute_instance* integer_declaration
-|
-attribute_instance* local_parameter_declaration
-|
-attribute_instance* parameter_declaration
-|
-attribute_instance* real_declaration
-|
-attribute_instance* realtime_declaration
-|
-attribute_instance* time_declaration
+  attribute_instance* block_reg_declaration
+| attribute_instance* event_declaration
+| attribute_instance* integer_declaration
+| attribute_instance* local_parameter_declaration
+| attribute_instance* parameter_declaration
+| attribute_instance* real_declaration
+| attribute_instance* realtime_declaration
+| attribute_instance* time_declaration
 ;
 
 block_reg_declaration : 'reg' ( 'signed' )? ( range )? list_of_block_variable_identifiers ';' ;
@@ -791,8 +776,8 @@ loop_statement :
 
 // 6.9 Task enable statements
 
-system_task_enable : system_task_identifier ( '(' expression ( ',' expression )* ')' )? ';' ;
-task_enable : hierarchical_task_identifier ( '(' expression ( ',' expression )* ')' )? ';' ;
+system_task_enable : system_task_identifier ( '(' (expression ( ',' expression )*)? ')' )? ';' ;
+task_enable : hierarchical_task_identifier ( '(' (expression ( ',' expression )*)? ')' )? ';' ;
 
 // 7 Specify section
 // 7.1 Specify block declaration
@@ -1090,8 +1075,10 @@ constant_function_call :
 function_identifier attribute_instance* '(' (constant_expression ( ',' constant_expression )*)? ')'
 ;
 
-function_call : hierarchical_function_identifier attribute_instance*
-  '(' (expression ( ',' expression )*)? ')' ;
+function_call
+    :   hierarchical_function_identifier attribute_instance*
+        '(' (expression ( ',' expression )*)? ')'
+    ;
 system_function_call : system_function_identifier ( (expression ( ',' expression )*)? )? ;
 genvar_function_call : genvar_function_identifier attribute_instance*
                        '(' (constant_expression ( ',' constant_expression )*)? ')'

@@ -215,14 +215,14 @@ begin
             
             if (cpubus_error) 
               begin
-                $display($time,,"CPUBUS ERROR: Predicted TRAN: %h, ADDRESS: %h, DATA: %h", predicted_transaction, predicted_address, predicted_data);
-                $display($time,,"CPUBUS ERROR: Actual    TRAN: %h, ADDRESS: %h, DATA: %h",  trans, cpubus_address, cpubus_data);
+                $display($time,"CPUBUS ERROR: Predicted TRAN: %h, ADDRESS: %h, DATA: %h", predicted_transaction, predicted_address, predicted_data);
+                $display($time,"CPUBUS ERROR: Actual    TRAN: %h, ADDRESS: %h, DATA: %h",  trans, cpubus_address, cpubus_data);
               end
               
             if (memory_error)
               begin
-                 $display($time, ,"MEMORY ERROR: Predicted TRAN: %h, ADDRESS: %h, DATA: %h", predicted_transaction, predicted_address, predicted_data);
-                 $display($time, ,"MEMORY ERROR: Actual    TRAN: %h, ADDRESS: %h, DATA: %h",  trans, memory_address, memory_data);
+                 $display($time,"MEMORY ERROR: Predicted TRAN: %h, ADDRESS: %h, DATA: %h", predicted_transaction, predicted_address, predicted_data);
+                 $display($time ,"MEMORY ERROR: Actual    TRAN: %h, ADDRESS: %h, DATA: %h",  trans, memory_address, memory_data);
               end  
            end
   end

@@ -38,8 +38,6 @@ module dut_dummy(
   input wire xbus_wait,
   input wire xbus_error);
 
-  bit[2:0]   st;
-
   // Basic arbiter, supports two masters, 0 has priority over 1
 
    always @(posedge xbus_clock or posedge xbus_reset) begin
