@@ -140,6 +140,8 @@ public class Bootstrap {
 	}
 
 	public static class ParseStats {
+		public InputDocument doc;
+		public ParseStats(InputDocument doc) { this.doc = doc; }
 		public long totalTransitions;
 		public long ATNTransitions;
 		public long fullContextTransitions;
@@ -278,6 +280,9 @@ public class Bootstrap {
 				List<ParseStats> trial = trials.get(t);
 				ParseStats stat = trial.get(f);
 				double atnRatio = stat.ATNTransitions / (double) stat.totalTransitions;
+				if ( stat.totalTransitions<=0 ) {
+					System.out.println("ZERO "+stat.doc.fileName+": "+stat.ATNTransitions +"/"+ stat.totalTransitions);
+				}
 				if ( t>0 ) transitions.append(", ");
 				transitions.append(atnRatio); //+"("+stat.ATNTransitions+"/"+stat.totalTransitions+")");
 				if ( t>0 ) dfaSizes.append(", ");
@@ -370,7 +375,7 @@ public class Bootstrap {
 			DFA[] decisionToDFA = parser.getInterpreter().decisionToDFA;
 			PredictionContextCache sharedContextCache =
 				parser.getInterpreter().getSharedContextCache();
-			ParseStats oneFileStats = new ParseStats();
+			ParseStats oneFileStats = new ParseStats(doc);
 			StatsParserATNSimulator sim =
 				new StatsParserATNSimulator(
 					oneFileStats,

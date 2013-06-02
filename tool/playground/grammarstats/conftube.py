@@ -18,9 +18,10 @@ conf95 = [sort(filerow)[index_of_95] for filerow in stats]
 
 #TODO: add trials/N to plot
 
+print means
 plt.plot(means, linewidth=0.5)
 plt.plot(conf95, color="grey", linewidth=0.5)
-plt.axis(ymax=.1)
+plt.axis(ymax=.3)
 plt.title(transitions_file)
 plt.xlabel('Files parsed', family="serif")
 plt.ylabel('ATN to total transitions ratio', family="serif")
