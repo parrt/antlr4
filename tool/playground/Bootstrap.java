@@ -281,7 +281,7 @@ public class Bootstrap {
 				ParseStats stat = trial.get(f);
 				double atnRatio = stat.ATNTransitions / (double) stat.totalTransitions;
 				if ( stat.totalTransitions<=0 ) {
-					System.out.println("ZERO "+stat.doc.fileName+": "+stat.ATNTransitions +"/"+ stat.totalTransitions);
+					System.err.println("ZERO TRANSITIONS "+stat.doc.fileName+": "+stat.ATNTransitions +"/"+ stat.totalTransitions);
 				}
 				if ( t>0 ) transitions.append(", ");
 				transitions.append(atnRatio); //+"("+stat.ATNTransitions+"/"+stat.totalTransitions+")");
