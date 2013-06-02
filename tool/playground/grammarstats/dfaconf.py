@@ -2,7 +2,7 @@ import sys
 from numpy  import *
 import matplotlib.pyplot as plt
 
-transitions_file = sys.argv[1]
+transitions_file = sys.argv[1]+'-dfasizes'
 
 # load transition data. Each row is the list of trial stats per this one file
 stats = loadtxt(open(transitions_file+'.txt',"rb"),delimiter=",",skiprows=0)
@@ -15,16 +15,18 @@ N = len(stats)
 index_of_97_5 = (trials * 0.975) - 1
 index_of_2_5 = (trials * 0.025) - 1
 
-print index_of_97_5, index_of_2_5
-
 # Compute two-sided confidence interval.
 # Find max/min value 2.5% values from sorted list
 top2_5 = [sort(filerow)[index_of_97_5] for filerow in stats]
 bottom2_5 = [sort(filerow)[index_of_2_5] for filerow in stats]
 
+#x = arange(0,800,1)
+#y = log(50*x)*9000
+
 plt.plot(means, linewidth=0.5)
 plt.plot(top2_5, color="grey", linewidth=0.5)
 plt.plot(bottom2_5, color="grey", linewidth=0.5)
+# plt.plot(x,y)
 plt.ylabel('Number of DFA states', family="serif")
 plt.legend(('DFA states mean','95% two-sided confidence interval'),
 		   loc='lower right' , prop={'family':'serif'})

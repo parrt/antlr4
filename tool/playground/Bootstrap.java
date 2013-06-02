@@ -272,7 +272,7 @@ public class Bootstrap {
 		StringBuilder timings = new StringBuilder();
 
 		for (int f = 0; f < N; f++) {
-			long cumTime = 0;
+			long cumTimeInMs = 0;
 			for (int t = 0; t < TRIALS; t++) {
 //				transitions.append(f);
 //				dfaSizes.append(f);
@@ -288,9 +288,10 @@ public class Bootstrap {
 				if ( t>0 ) dfaSizes.append(", ");
 				dfaSizes.append(stat.stopDFASize);
 				// calc cumulative time after all files thus far for this trial
-				cumTime += stat.timeLL;
+				long timeInMS = stat.timeSLL / 1000000;
+				cumTimeInMs += timeInMS;
 				if ( t>0 ) timings.append(", ");
-				timings.append(cumTime);
+				timings.append(cumTimeInMs);
 			}
 			transitions.append("\n");
 			dfaSizes.append("\n");

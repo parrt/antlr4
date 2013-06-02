@@ -2,7 +2,7 @@ import sys
 from numpy  import *
 import matplotlib.pyplot as plt
 
-transitions_file = sys.argv[1]
+transitions_file = sys.argv[1]+'-transitions'
 
 # load transition data. Each row is the list of trial stats per this one file
 stats = loadtxt(open(transitions_file+'.txt',"rb"),delimiter=",",skiprows=0)

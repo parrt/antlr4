@@ -578,7 +578,7 @@ grammar JavaSable;
 
   block :
     '{' block_statements? '}';
-
+ 
   block_statements :
      block_statement |
      block_statements block_statement;
@@ -649,15 +649,18 @@ grammar JavaSable;
      assignment |
      pre_increment_expression |
      pre_decrement_expression |
-     postfix_expression '++' |
-     postfix_expression '--' |
-     (method_name '(' argument_list? ')' |
+     postfix_expression |
+     method_name '(' argument_list? ')' |
      primary '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
      'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
      class_name '.' 'super' '.' non_wild_type_arguments? Identifier '(' argument_list? ')' |
-     type_name '.' non_wild_type_arguments Identifier '(' argument_list? ')') |
-     'new' type_arguments? type_decl_specifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
-     primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond? '(' argument_list? ')' class_body?;
+     type_name '.' non_wild_type_arguments Identifier '(' argument_list? ')' |
+     // inline to avoid indirect left-recur
+     primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond?
+       '(' argument_list? ')' class_body? |
+     'new' type_arguments? type_decl_specifier type_arguments_or_diamond?
+       '(' argument_list? ')' class_body?
+     ;
 
   // 14.9
 
@@ -807,14 +810,13 @@ grammar JavaSable;
   // 15.8
 
   primary :
+     Identifier |
      literal |
      type '.' 'class' |
      'void' '.' 'class' |
      'this' |
      class_name '.' 'this' |
      '(' expression ')' |
-     'new' type_arguments? type_decl_specifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
-     primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
      primary '.' Identifier |
      'super' '.' Identifier |
      class_name '.' 'super' '.' Identifier |
@@ -825,6 +827,10 @@ grammar JavaSable;
      type_name '.' non_wild_type_arguments Identifier '(' argument_list? ')' |
      expression_name '[' expression ']' |
      primary '[' expression ']' |
+     primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond?
+       '(' argument_list? ')' class_body? |
+     'new' type_arguments? type_decl_specifier type_arguments_or_diamond?
+       '(' argument_list? ')' class_body? |
      array_creation_expression;
 
   /*
@@ -849,11 +855,10 @@ grammar JavaSable;
 
   // 15.9
 
-/*
-  class_instance_creation_expression :
-     'new' type_arguments? type_decl_specifier type_arguments_or_diamond? '(' argument_list? ')' class_body? |
-     primary '.' 'new' type_arguments? Identifier type_arguments_or_diamond? '(' argument_list? ')' class_body?;
-    */
+
+  class_instance_creation_expression
+     : primary
+  ;
 
   type_arguments_or_diamond :
      type_arguments |
@@ -889,8 +894,6 @@ grammar JavaSable;
  
   postfix_expression :
      (primary | expression_name) ('++' | '--')*;
-
-  
   
   unary_expression :
     pre_increment_expression |
@@ -1004,11 +1007,11 @@ grammar JavaSable;
 
   left_hand_side :
      expression_name |
-     (primary '.' Identifier |
+     primary '.' Identifier |
      'super' '.' Identifier |
-     class_name '.' 'super' '.' Identifier) |
-     (expression_name '[' expression ']' |
-     primary '[' expression ']');
+     class_name '.' 'super' '.' Identifier |
+     expression_name '[' expression ']' |
+     primary '[' expression ']';
 
   assignment_operator :
      '=' |
