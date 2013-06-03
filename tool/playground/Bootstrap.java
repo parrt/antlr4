@@ -271,12 +271,10 @@ public class Bootstrap {
 		StringBuilder dfaSizes = new StringBuilder();
 		StringBuilder timings = new StringBuilder();
 
+		long[] cumTimeInMs = new long[TRIALS];
 		for (int f = 0; f < N; f++) {
-			long cumTimeInMs = 0;
+			// track cum time for each file index; need cum for each trial
 			for (int t = 0; t < TRIALS; t++) {
-//				transitions.append(f);
-//				dfaSizes.append(f);
-//				timings.append(f);
 				List<ParseStats> trial = trials.get(t);
 				ParseStats stat = trial.get(f);
 				double atnRatio = stat.ATNTransitions / (double) stat.totalTransitions;
@@ -288,15 +286,32 @@ public class Bootstrap {
 				if ( t>0 ) dfaSizes.append(", ");
 				dfaSizes.append(stat.stopDFASize);
 				// calc cumulative time after all files thus far for this trial
-				long timeInMS = stat.timeSLL / 1000000;
-				cumTimeInMs += timeInMS;
+				long SLL_timeInMS = stat.timeSLL / 1000000;
+				long LL_timeInMS = stat.timeLL / 1000000;
+				cumTimeInMs[t] += SLL_timeInMS + LL_timeInMS;
 				if ( t>0 ) timings.append(", ");
-				timings.append(cumTimeInMs);
+				timings.append(cumTimeInMs[t]);
 			}
 			transitions.append("\n");
 			dfaSizes.append("\n");
 			timings.append("\n");
 		}
+
+//		for (int t = 0; t < TRIALS; t++) {
+//			long[] cumTimeInMs = new long[TRIALS];
+//			for (int f = 0; f < N; f++) {
+//				List<ParseStats> trial = trials.get(t);
+//				ParseStats stat = trial.get(f);
+//				// calc cumulative time after all files thus far for this trial
+//				long SLL_timeInMS = stat.timeSLL / 1000000;
+//				long LL_timeInMS = stat.timeLL / 1000000;
+//				cumTimeInMs[t] += SLL_timeInMS + LL_timeInMS;
+//				if ( t>0 ) timings.append(", ");
+//				timings.append(cumTimeInMs[t]);
+//			}
+//			timings.append("\n");
+//		}
+
 		Utils.writeFile(grammarName + "-" + TRANSITION_FILE, transitions.toString());
 		Utils.writeFile(grammarName + "-" + DFASIZE_FILE, dfaSizes.toString());
 		Utils.writeFile(grammarName + "-" + TIMING_FILE, timings.toString());
@@ -355,6 +370,7 @@ public class Bootstrap {
 			System.gc();
 		}
 
+		boolean LL_required = false;
 		int d = 0;
 		List<ParseStats> parseStats = new ArrayList<ParseStats>(docs.size());
 		for (InputDocument doc : docs) {
@@ -401,7 +417,7 @@ public class Bootstrap {
 					if ( ex.getCause() instanceof ParseCancellationException ) {
 						if ( !SLL ) {
 							// count ATN transitions from both SLL *and* LL mode since we failed over
-//						System.err.println("FAIL OVER TO LL");
+							LL_required = true;
 							tokens.reset(); // rewind input stream
 							// back to standard listeners/handlers
 							parser.addErrorListener(ConsoleErrorListener.INSTANCE);
@@ -430,6 +446,7 @@ public class Bootstrap {
 //			if ( d % 10 == 0 ) System.out.println();
 			d++;
 		}
+		if ( LL_required ) System.err.println("FAIL OVER TO LL");
 		return parseStats;
 	}
 

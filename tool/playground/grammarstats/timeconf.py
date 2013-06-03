@@ -2,7 +2,7 @@ import sys
 from numpy  import *
 import matplotlib.pyplot as plt
 
-transitions_file = sys.argv[1]+'timings'
+transitions_file = sys.argv[1]+'-timings'
 
 is_transitions = transitions_file.find('transitions')>0
 is_dfasize = transitions_file.find('dfasizes')>0
@@ -24,19 +24,9 @@ bottom2_5 = [sort(filerow)[index_of_2_5] for filerow in stats]
 plt.plot(means, linewidth=0.5)
 plt.plot(top2_5, color="grey", linewidth=0.5)
 plt.plot(bottom2_5, color="grey", linewidth=0.5)
-if is_transitions:
-	plt.axis(ymax=.3)
-	plt.ylabel('ATN to total transitions ratio', family="serif")
-	plt.legend(('ATN transition mean','95% one-sided confidence interval'),
-			   loc='upper right' , prop={'family':'serif'})
-elif is_dfasize:
-	plt.ylabel('Number of DFA states', family="serif")
-	plt.legend(('DFA states mean','95% one-sided confidence interval'),
-			   loc='lower right' , prop={'family':'serif'})
-else: # timing
-	plt.ylabel('Wallclock parse time (ms)', family="serif")
-	plt.legend(('Wallclock parse time','95% one-sided confidence interval'),
-			   loc='upper left' , prop={'family':'serif'})
+plt.ylabel('Wallclock parse time (ms)', family="serif")
+plt.legend(('Wallclock parse time','95% two-sided confidence interval'),
+		   loc='upper left' , prop={'family':'serif'})
 plt.title(transitions_file+" (trials="+str(trials)+", files N="+str(N)+")")
 plt.xlabel('Files parsed', family="serif")
 plt.savefig(transitions_file+'-stats.pdf', format="pdf")
