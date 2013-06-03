@@ -96,7 +96,8 @@ public class Bootstrap {
 		new Option("N",	"-N", OptionArgType.INT, "how many files to sample from docs"),
 		new Option("inputFilePattern",	"-files", OptionArgType.STRING, "input files; e.g., '*.java'"),
 		new Option("showFileNames",	"-showfiles", "show file names as they are parsed"),
-		new Option("SLL",	"-SLL", "force pure SLL parsing")
+		new Option("SLL",	"-SLL", "force pure SLL parsing w/o possibility of failover to LL"),
+		new Option("LL",	"-LL", "force pure LL parsing w/o trying SLL first")
 	};
 
 	private static class DescriptiveErrorListener extends BaseErrorListener {
@@ -218,6 +219,7 @@ public class Bootstrap {
 	public int N = 5;       // how many files in a sample
 	public boolean showFileNames = false;
 	public boolean SLL = false;
+	public boolean LL = false;
 
 	protected String grammarName;
 	protected String startRuleName;
@@ -370,7 +372,7 @@ public class Bootstrap {
 			System.gc();
 		}
 
-		boolean LL_required = false;
+		int LL_required = 0;
 		int d = 0;
 		List<ParseStats> parseStats = new ArrayList<ParseStats>(docs.size());
 		for (InputDocument doc : docs) {
@@ -403,34 +405,48 @@ public class Bootstrap {
 			parser.setInterpreter(sim);
 			try {
 				Method startRule = parserClass.getMethod(startRuleName);
-				parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
-				parser.setErrorHandler(new BailErrorStrategy());
-				parser.removeErrorListeners();
 //				parser.addErrorListener(new DescriptiveErrorListener());
-				try {
-					final long startTime = System.nanoTime();
-					startRule.invoke(parser, (Object[])null);
-					final long stopTime = System.nanoTime();
-					oneFileStats.timeSLL = stopTime - startTime;
+				if ( LL ) { // track LL only w/o SLL first
+					try {
+						final long startTime = System.nanoTime();
+						startRule.invoke(parser, (Object[])null);
+						final long stopTime = System.nanoTime();
+						oneFileStats.timeSLL = 0;
+						oneFileStats.timeLL = stopTime - startTime;
+					}
+					catch (InvocationTargetException ex) {
+						System.err.println(doc+": syntax error: "+ex.getCause().toString());
+					}
 				}
-				catch (InvocationTargetException ex) {
-					if ( ex.getCause() instanceof ParseCancellationException ) {
-						if ( !SLL ) {
-							// count ATN transitions from both SLL *and* LL mode since we failed over
-							LL_required = true;
-							tokens.reset(); // rewind input stream
-							// back to standard listeners/handlers
-							parser.addErrorListener(ConsoleErrorListener.INSTANCE);
-							parser.setErrorHandler(new DefaultErrorStrategy());
-							parser.getInterpreter().setPredictionMode(PredictionMode.LL);
+				else {
+					parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
+					parser.setErrorHandler(new BailErrorStrategy());
+					parser.removeErrorListeners();
+					try {
+						final long startTime = System.nanoTime();
+						startRule.invoke(parser, (Object[])null);
+						final long stopTime = System.nanoTime();
+						oneFileStats.timeSLL = stopTime - startTime;
+					}
+					catch (InvocationTargetException ex) {
+						if ( ex.getCause() instanceof ParseCancellationException ) {
+							if ( !SLL ) {
+								// count ATN transitions from both SLL *and* LL mode since we failed over
+								LL_required++;
+								tokens.reset(); // rewind input stream
+								// back to standard listeners/handlers
+								parser.addErrorListener(ConsoleErrorListener.INSTANCE);
+								parser.setErrorHandler(new DefaultErrorStrategy());
+								parser.getInterpreter().setPredictionMode(PredictionMode.LL);
 
-							final long startTime = System.nanoTime();
-							startRule.invoke(parser, (Object[])null);
-							final long stopTime = System.nanoTime();
-							oneFileStats.timeLL = stopTime - startTime;
-						}
-						else {
-							System.err.println(doc+": syntax error: "+ex.toString());
+								final long startTime = System.nanoTime();
+								startRule.invoke(parser, (Object[])null);
+								final long stopTime = System.nanoTime();
+								oneFileStats.timeLL = stopTime - startTime;
+							}
+							else {
+								System.err.println(doc+": syntax error: "+ex.getCause().toString());
+							}
 						}
 					}
 				}
@@ -446,7 +462,7 @@ public class Bootstrap {
 //			if ( d % 10 == 0 ) System.out.println();
 			d++;
 		}
-		if ( LL_required ) System.err.println("FAIL OVER TO LL");
+		if ( LL_required>0 ) System.err.println(LL_required+" FILES FAILED OVER TO LL");
 		return parseStats;
 	}
 
