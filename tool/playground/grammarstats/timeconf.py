@@ -4,9 +4,6 @@ import matplotlib.pyplot as plt
 
 transitions_file = sys.argv[1]+'-timings'
 
-is_transitions = transitions_file.find('transitions')>0
-is_dfasize = transitions_file.find('dfasizes')>0
-
 # load transition data. Each row is the list of trial stats per this one file
 stats = loadtxt(open(transitions_file+'.txt',"rb"),delimiter=",",skiprows=0)
 means = [mean(filerow) for filerow in stats]

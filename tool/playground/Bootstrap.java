@@ -97,7 +97,8 @@ public class Bootstrap {
 		new Option("inputFilePattern",	"-files", OptionArgType.STRING, "input files; e.g., '*.java'"),
 		new Option("showFileNames",	"-showfiles", "show file names as they are parsed"),
 		new Option("SLL",	"-SLL", "force pure SLL parsing w/o possibility of failover to LL"),
-		new Option("LL",	"-LL", "force pure LL parsing w/o trying SLL first")
+		new Option("LL",	"-LL", "force pure LL parsing w/o trying SLL first"),
+		new Option("once",	"-1x", "do just one run through data and in order")
 	};
 
 	private static class DescriptiveErrorListener extends BaseErrorListener {
@@ -220,6 +221,7 @@ public class Bootstrap {
 	public boolean showFileNames = false;
 	public boolean SLL = false;
 	public boolean LL = false;
+	public boolean once = false;
 
 	protected String grammarName;
 	protected String startRuleName;
@@ -238,6 +240,9 @@ public class Bootstrap {
 
 	public void go(String[] args) throws Exception {
 		handleArgs(args);
+		if ( once ) {
+			TRIALS = 1;
+		}
 		if (inputFiles.size() > 0 ) {
 			List<String> allFiles = new ArrayList<String>();
 			for (String fileName : inputFiles) {
@@ -469,7 +474,7 @@ public class Bootstrap {
 	/** From input documents, grab n in random order w/o replacement */
 	public List<InputDocument> getRandomDocuments(List<InputDocument> documents, int n) {
 		List<InputDocument> documents_ = new ArrayList<InputDocument>(documents);
-		Collections.shuffle(documents_, RANDOM);
+		if ( !once ) Collections.shuffle(documents_, RANDOM);
 		List<InputDocument> contentList = new ArrayList<InputDocument>(n);
 		for (int i=0; i<n; i++) { // get first n files from shuffle and set file index for it
 			contentList.add(new InputDocument(documents_.get(i), i));
@@ -533,10 +538,9 @@ public class Bootstrap {
 			}
 		}
 
-		// otherwise, if this is a java file, parse it!
-		else if ( (f.getName().length()>5) &&
-			f.getName().matches(inputFilePattern) &&
-			f.getName().indexOf('-')<0 ) // don't allow preprocessor files like ByteBufferAs-X-Buffer.java
+		// otherwise, if this is an input file, parse it!
+		else if ( f.getName().matches(inputFilePattern) &&
+			      f.getName().indexOf('-')<0 ) // don't allow preprocessor files like ByteBufferAs-X-Buffer.java
 		{
 			files.add(f.getAbsolutePath());
 		}
