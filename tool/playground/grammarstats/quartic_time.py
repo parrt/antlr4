@@ -15,7 +15,7 @@ N = len(timing)
 x = array(arange(0,170,1))
 
 # fit polynomial max 5
-fit = polyfit(x, array(timing), 3)
+fit = polyfit(x, array(timing), 4)
 poly = poly1d(fit)
 print poly
 y = poly(x)

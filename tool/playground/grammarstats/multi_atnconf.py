@@ -18,35 +18,33 @@ means = {}
 means['a'] = [mean(filerow) for filerow in stats['a']]
 means['b'] = [mean(filerow) for filerow in stats['b']]
 
-trials = len(stats['a'][0])
+trialsa = len(stats['a'][0])
+trialsb = len(stats['b'][0])
 N = len(stats['a'])
-index_of_95 = trials * 0.95 - 1
+index_of_95a = trialsa * 0.95 - 1
+index_of_95b = trialsb * 0.95 - 1
 
 # Compute one-sided confidence interval.
 # Find max value 5% from max value in sorted list
-conf95 = [sort(filerow)[index_of_95] for filerow in stats['a']]
+conf95a = [sort(filerow)[index_of_95a] for filerow in stats['a']]
+conf95b = [sort(filerow)[index_of_95b] for filerow in stats['b']]
 
 f, (plt1,plt2) = plt.subplots(2, sharex=True)
 
 plt1.plot(means['a'], linewidth=0.5)
-plt1.plot(conf95, color="grey", linewidth=0.5)
+plt1.plot(conf95a, color="grey", linewidth=0.5)
 plt1.axis(ymax=.2)
 plt.ylabel('ATN to total transitions ratio', family="serif")
-#plt1.set_title(transitions_file['a']+" (trials="+str(trials)+", files N="+str(N)+")")
 plt.xlabel('Files parsed', family="serif")
 
 plt2.plot(means['b'], linewidth=0.5)
-plt.ylabel('ATN to total transitions ratio', family="serif")
-plt2.plot(conf95, color="grey", linewidth=0.5)
+plt2.plot(conf95b, color="grey", linewidth=0.5)
 plt2.axis(ymax=.2)
-#plt2.set_title(transitions_file['b']+" (trials="+str(trials)+", files N="+str(N)+")")
-#plt2.legend(('ATN transition mean','95% one-sided confidence interval'),
-#			loc='upper right' , prop={'family':'serif'})
 
 f.subplots_adjust(hspace=0)
 plt.setp([a.get_xticklabels() for a in f.axes[:-1]], visible=False)
 
-f.suptitle("ATN vs total transitions (trials="+str(trials)+", files N="+str(N)+")")
+f.suptitle("ATN vs total transitions (trials="+str(trialsa)+", files N="+str(N)+")")
 
 styles = mpatch.BoxStyle.get_styles()
 figheight = (len(styles)+.5)

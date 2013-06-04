@@ -1,4 +1,4 @@
-/** ANSI C ANTLR v3 grammar
+/** ANSI C ANTLR v4 grammar translated from ANTLR v3 grammar. June 2013
 
 Translated from Jutta Degener's 1995 ANSI C yacc grammar by Terence Parr
 July 2006.  The lexical rules were taken from the Java grammar.
@@ -31,66 +31,18 @@ Terence Parr
 July 2006
 */
 grammar C;
-options {
-    backtrack=true;
-    memoize=true;
-    k=2;
-}
-
-scope Symbols {
-	Set types; // only track types in order to get parser working
-}
-
-@header {
-import java.util.Set;
-import java.util.HashSet;
-}
-
-@members {
-	boolean isTypeName(String name) {
-		for (int i = Symbols_stack.size()-1; i>=0; i--) {
-			Symbols_scope scope = (Symbols_scope)Symbols_stack.get(i);
-			if ( scope.types.contains(name) ) {
-				return true;
-			}
-		}
-		return false;
-	}
-}
 
 translation_unit
-scope Symbols; // entire file is a scope
-@init {
-  $Symbols::types = new HashSet();
-}
 	: external_declaration+
 	;
 
-/** Either a function definition or any other kind of C decl/def.
- *  The LL(*) analysis algorithm fails to deal with this due to
- *  recursion in the declarator rules.  I'm putting in a
- *  manual predicate here so that we don't backtrack over
- *  the entire function.  Further, you get a better error
- *  as errors within the function itself don't make it fail
- *  to predict that it's a function.  Weird errors previously.
- *  Remember: the goal is to avoid backtrack like the plague
- *  because it makes debugging, actions, and errors harder.
- *
- *  Note that k=1 results in a much smaller predictor for the 
- *  fixed lookahead; k=2 made a few extra thousand lines. ;)
- *  I'll have to optimize that in the future.
- */
+/** Either a function definition or any other kind of C decl/def. */
 external_declaration
-options {k=1;}
-	: ( declaration_specifiers? declarator declaration* '{' )=> function_definition
+	: function_definition
 	| declaration
 	;
 
 function_definition
-scope Symbols; // put parameters and locals into same scope for now
-@init {
-  $Symbols::types = new HashSet();
-}
 	:	declaration_specifiers? declarator
 		(	declaration+ compound_statement	// K&R style
 		|	compound_statement				// ANSI style
@@ -98,13 +50,7 @@ scope Symbols; // put parameters and locals into same scope for now
 	;
 
 declaration
-scope {
-  boolean isTypedef;
-}
-@init {
-  $declaration::isTypedef = false;
-}
-	: 'typedef' declaration_specifiers? {$declaration::isTypedef=true;}
+	: 'typedef' declaration_specifiers?
 	  init_declarator_list ';' // special case, looking for typedef	
 	| declaration_specifiers init_declarator_list? ';'
 	;
@@ -147,16 +93,10 @@ type_specifier
 	;
 
 type_id
-    :   {isTypeName(input.LT(1).getText())}? IDENTIFIER
-//    	{System.out.println($IDENTIFIER.text+" is a type");}
+    :   IDENTIFIER
     ;
 
 struct_or_union_specifier
-options {k=3;}
-scope Symbols; // structs are scopes
-@init {
-  $Symbols::types = new HashSet();
-}
 	: struct_or_union IDENTIFIER? '{' struct_declaration_list '}'
 	| struct_or_union IDENTIFIER
 	;
@@ -188,7 +128,6 @@ struct_declarator
 	;
 
 enum_specifier
-options {k=3;}
 	: 'enum' '{' enumerator_list '}'
 	| 'enum' IDENTIFIER '{' enumerator_list '}'
 	| 'enum' IDENTIFIER
@@ -214,12 +153,6 @@ declarator
 
 direct_declarator
 	:   (	IDENTIFIER
-			{
-			if ($declaration.size()>0&&$declaration::isTypedef) {
-				$Symbols::types.add($IDENTIFIER.text);
-				System.out.println("define type "+$IDENTIFIER.text);
-			}
-			}
 		|	'(' declarator ')'
 		)
         declarator_suffix*
@@ -434,10 +367,6 @@ labeled_statement
 	;
 
 compound_statement
-scope Symbols; // blocks have a scope of symbols
-@init {
-  $Symbols::types = new HashSet();
-}
 	: '{' declaration* statement_list? '}'
 	;
 
@@ -451,7 +380,7 @@ expression_statement
 	;
 
 selection_statement
-	: 'if' '(' expression ')' statement (options {k=1; backtrack=false;}:'else' statement)?
+	: 'if' '(' expression ')' statement ('else' statement)?
 	| 'switch' '(' expression ')' statement
 	;
 
@@ -535,18 +464,18 @@ UnicodeEscape
     :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
     ;
 
-WS  :  (' '|'\r'|'\t'|'\u000C'|'\n') {$channel=HIDDEN;}
+WS  :  (' '|'\r'|'\t'|'\u000C'|'\n') -> channel(HIDDEN)
     ;
 
 COMMENT
-    :   '/*' ( options {greedy=false;} : . )* '*/' {$channel=HIDDEN;}
+    :   '/*' .*? '*/' -> channel(HIDDEN)
     ;
 
 LINE_COMMENT
-    : '//' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;}
+    : '//' ~[\r\n]* '\r'? '\n' -> channel(HIDDEN)
     ;
 
 // ignore #line info for now
 LINE_COMMAND 
-    : '#' ~('\n'|'\r')* '\r'? '\n' {$channel=HIDDEN;}
+    : '#' ~[\r\n]* '\r'? '\n' -> channel(HIDDEN)
     ;
