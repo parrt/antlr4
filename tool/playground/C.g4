@@ -1,5 +1,8 @@
-/** ANSI C ANTLR v4 grammar translated from ANTLR v3 grammar. June 2013
+/** ANSI C ANTLR v4 grammar translated from ANTLR v3 grammar. Added some C11
+    and GCC extension stuff.
+    Terence Parr, June 2013.
 
+----- ANTLR v3 C grammar comment -----
 Translated from Jutta Degener's 1995 ANSI C yacc grammar by Terence Parr
 July 2006.  The lexical rules were taken from the Java grammar.
 
@@ -135,8 +138,8 @@ struct_declarator
 	;
 
 enum_specifier
-	: 'enum' '{' enumerator_list '}'
-	| 'enum' IDENTIFIER '{' enumerator_list '}'
+	: 'enum' '{' enumerator_list ','? '}'
+	| 'enum' IDENTIFIER '{' enumerator_list ','? '}'
 	| 'enum' IDENTIFIER
 	;
 
@@ -157,7 +160,7 @@ function_qualifier
     :   'inline'
     |   '__inline__' // GCC extension
     |   gcc_attribute_specifier
-    |   '__declspec' '(' Identifier ')'
+    |   '__declspec' '(' IDENTIFIER ')'
     |   '__stdcall'
     ;
 
@@ -205,6 +208,9 @@ pointer
 	: '*' type_qualifier+ pointer?
 	| '*' pointer
 	| '*'
+    | '^' type_qualifier+           // Blocks language extension
+    | '^' type_qualifier* pointer   // Blocks language extension
+    | '^'
 	;
 
 parameter_type_list
@@ -317,7 +323,7 @@ constant
     |   OCTAL_LITERAL
     |   DECIMAL_LITERAL
     |	CHARACTER_LITERAL
-	|	STRING_LITERAL
+	|	STRING_LITERAL+
     |   FLOATING_POINT_LITERAL
     ;
 
@@ -453,11 +459,19 @@ LETTER
 	;
 
 CHARACTER_LITERAL
-    :   '\'' ( EscapeSequence | ~('\''|'\\') ) '\''
+    :   [LuU]? '\'' ( EscapeSequence | ~('\''|'\\') ) '\''
     ;
 
 STRING_LITERAL
-    :  '"' ( EscapeSequence | ~('\\'|'"') )* '"'
+    :  ENCODINGPREFIX? '"' ( EscapeSequence | ~('\\'|'"') )* '"'
+    ;
+
+fragment
+ENCODINGPREFIX
+    :   'u8'
+    |   'u'
+    |   'U'
+    |   'L'
     ;
 
 HEX_LITERAL : '0' ('x'|'X') HexDigit+ IntegerTypeSuffix? ;
@@ -471,9 +485,16 @@ HexDigit : ('0'..'9'|'a'..'f'|'A'..'F') ;
 
 fragment
 IntegerTypeSuffix
-	:	('u'|'U')? ('l'|'L')
-	|	('u'|'U')  ('l'|'L')?
-	;
+    :   [uU] [lL]?
+    |   [uU] LongLongSuffix
+    |   [lL] [uU]?
+    |   LongLongSuffix [uU]?
+    ;
+
+fragment
+LongLongSuffix
+    :   'll' | 'LL'
+    ;
 
 FLOATING_POINT_LITERAL
     :   ('0'..'9')+ '.' ('0'..'9')* Exponent? FloatTypeSuffix?
@@ -483,14 +504,14 @@ FLOATING_POINT_LITERAL
 	;
 
 fragment
-Exponent : ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
+Exponent : [eE] [+-]? [0-9]+ ;
 
 fragment
-FloatTypeSuffix : ('f'|'F'|'d'|'D') ;
+FloatTypeSuffix : [fFdDlL] ;
 
 fragment
 EscapeSequence
-    :   '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
+    :   '\\' ['"?abfnrtv\\]
     |   OctalEscape
     ;
 
