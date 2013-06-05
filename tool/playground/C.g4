@@ -40,6 +40,7 @@ translation_unit
 external_declaration
 	: function_definition
 	| declaration
+    | ';' // stray
 	;
 
 function_definition
@@ -59,6 +60,7 @@ declaration_specifiers
 	:   (   storage_class_specifier
 		|   type_specifier
         |   type_qualifier
+        |   function_qualifier
         )+
 	;
 
@@ -87,9 +89,14 @@ type_specifier
 	| 'double'
 	| 'signed'
 	| 'unsigned'
+    | '__m128'
+    | '__m128d'
+    | '__m128i'
+    | '__extension__' '(' ('__m128' | '__m128d' | '__m128i') ')'
 	| struct_or_union_specifier
 	| enum_specifier
 	| type_id
+    |   '__typeof__' '(' constant_expression ')' // GCC extension
 	;
 
 type_id
@@ -146,8 +153,16 @@ type_qualifier
 	| 'volatile'
 	;
 
+function_qualifier
+    :   'inline'
+    |   '__inline__' // GCC extension
+    |   gcc_attribute_specifier
+    |   '__declspec' '(' Identifier ')'
+    |   '__stdcall'
+    ;
+
 declarator
-	: pointer? direct_declarator
+	: pointer? direct_declarator gcc_declarator_extension*
 	| pointer
 	;
 
@@ -157,6 +172,26 @@ direct_declarator
 		)
         declarator_suffix*
 	;
+
+gcc_declarator_extension
+    :   '__asm' '(' STRING_LITERAL+ ')'
+    |   gcc_attribute_specifier
+    ;
+
+gcc_attribute_specifier
+    :   '__attribute__' '(' '(' gcc_attribute_list ')' ')'
+    ;
+
+gcc_attribute_list
+    :   gcc_attribute (',' gcc_attribute)*
+    |   // empty
+    ;
+
+gcc_attribute
+    :   ~(',' | '(' | ')') // relaxed def for "identifier or reserved word"
+        ('(' argument_expression_list? ')')?
+    |   // empty
+    ;
 
 declarator_suffix
 	:   '[' constant_expression ']'
@@ -193,8 +228,8 @@ type_name
 	;
 
 abstract_declarator
-	: pointer direct_abstract_declarator?
-	| direct_abstract_declarator
+	: pointer (direct_abstract_declarator gcc_declarator_extension*)?
+	| direct_abstract_declarator gcc_declarator_extension*
 	;
 
 direct_abstract_declarator
@@ -232,7 +267,7 @@ multiplicative_expression
 	;
 
 cast_expression
-	: '(' type_name ')' cast_expression
+	: '__extension__'? '(' type_name ')' cast_expression
 	| unary_expression
 	;
 
@@ -243,6 +278,7 @@ unary_expression
 	| unary_operator cast_expression
 	| 'sizeof' unary_expression
 	| 'sizeof' '(' type_name ')'
+	| '&&' IDENTIFIER // GCC extension address of label
 	;
 
 postfix_expression
@@ -255,6 +291,7 @@ postfix_expression
         |   '++'
         |   '--'
         )*
+    |   '__extension__' '(' type_name ')' '{' initializer_list ','? '}'
 	;
 
 unary_operator
@@ -270,6 +307,9 @@ primary_expression
 	: IDENTIFIER
 	| constant
 	| '(' expression ')'
+	| '__extension__'? '(' compound_statement ')' // Blocks (GCC extension)
+	| '__builtin_va_arg' '(' unary_expression ',' type_name ')'
+	| '__builtin_offsetof' '(' type_name ',' unary_expression ')'
 	;
 
 constant
@@ -358,6 +398,7 @@ statement
 	| selection_statement
 	| iteration_statement
 	| jump_statement
+    | ('__asm' | '__asm__') ('volatile' | '__volatile__') '(' (logical_or_expression (',' logical_or_expression)*)? (':' (logical_or_expression (',' logical_or_expression)*)?)* ')' ';'
 	;
 
 labeled_statement
@@ -396,6 +437,7 @@ jump_statement
 	| 'break' ';'
 	| 'return' ';'
 	| 'return' expression ';'
+    | 'goto' unary_expression ';' // GCC extension
 	;
 
 IDENTIFIER

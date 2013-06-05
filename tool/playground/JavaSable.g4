@@ -560,10 +560,10 @@ grammar JavaSable;
      element_values ',' element_value;
 
   marker_annotation :
-    '@' Identifier;
+    '@' type_name;
 
   single_element_annotation :
-    '@' Identifier '(' element_value ')';
+    '@' type_name '(' element_value ')';
 
   // 10.6
 
@@ -795,7 +795,7 @@ grammar JavaSable;
     'finally' block;
 
   try_with_resources_statement :
-    'try' resource_specification block variable_declarator_id catches? finally_?;
+    'try' resource_specification block catches? finally_?;
 
   resource_specification :
     '(' resources ';'? ')';
