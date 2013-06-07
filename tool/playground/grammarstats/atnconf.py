@@ -1,6 +1,7 @@
 import sys
 from numpy  import *
 import matplotlib.pyplot as plt
+import shared
 
 transitions_file = sys.argv[1]+'-transitions'
 

@@ -3,6 +3,7 @@ from numpy  import *
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatch
 import matplotlib.pyplot as plt
+import shared
 
 transitions_file = {}
 
