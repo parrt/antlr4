@@ -173,6 +173,37 @@ public class TestToolSyntaxErrors extends BaseTest {
 	}
 
 	/**
+	 * This is a regression test for antlr/antlr4#243
+	 * "Generate a good message for unterminated strings"
+	 * https://github.com/antlr/antlr4/issues/243
+	 */
+	@Test public void testUnterminatedStringLiteral() {
+		String[] pair = new String[] {
+			"grammar A;\n" +
+			"a : 'x\n" +
+			"  ;\n",
+
+			"error(" + ErrorType.UNTERMINATED_STRING_LITERAL.code + "): A.g4:2:4: unterminated string literal\n"
+		};
+		super.testErrors(pair, true);
+	}
+
+	/**
+	 * This is a regression test for antlr/antlr4#262
+	 * "Parser Rule Name Starting With an Underscore"
+	 * https://github.com/antlr/antlr4/issues/262
+	 */
+	@Test public void testParserRuleNameStartingWithUnderscore() {
+		String[] pair = new String[] {
+			"grammar A;\n" +
+			"_a : 'x' ;\n",
+
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:0: syntax error: '_' came as a complete surprise to me\n"
+		};
+		super.testErrors(pair, true);
+	}
+
+	/**
 	 * This is a regression test for antlr/antlr4#194
 	 * "NullPointerException on 'options{}' in grammar file"
 	 * https://github.com/antlr/antlr4/issues/194

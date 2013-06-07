@@ -1,0 +1,6 @@
+USE AdventureWorks;
+GO
+SELECT OBJECTPROPERTYEX(OBJECT_ID(N'HumanResources.Employee'), N'TABLEUPDATETRIGGERCOUNT');
+GO
+
+

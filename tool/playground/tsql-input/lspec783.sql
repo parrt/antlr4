@@ -1,0 +1,4 @@
+SELECT "Month Number" = MONTH('03/12/1998')
+GO
+SELECT MONTH(0), DAY(0), YEAR(0)
+

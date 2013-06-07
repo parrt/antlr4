@@ -1,0 +1,1 @@
+SELECT ABS(-1.0), ABS(0.0), ABS(1.0)

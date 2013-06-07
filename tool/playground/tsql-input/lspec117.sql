@@ -1,0 +1,1 @@
+SELECT @@SERVICENAME AS 'Service Name'

@@ -1,0 +1,2 @@
+CREATE TYPE SSN
+FROM varchar(11) NOT NULL ;

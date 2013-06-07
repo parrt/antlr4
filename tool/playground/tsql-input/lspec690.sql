@@ -1,0 +1,2 @@
+SELECT fulltextserviceproperty('IsFulltextInstalled')
+

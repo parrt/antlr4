@@ -1,0 +1,1 @@
+SELECT @@SERVERNAME AS 'Server Name'

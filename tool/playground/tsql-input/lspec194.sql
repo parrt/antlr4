@@ -1,0 +1,1 @@
+ALTER QUEUE ExpenseQueue WITH STATUS = OFF ;

@@ -1,0 +1,3 @@
+CREATE TABLE t1 (a int, b int, c AS a/b);
+CREATE UNIQUE CLUSTERED INDEX Idx1 ON t1(c);
+INSERT INTO t1 VALUES (1, 0);

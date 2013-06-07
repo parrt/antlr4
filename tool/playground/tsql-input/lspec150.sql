@@ -1,0 +1,2 @@
+ALTER CREDENTIAL Frames WITH IDENTITY = 'Aboulrus8';
+GO

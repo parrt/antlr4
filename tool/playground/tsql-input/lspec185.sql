@@ -1,0 +1,1 @@
+ALTER LOGIN Mary5 WITH NAME = Joe2;

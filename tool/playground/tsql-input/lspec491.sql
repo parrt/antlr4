@@ -1,0 +1,3 @@
+CREATE TABLE #MyTempTable (cola INT PRIMARY KEY)
+INSERT INTO #MyTempTable VALUES (1)
+

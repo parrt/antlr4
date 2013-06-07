@@ -1,0 +1,7 @@
+USE AdventureWorks;
+GO
+ALTER INDEX ALL ON Production.Product
+REBUILD WITH (FILLFACTOR = 80, SORT_IN_TEMPDB = ON,
+              STATISTICS_NORECOMPUTE = ON);
+GO
+

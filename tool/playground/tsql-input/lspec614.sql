@@ -1,0 +1,3 @@
+DROP LOGIN WilliJo;
+GO  
+

@@ -1,0 +1,2 @@
+CREATE ROUTE TransportRoute
+    WITH ADDRESS = 'TRANSPORT' ;

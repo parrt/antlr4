@@ -1,0 +1,1 @@
+SELECT @@TOTAL_ERRORS AS 'Errors', GETDATE() AS 'As of'

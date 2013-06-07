@@ -1,0 +1,7 @@
+USE master;
+REVOKE VIEW SERVER STATE FROM WanidaBenshoof;
+GO
+USE master;
+REVOKE GRANT OPTION FOR CONNECT SQL FROM JanethEsteves;
+GO
+
