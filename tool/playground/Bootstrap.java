@@ -28,6 +28,7 @@
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -98,8 +99,25 @@ public class Bootstrap {
 		new Option("showFileNames",	"-showfiles", "show file names as they are parsed"),
 		new Option("SLL",	"-SLL", "force pure SLL parsing w/o possibility of failover to LL"),
 		new Option("LL",	"-LL", "force pure LL parsing w/o trying SLL first"),
-		new Option("once",	"-1x", "do just one run through data and in order")
+		new Option("once",	"-1x", "do just one run through data and in order"),
+		new Option("rawTime",	"-raw-time", "do not accumulate time for each file parse"),
+		new Option("toupper",	"-toupper", "toupper all input"),
+		new Option("showTokens",	"-tokens", "show input tokens")
 	};
+
+	public class ToUpperInputStream  extends ANTLRInputStream {
+		public ToUpperInputStream(char[] data, int numberOfActualCharsInArray) {
+			super(data, numberOfActualCharsInArray);
+		}
+
+		@Override
+	    public int LA(int i) {
+	        int c = super.LA(i);
+			if ( !Character.isLetter(c) ) return c;
+//			System.out.println((char)c +"->"+(char)Character.toUpperCase(c));
+			return Character.toUpperCase(c);
+	    }
+	}
 
 	private static class DescriptiveErrorListener extends BaseErrorListener {
 		public static DescriptiveErrorListener INSTANCE = new DescriptiveErrorListener();
@@ -222,6 +240,9 @@ public class Bootstrap {
 	public boolean SLL = false;
 	public boolean LL = false;
 	public boolean once = false;
+	public boolean rawTime = false;
+	public boolean toupper = false;
+	public boolean showTokens = false;
 
 	protected String grammarName;
 	protected String startRuleName;
@@ -297,7 +318,8 @@ public class Bootstrap {
 				long LL_timeInMS = stat.timeLL / 1000000;
 				cumTimeInMs[t] += SLL_timeInMS + LL_timeInMS;
 				if ( t>0 ) timings.append(", ");
-				timings.append(cumTimeInMs[t]);
+				if ( rawTime ) timings.append(SLL_timeInMS + LL_timeInMS);
+				else timings.append(cumTimeInMs[t]);
 			}
 			transitions.append("\n");
 			dfaSizes.append("\n");
@@ -383,17 +405,27 @@ public class Bootstrap {
 		for (InputDocument doc : docs) {
 			if ( showFileNames ) System.out.print(doc);
 //			if ( d % 10 == 0 ) System.out.print(" "+d);
-			ANTLRInputStream input =
-				new ANTLRInputStream(doc.content, doc.content.length);
+			ANTLRInputStream input = null;
+			if ( toupper ) input = new ToUpperInputStream(doc.content, doc.content.length);
+			else input = new ANTLRInputStream(doc.content, doc.content.length);
 			Constructor<? extends Lexer> lexerCtor =
 				lexerClass.getConstructor(CharStream.class);
 			Lexer lexer = lexerCtor.newInstance(input);
 			input.name = doc.fileName;
+
 //			lexer.removeErrorListeners();
 //			lexer.addErrorListener(new DescriptiveErrorListener());
 			Constructor<? extends Parser> parserCtor =
 				parserClass.getConstructor(TokenStream.class);
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+			if ( showTokens ) {
+				tokens.fill();
+				for (Object tok : tokens.getTokens()) {
+					System.out.println(tok);
+				}
+			}
+
 			Parser parser = parserCtor.newInstance(tokens);
 			parser.setBuildParseTree(false); // no parse trees
 			DFA[] decisionToDFA = parser.getInterpreter().decisionToDFA;
@@ -412,6 +444,7 @@ public class Bootstrap {
 				Method startRule = parserClass.getMethod(startRuleName);
 //				parser.addErrorListener(new DescriptiveErrorListener());
 				if ( LL ) { // track LL only w/o SLL first
+					parser.getInterpreter().setPredictionMode(PredictionMode.LL);
 					try {
 						final long startTime = System.nanoTime();
 						startRule.invoke(parser, (Object[])null);

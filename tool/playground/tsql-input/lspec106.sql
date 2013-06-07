@@ -1,0 +1,1 @@
+SELECT @@MAX_PRECISION AS 'Max Precision'

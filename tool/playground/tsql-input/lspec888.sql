@@ -1,0 +1,10 @@
+USE AdventureWorks;
+REVOKE CREATE CERTIFICATE FROM MelanieK;
+GO
+USE AdventureWorks;
+REVOKE REFERENCES FROM AuditMonitor;
+GO
+USE AdventureWorks;
+REVOKE VIEW DEFINITION FROM CarmineEs CASCADE;
+GO
+

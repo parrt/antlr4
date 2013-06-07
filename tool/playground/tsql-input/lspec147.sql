@@ -1,0 +1,4 @@
+ALTER CERTIFICATE Shipping13 
+    WITH PRIVATE KEY (FILE = 'c:\\importedkeys\Shipping13',
+    DECRYPTION BY PASSWORD = 'GDFLKl8^^GGG4000%');
+GO

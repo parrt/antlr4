@@ -27,7 +27,7 @@ print nfiles
 for g in grammars:
 	plt.plot(means[g], linewidth=0.5)
 plt.legend(grammars,
-		   loc='upper right' , prop={'family':'serif'})
+		   loc='upper left' , prop={'family':'serif'})
 plt.ylabel('Parse time in ms', family="serif", size=15)
 plt.xlabel('Files parsed', family="serif", size=15)
 plt.savefig('parse-time-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0)

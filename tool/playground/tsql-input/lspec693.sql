@@ -1,0 +1,3 @@
+SELECT Status =
+    GET_TRANSMISSION_STATUS('58ef1d2d-c405-42eb-a762-23ff320bddf0') ;
+

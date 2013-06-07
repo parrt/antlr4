@@ -26,6 +26,6 @@ plt.legend(('Wallclock parse time','95% two-sided confidence interval'),
 		   loc='upper left' , prop={'family':'serif'})
 plt.title(transitions_file+" (trials="+str(trials)+", files N="+str(N)+")")
 plt.xlabel('Files parsed', family="serif")
-plt.savefig(transitions_file+'-stats.pdf', format="pdf")
+plt.savefig(transitions_file+'-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0)
 plt.show()
 

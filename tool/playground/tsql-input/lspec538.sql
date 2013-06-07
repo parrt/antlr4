@@ -1,0 +1,3 @@
+SELECT DATABASEPROPERTYEX('AdventureWorks', 'IsAutoShrink');
+
+

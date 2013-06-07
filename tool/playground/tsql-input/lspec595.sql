@@ -1,0 +1,9 @@
+USE master;
+DENY VIEW DEFINITION ON ENDPOINT::Mirror7 TO ZArifin;
+GO
+
+USE master;
+DENY TAKE OWNERSHIP ON ENDPOINT::Shipping83 TO PKomosinski 
+    CASCADE;
+GO
+

@@ -1,0 +1,3 @@
+SELECT GETDATE();
+GO
+
