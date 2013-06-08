@@ -1,6 +1,7 @@
 import sys
 from numpy  import *
 import matplotlib.pyplot as plt
+import shared
 
 transitions_file = sys.argv[1]+'-timings'
 
@@ -18,7 +19,7 @@ index_of_2_5 = round(trials * 0.025)
 top2_5 = [sort(filerow)[index_of_97_5] for filerow in stats]
 bottom2_5 = [sort(filerow)[index_of_2_5] for filerow in stats]
 
-plt.plot(means, linewidth=0.5)
+plt.plot(means, linewidth=0.75, color=shared.colors[sys.argv[1]])
 plt.plot(top2_5, color="grey", linewidth=0.5)
 plt.plot(bottom2_5, color="grey", linewidth=0.5)
 plt.ylabel('Wallclock parse time (ms)', family="serif")
