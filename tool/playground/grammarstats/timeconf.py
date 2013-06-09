@@ -40,7 +40,7 @@ plt.plot([980,1020], [bottom2_5[1000],bottom2_5[1000]], 'k-', lw=1)
 plt.ylabel('Parse time (ms)', family="serif", size=15)
 
 plt.xlabel('Files parsed', family="serif", size=15)
-plt.savefig('JavaLR-timings-stats.pdf',
+plt.savefig('Java-timings-stats.pdf',
 			format="pdf", bbox_inches='tight', pad_inches=0.03)
 plt.show()
 
