@@ -1,5 +1,5 @@
 colors = {
-	"JavaLR":"#0015B0",      # java are blues
+	"Java":"#0015B0",      # java are blues
 	"JavaRats":"cyan",
 	"JavaSable": "#6C32D1",
 	"Verilog2001": "black", # hotpink
@@ -9,7 +9,7 @@ colors = {
 }
 
 styles = {
-	"JavaLR":"-",
+	"Java":"-",
 	"JavaRats":"-",
 	"JavaSable": "-",
 	"Verilog2001": "-",

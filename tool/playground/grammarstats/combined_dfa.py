@@ -17,6 +17,9 @@ files2 = [g+'-dfasizes.txt' for g in grammars2]
 
 f, (plt1,plt2) = plt.subplots(2, sharex=True)
 
+f.set_figheight(5)
+f.set_figwidth(4)
+
 def my_formatter_fun(x, p):
 	return "%.0f" % (x / 100.0)
 
@@ -38,8 +41,8 @@ for g in grammars1:
 	N = len(means[g])
 	plt1.plot(means[g], linewidth=0.5,
 			 color=shared.colors[g], linestyle=shared.styles[g])
-	plt1.text(N-len(g)*10, means[g][N-1], g,
-			 fontsize=15, family="serif")
+	plt1.text(N-len(g)*14, means[g][N-1], g,
+			 fontsize=11, family="serif")
 	m = max(m, max(means[g]))
 
 plt1.axis(ymax=m*1.08)
@@ -61,23 +64,23 @@ for g in grammars2:
 	N = len(means[g])
 	if ( g == "C11" ):
 		plt2.text(N-len(g)*24, means[g][N-1], g,
-				  fontsize=15, family="serif")
+				  fontsize=11, family="serif")
 	elif ( g == "C11SLL" ):
-		plt2.text(N-len(g)*12, 0.80*means[g][N-1], g,
-				  fontsize=15, family="serif")
+		plt2.text(N-len(g)*18, 0.80*means[g][N-1], g,
+				  fontsize=11, family="serif")
 	else:
-		plt2.text(N-len(g)*10, 0.80*means[g][N-1], g,
-				  fontsize=15, family="serif")
+		plt2.text(N-len(g)*14, 0.80*means[g][N-1], g,
+				  fontsize=11, family="serif")
 	m = max(m, max(means[g]))
 
 plt2.axis(ymax=m*1.08)
 
-plt1.set_ylabel('Number of DFA states', family="serif", size=13)
-plt2.set_ylabel('Number of DFA $10^2$ states', family="serif", size=13)
-plt.xlabel('Files parsed', family="serif", size=15)
+plt1.set_ylabel('Number of DFA states', family="serif", size=11)
+plt2.set_ylabel('Number of DFA $10^2$ states', family="serif", size=11)
+plt.xlabel('Files parsed', family="serif", size=11)
 
 f.subplots_adjust(hspace=0)
 plt.setp([a.get_xticklabels() for a in f.axes[:-1]], visible=False)
 
-plt.savefig('dfasize-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0)
+plt.savefig('dfasize-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0.03)
 plt.show()

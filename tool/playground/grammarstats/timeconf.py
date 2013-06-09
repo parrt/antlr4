@@ -16,8 +16,8 @@ index_of_2_5 = round(trials * 0.025)
 
 fig, ax = plt.subplots(1)
 
-fig.set_figheight(3.5)
-fig.set_figwidth(7)
+fig.set_figheight(4)
+fig.set_figwidth(6)
 
 # Compute two-sided confidence interval.
 # Find max/min value 2.5% values from sorted list
@@ -30,16 +30,16 @@ ax.fill_between(t, top2_5, bottom2_5, facecolor='yellow', alpha=0.2)
 plt.plot(means, linewidth=0.75, color=shared.colors[sys.argv[1]])
 # plt.plot(top2_5, color="grey", linewidth=0.5)
 # plt.plot(bottom2_5, color="grey", linewidth=0.5)
-plt.text(1640, 430, "Java", fontsize=13, family="serif")
-plt.text(300, 460, '95% two-sided confidence interval',
-		 fontsize=13, family="serif")
-plt.plot([1000,1000], [top2_5[1000],bottom2_5[1000]], 'k-', lw=1)
-plt.plot([980,1020], [top2_5[1000],top2_5[1000]], 'k-', lw=1)
-plt.plot([980,1020], [bottom2_5[1000],bottom2_5[1000]], 'k-', lw=1)
+plt.text(1640, 500, "Java", fontsize=12, family="serif")
+plt.text(520, 150, '95% two-sided confidence interval',
+		 fontsize=12, family="serif")
+plt.plot([500,500], [top2_5[500],bottom2_5[500]], 'k-', lw=1)
+plt.plot([480,520], [top2_5[500],top2_5[500]], 'k-', lw=1)
+plt.plot([480,520], [bottom2_5[500],bottom2_5[500]], 'k-', lw=1)
 
-plt.ylabel('Parse time (ms)', family="serif", size=15)
+plt.ylabel('Parse time (ms)', family="serif", size=12)
 
-plt.xlabel('Files parsed', family="serif", size=15)
+plt.xlabel('Files parsed', family="serif", size=12)
 plt.savefig('Java-timings-stats.pdf',
 			format="pdf", bbox_inches='tight', pad_inches=0.03)
 plt.show()
