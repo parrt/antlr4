@@ -31,7 +31,7 @@
  *
  *  Sam Harwell cleaned this up significantly and updated to 1.7!
  */
-grammar JavaLR;
+grammar Java;
 
 // starting point for parsing a java file
 /* The annotations are separated out to make parsing faster, but must be associated with
