@@ -38,6 +38,6 @@ else: # timing
 			   loc='lower right' , prop={'family':'serif'})
 plt.title(transitions_file)
 plt.xlabel('Files parsed', family="serif")
-plt.savefig(transitions_file+'-stats.pdf', format="pdf")
+plt.savefig(transitions_file+'-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0)
 plt.show()
 

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatch
 import matplotlib.pyplot as plt
 import shared
+import shared
 
 transitions_file = {}
 
@@ -23,14 +24,23 @@ for i in range(len(grammars)):
 	means[g] = [mean(filerow) for filerow in stats[g]]
 	nfiles[g] = len(stats[g]) # num files parsed for this grammar
 
-print nfiles
-
+m = 0
 for g in grammars:
-	plt.plot(means[g], linewidth=0.5)
-plt.axis(ymax=.4)
-plt.legend(grammars,
-		   loc='upper right' , prop={'family':'serif'})
-plt.ylabel('ATN to total transitions ratio', family="serif", size=15)
+	N = len(means[g])
+	N = 175 # force to show left side more
+	plt.plot(means[g][1:N], linewidth=1.0,
+			 color=shared.colors[g], linestyle=shared.styles[g])
+
+	X = 20
+	Y = max(means[g][X-5:X+5])
+	if g=='Verilog2001' : Y = 0.005; X = 1
+	plt.text(X, Y, g,
+			 fontsize=15, family="serif")
+	m = max(m, max(means[g]))
+
+plt.axis(xmax=N, ymax=.5)
+
+plt.ylabel('Ratio of DATN to all lookahead', family="serif", size=15)
 plt.xlabel('Files parsed', family="serif", size=15)
-plt.savefig('atn-decay-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0)
+plt.savefig('atn-decay-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0.05)
 plt.show()

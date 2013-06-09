@@ -14,19 +14,33 @@ N = len(stats)
 index_of_97_5 = round(trials * 0.975) - 1
 index_of_2_5 = round(trials * 0.025)
 
+fig, ax = plt.subplots(1)
+
+fig.set_figheight(3.5)
+fig.set_figwidth(7)
+
 # Compute two-sided confidence interval.
 # Find max/min value 2.5% values from sorted list
 top2_5 = [sort(filerow)[index_of_97_5] for filerow in stats]
 bottom2_5 = [sort(filerow)[index_of_2_5] for filerow in stats]
 
+t = arange(N)
+ax.fill_between(t, top2_5, bottom2_5, facecolor='yellow', alpha=0.2)
+
 plt.plot(means, linewidth=0.75, color=shared.colors[sys.argv[1]])
-plt.plot(top2_5, color="grey", linewidth=0.5)
-plt.plot(bottom2_5, color="grey", linewidth=0.5)
-plt.ylabel('Wallclock parse time (ms)', family="serif")
-plt.legend(('Wallclock parse time','95% two-sided confidence interval'),
-		   loc='upper left' , prop={'family':'serif'})
-plt.title(transitions_file+" (trials="+str(trials)+", files N="+str(N)+")")
-plt.xlabel('Files parsed', family="serif")
-plt.savefig(transitions_file+'-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0)
+# plt.plot(top2_5, color="grey", linewidth=0.5)
+# plt.plot(bottom2_5, color="grey", linewidth=0.5)
+plt.text(1640, 430, "Java", fontsize=13, family="serif")
+plt.text(300, 460, '95% two-sided confidence interval',
+		 fontsize=13, family="serif")
+plt.plot([1000,1000], [top2_5[1000],bottom2_5[1000]], 'k-', lw=1)
+plt.plot([980,1020], [top2_5[1000],top2_5[1000]], 'k-', lw=1)
+plt.plot([980,1020], [bottom2_5[1000],bottom2_5[1000]], 'k-', lw=1)
+
+plt.ylabel('Parse time (ms)', family="serif", size=15)
+
+plt.xlabel('Files parsed', family="serif", size=15)
+plt.savefig('JavaLR-timings-stats.pdf',
+			format="pdf", bbox_inches='tight', pad_inches=0.03)
 plt.show()
 

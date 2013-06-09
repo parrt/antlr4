@@ -2,9 +2,7 @@ grammar Quartic;
 
 s : a EOF ;
 
-ignored : a 'x'* EOF ; // force SLL conflict
-
-a : 'x' a 'y'
+a : 'x' a a
   | 'x' a
   | 'x'
   ;

@@ -1,7 +1,7 @@
 from numpy  import *
 import matplotlib.pyplot as plt
 
-transitions_file = 'Cubic-timings'
+transitions_file = 'Quartic-timings'
 
 # load timing data; column of times per file
 f = open(transitions_file+'.txt',"rb")

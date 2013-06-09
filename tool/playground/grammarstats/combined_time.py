@@ -19,7 +19,6 @@ files2 = [g+'-timings.txt' for g in grammars2]
 
 # load transition data. Each row is the list of trial stats per this one file
 
-
 f, (plt1,plt2) = plt.subplots(2, sharex=True)
 # formatter = ScalarFormatter()
 # formatter.set_scientific(True)
@@ -86,11 +85,11 @@ plt.setp([a.get_xticklabels() for a in f.axes[:-1]], visible=False)
 #plt.legend(grammars,
 		   #loc='upper left' , prop={'family':'serif'})
 plt1.set_ylabel('Parse time in ms', family="serif", size=15)
-plt2.set_ylabel('Parse time in 10^3 sec', family="serif", size=15)
+plt2.set_ylabel(r'Parse time in $10^3$ ms', family="serif", size=15)
 plt.xlabel('Files parsed', family="serif", size=15)
-plt.savefig('parse-time-stats.pdf',
-			format="pdf",
-			bbox_inches='tight',
-			pad_inches=0.04)
+# plt.savefig('parse-time-stats.pdf',
+# 			format="pdf",
+# 			bbox_inches='tight',
+# 			pad_inches=0.04)
 plt.show()
 
