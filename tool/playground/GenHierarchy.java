@@ -23,9 +23,9 @@ public class GenHierarchy {
 
 //			System.out.println(file);
 			// START: launch
-			JavaLRLexer lexer = new JavaLRLexer(input);
+			JavaLexer lexer = new JavaLexer(input);
 			CommonTokenStream tokens = new CommonTokenStream(lexer);
-			JavaLRParser parser = new JavaLRParser(tokens);
+			JavaParser parser = new JavaParser(tokens);
 			ParserRuleContext tree = parser.compilationUnit(); // parse
 
 			ParseTreeWalker walker = new ParseTreeWalker(); // create standard walker

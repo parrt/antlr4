@@ -3,9 +3,9 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.List;
 
-public class ExtractInheritance extends JavaLRBaseListener {
-	JavaLRParser parser;
-	public ExtractInheritance(JavaLRParser parser) { this.parser = parser; }
+public class ExtractInheritance extends JavaBaseListener {
+	JavaParser parser;
+	public ExtractInheritance(JavaParser parser) { this.parser = parser; }
 
 	/*
 	normalClassDeclaration
@@ -17,7 +17,7 @@ public class ExtractInheritance extends JavaLRBaseListener {
 
 	 */
 	@Override
-	public void enterNormalClassDeclaration(JavaLRParser.NormalClassDeclarationContext ctx) {
+	public void enterNormalClassDeclaration(JavaParser.NormalClassDeclarationContext ctx) {
 		TerminalNode id = ctx.Identifier();
 		String sup = null;
 		if ( ctx.type()!=null ) {
@@ -25,8 +25,8 @@ public class ExtractInheritance extends JavaLRBaseListener {
 			System.out.println("\""+id+"\" -> \""+sup+"\"");
 		}
 		if ( ctx.typeList()!=null ) {
-			List<? extends JavaLRParser.TypeContext> type = ctx.typeList().type();
-			for (JavaLRParser.TypeContext t : type) {
+			List<? extends JavaParser.TypeContext> type = ctx.typeList().type();
+			for (JavaParser.TypeContext t : type) {
 				System.out.println("\""+id+"\" -> \""+t.getText()+"\"");
 			}
 		}
@@ -40,13 +40,13 @@ public class ExtractInheritance extends JavaLRBaseListener {
 	 */
 
 	@Override
-	public void enterNormalInterfaceDeclaration(JavaLRParser.NormalInterfaceDeclarationContext ctx) {
+	public void enterNormalInterfaceDeclaration(JavaParser.NormalInterfaceDeclarationContext ctx) {
 		TerminalNode id = ctx.Identifier();
 		System.out.println("###### interface "+id);
 		String args = null;
 		if ( ctx.typeList()!=null ) {
-			List<? extends JavaLRParser.TypeContext> type = ctx.typeList().type();
-			for (JavaLRParser.TypeContext t : type) {
+			List<? extends JavaParser.TypeContext> type = ctx.typeList().type();
+			for (JavaParser.TypeContext t : type) {
 				System.out.println("\""+id+"\" -> \""+t.getText()+"\"");
 			}
 		}

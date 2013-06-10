@@ -18,11 +18,11 @@ public class TransformEType {
 		}
 		CharStream input = new ANTLRInputStream(is);
 
-		JavaLRLexer lex = new JavaLRLexer(input);
+		JavaLexer lex = new JavaLexer(input);
 		lex.setTokenFactory(new CommonTokenFactory(true));
 
 		CommonTokenStream tokens = new CommonTokenStream(lex);
-		JavaLRParser parser = new JavaLRParser(tokens);
+		JavaParser parser = new JavaParser(tokens);
 
 		parser.addErrorListener(new DiagnosticErrorListener());
 
