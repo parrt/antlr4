@@ -31,7 +31,7 @@ plt.plot(means, linewidth=0.75, color=shared.colors[sys.argv[1]])
 # plt.plot(top2_5, color="grey", linewidth=0.5)
 # plt.plot(bottom2_5, color="grey", linewidth=0.5)
 plt.text(1640, 500, "Java", fontsize=12, family="serif")
-plt.text(520, 150, '95% two-sided confidence interval',
+plt.text(520, 150, '95% two-sided confidence tube',
 		 fontsize=12, family="serif")
 plt.plot([500,500], [top2_5[500],bottom2_5[500]], 'k-', lw=1)
 plt.plot([480,520], [top2_5[500],top2_5[500]], 'k-', lw=1)
