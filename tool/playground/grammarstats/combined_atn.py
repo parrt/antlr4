@@ -40,7 +40,8 @@ for g in grammars:
 
 plt.axis(xmax=N, ymax=.5)
 
-plt.ylabel('Ratio of DATN to all lookahead', family="serif", size=15)
+plt.ylabel('Expected ratio of DATN to all lookahead', family="serif", size=15)
 plt.xlabel('Files parsed', family="serif", size=15)
+plt.text(45, .4, "Curves represent 500 trials of 175 files", fontsize=15, family="serif")
 plt.savefig('atn-decay-stats.pdf', format="pdf", bbox_inches='tight', pad_inches=0.05)
 plt.show()
