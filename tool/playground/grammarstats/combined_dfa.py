@@ -17,8 +17,8 @@ files2 = [g+'-dfasizes.txt' for g in grammars2]
 
 f, (plt1,plt2) = plt.subplots(2, sharex=True)
 
-f.set_figheight(5)
-f.set_figwidth(4)
+f.set_figheight(4.5)
+f.set_figwidth(3)
 
 def my_formatter_fun(x, p):
 	return "%.0f" % (x / 100.0)

@@ -21,8 +21,8 @@ files2 = [g+'-timings.txt' for g in grammars2]
 
 f, (plt1,plt2) = plt.subplots(2, sharex=True)
 
-f.set_figheight(5)
-f.set_figwidth(4)
+f.set_figheight(4.5)
+f.set_figwidth(3)
 
 # formatter = ScalarFormatter()
 # formatter.set_scientific(True)
@@ -49,7 +49,7 @@ for g in grammars1:
 	N = len(means[g])
 	plt1.plot(means[g], linewidth=0.5,
 			 color=shared.colors[g], linestyle=shared.styles[g])
-	plt1.text(N-len(g)*16, means[g][N-1], g,
+	plt1.text(N-len(g)*20, means[g][N-1], g,
 			 fontsize=12, family="serif")
 	m = max(m, max(means[g]))
 
@@ -71,13 +71,13 @@ for g in grammars2:
 			 color=shared.colors[g], linestyle=shared.styles[g])
 	N = len(means[g])
 	if ( g == "C11" ):
-		plt2.text(N-len(g)*18, means[g][N-1], g,
+		plt2.text(N-len(g)*24, means[g][N-1], g,
 				  fontsize=12, family="serif")
 	elif ( g == "C11SLL" ):
-		plt2.text(N-len(g)*18, 0.40*means[g][N-1], g,
+		plt2.text(N-len(g)*24, 0.40*means[g][N-1], g,
 				  fontsize=12, family="serif")
 	else:
-		plt2.text(N-len(g)*16, means[g][N-1], g,
+		plt2.text(N-len(g)*24, means[g][N-1], g,
 				  fontsize=12, family="serif")
 	m = max(m, max(means[g]))
 
