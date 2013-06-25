@@ -49,8 +49,15 @@ for g in grammars1:
 	N = len(means[g])
 	plt1.plot(means[g], linewidth=0.5,
 			 color=shared.colors[g], linestyle=shared.styles[g])
-	plt1.text(N-len(g)*20, means[g][N-1], g,
-			 fontsize=12, family="serif")
+	if ( g == "JavaRats" ):
+		plt1.text(N-len(g)*20, means[g][N-1]-100, g,
+				  fontsize=12, family="serif")
+	elif ( g == "Verilog2001" ):
+		plt1.text(N-len(g)*17, means[g][N-1], g,
+				  fontsize=12, family="serif")
+	else:
+		plt1.text(N-len(g)*20, means[g][N-1], g,
+				  fontsize=12, family="serif")
 	m = max(m, max(means[g]))
 
 plt1.axis(ymax=m*1.08)

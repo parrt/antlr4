@@ -41,7 +41,7 @@ for g in grammars1:
 	N = len(means[g])
 	plt1.plot(means[g], linewidth=0.5,
 			 color=shared.colors[g], linestyle=shared.styles[g])
-	plt1.text(N-len(g)*14, means[g][N-1], g,
+	plt1.text(N-len(g)*19, means[g][N-1], g,
 			 fontsize=11, family="serif")
 	m = max(m, max(means[g]))
 
@@ -66,17 +66,20 @@ for g in grammars2:
 		plt2.text(N-len(g)*24, means[g][N-1], g,
 				  fontsize=11, family="serif")
 	elif ( g == "C11SLL" ):
-		plt2.text(N-len(g)*18, 0.80*means[g][N-1], g,
+		plt2.text(N-len(g)*20, 0.80*means[g][N-1], g,
+				  fontsize=11, family="serif")
+	elif ( g == "JavaSable" ):
+		plt2.text(N-len(g)*18, 0.65*means[g][N-1], g,
 				  fontsize=11, family="serif")
 	else:
-		plt2.text(N-len(g)*14, 0.80*means[g][N-1], g,
+		plt2.text(N-len(g)*18, 0.80*means[g][N-1], g,
 				  fontsize=11, family="serif")
 	m = max(m, max(means[g]))
 
 plt2.axis(ymax=m*1.08)
 
-plt1.set_ylabel('Number of DFA states', family="serif", size=11)
-plt2.set_ylabel('Number of DFA $10^2$ states', family="serif", size=11)
+plt1.set_ylabel('No. DFA states', family="serif", size=11)
+plt2.set_ylabel('No. DFA $10^2$ states', family="serif", size=11)
 plt.xlabel('Files parsed', family="serif", size=11)
 
 f.subplots_adjust(hspace=0)
