@@ -16,8 +16,8 @@ index_of_2_5 = round(trials * 0.025)
 
 fig, ax = plt.subplots(1)
 
-fig.set_figheight(4)
-fig.set_figwidth(6)
+fig.set_figheight(3)
+fig.set_figwidth(3)
 
 # Compute two-sided confidence interval.
 # Find max/min value 2.5% values from sorted list
@@ -31,7 +31,9 @@ plt.plot(means, linewidth=0.75, color=shared.colors[sys.argv[1]])
 # plt.plot(top2_5, color="grey", linewidth=0.5)
 # plt.plot(bottom2_5, color="grey", linewidth=0.5)
 plt.text(1640, 500, "Java", fontsize=12, family="serif")
-plt.text(520, 150, '95% two-sided confidence tube',
+plt.text(560, 150, '95% two-sided',
+		 fontsize=12, family="serif")
+plt.text(560, 90, 'confidence tube',
 		 fontsize=12, family="serif")
 plt.plot([500,500], [top2_5[500],bottom2_5[500]], 'k-', lw=1)
 plt.plot([480,520], [top2_5[500],top2_5[500]], 'k-', lw=1)
