@@ -1063,14 +1063,12 @@ public class ParserATNSimulator extends ATNSimulator {
 	{
 		if ( debug ) System.out.println("closure("+config.toString(parser,true)+")");
 
-		if ( depth != 0 && !closureBusy.add(config) ) return; // avoid infinite recursion
-
 		if ( config.state instanceof RuleStopState ) {
 			// We hit rule end. If we have context info, use it
 			// run thru all possible stack tops in ctx
 			if ( !config.context.isEmpty() ) {
-				for (SingletonPredictionContext ctx : config.context) {
-					if ( ctx.returnState==PredictionContext.EMPTY_RETURN_STATE ) {
+				for (int i = 0; i < config.context.size(); i++) {
+					if ( config.context.getReturnState(i)==PredictionContext.EMPTY_RETURN_STATE ) {
 						if (fullCtx) {
 							configs.add(new ATNConfig(config, config.state, PredictionContext.EMPTY), mergeCache);
 							continue;
@@ -1084,8 +1082,8 @@ public class ParserATNSimulator extends ATNSimulator {
 						}
 						continue;
 					}
-					ATNState returnState = atn.states.get(ctx.returnState);
-					PredictionContext newContext = ctx.parent; // "pop" return state
+					ATNState returnState = atn.states.get(config.context.getReturnState(i));
+					PredictionContext newContext = config.context.getParent(i); // "pop" return state
 					ATNConfig c = new ATNConfig(returnState, config.alt, newContext,
 												config.semanticContext);
 					// While we have context to pop back from, we may have
@@ -1144,6 +1142,12 @@ public class ParserATNSimulator extends ATNSimulator {
 					// track how far we dip into outer context.  Might
 					// come in handy and we avoid evaluating context dependent
 					// preds if this is > 0.
+
+					if (!closureBusy.add(c)) {
+						// avoid infinite recursion for right-recursive rules
+						continue;
+					}
+
 					c.reachesIntoOuterContext++;
 					configs.dipsIntoOuterContext = true; // TODO: can remove? only care when we add to set per middle of this method
 					assert newDepth > Integer.MIN_VALUE;
