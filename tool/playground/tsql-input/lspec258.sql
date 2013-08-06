@@ -1,2 +1,0 @@
-SELECT ASYMKEY_ID('ABerglundKey11');
-GO

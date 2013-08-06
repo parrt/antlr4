@@ -31,7 +31,6 @@
 package org.antlr.v4.runtime.atn;
 
 import java.util.Arrays;
-import java.util.Iterator;
 
 public class ArrayPredictionContext extends PredictionContext {
 	/** Parent can be null only if full ctx mode and we make an array
@@ -59,29 +58,10 @@ public class ArrayPredictionContext extends PredictionContext {
 	}
 
 	@Override
-	public Iterator<SingletonPredictionContext> iterator() {
-		return new Iterator<SingletonPredictionContext>() {
-			int i = 0;
-			@Override
-			public boolean hasNext() { return i < parents.length; }
-
-			@Override
-			public SingletonPredictionContext next() {
-				SingletonPredictionContext ctx =
-					SingletonPredictionContext.create(parents[i], returnStates[i]);
-				i++;
-				return ctx;
-			}
-
-			@Override
-			public void remove() { throw new UnsupportedOperationException(); }
-		};
-	}
-
-	@Override
 	public boolean isEmpty() {
-		return size()==1 &&
-			   returnStates[0]==EMPTY_RETURN_STATE;
+		// since EMPTY_RETURN_STATE can only appear in the last position, we
+		// don't need to verify that size==1
+		return returnStates[0]==EMPTY_RETURN_STATE;
 	}
 
 	@Override

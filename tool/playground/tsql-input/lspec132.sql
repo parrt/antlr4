@@ -1,3 +1,0 @@
-ALTER APPLICATION ROLE receipts_ledger 
-    WITH PASSWORD = '897yUUbv867y$200nk2i';
-GO

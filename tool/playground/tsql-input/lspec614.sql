@@ -1,3 +1,0 @@
-DROP LOGIN WilliJo;
-GO  
-

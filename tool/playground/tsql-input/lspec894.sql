@@ -1,4 +1,0 @@
-USE AdventureWorks;
-REVOKE ALTER ON SYMMETRIC KEY::SamInventory42 TO HamidS CASCADE;
-GO
-

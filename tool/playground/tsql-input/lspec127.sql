@@ -1,4 +1,0 @@
-DECLARE @i int;
-SET @i = -2147483648;
-SELECT ABS(@i);
-GO

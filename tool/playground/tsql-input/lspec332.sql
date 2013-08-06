@@ -1,2 +1,0 @@
-CLOSE SYMMETRIC KEY ShippingSymKey04;
-GO

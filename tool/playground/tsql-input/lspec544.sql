@@ -1,3 +1,0 @@
-SELECT DATEADD(month, 1, '08/30/2006')
-SELECT DATEADD(month, 1, '08/31/2006')
-

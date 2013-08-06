@@ -1,2 +1,0 @@
-SELECT QUOTENAME('abc[]def')
-

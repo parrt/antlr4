@@ -1,4 +1,0 @@
-CLOSE SYMMETRIC KEY GailSammamishKey6;
-DROP SYMMETRIC KEY GailSammamishKey6;
-GO
-

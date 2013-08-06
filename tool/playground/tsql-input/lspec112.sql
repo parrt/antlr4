@@ -1,1 +1,0 @@
-SELECT @@PACKET_ERRORS AS 'Packet Errors'

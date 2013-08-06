@@ -1,7 +1,0 @@
-SELECT SCHEMA_NAME();
-GO
-USE AdventureWorks;
-GO
-SELECT SCHEMA_NAME(5);
-GO
-

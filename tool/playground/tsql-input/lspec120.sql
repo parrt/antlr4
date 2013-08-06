@@ -1,1 +1,0 @@
-SELECT @@TIMETICKS AS 'Time Ticks';

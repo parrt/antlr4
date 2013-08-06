@@ -1,5 +1,0 @@
-CREATE PROCEDURE usp_CheckServer
-AS
-SELECT @@REMSERVER;
-EXEC SEATTLE1...usp_CheckServer
-GO

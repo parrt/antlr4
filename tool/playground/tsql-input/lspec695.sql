@@ -1,3 +1,0 @@
-SELECT GETDATE();
-GO
-
