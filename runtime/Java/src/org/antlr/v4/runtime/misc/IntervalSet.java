@@ -33,6 +33,7 @@ import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -71,26 +72,26 @@ public class IntervalSet implements IntSet {
 		addAll(set);
 	}
 
-	public IntervalSet(int... els) {
+	public IntervalSet(long... els) {
 		if ( els==null ) {
 			intervals = new ArrayList<Interval>(2); // most sets are 1 or 2 elements
 		}
 		else {
 			intervals = new ArrayList<Interval>(els.length);
-			for (int e : els) add(e);
+			for (long e : els) add(e);
 		}
 	}
 
 	/** Create a set with a single element, el. */
     @NotNull
-    public static IntervalSet of(int a) {
+    public static IntervalSet of(long a) {
 		IntervalSet s = new IntervalSet();
         s.add(a);
         return s;
     }
 
     /** Create a set with all ints within range [a..b] (inclusive) */
-	public static IntervalSet of(int a, int b) {
+	public static IntervalSet of(long a, long b) {
 		IntervalSet s = new IntervalSet();
 		s.add(a,b);
 		return s;
@@ -105,7 +106,7 @@ public class IntervalSet implements IntSet {
      *  as a range el..el.
      */
     @Override
-    public void add(int el) {
+    public void add(long el) {
         if ( readonly ) throw new IllegalStateException("can't alter readonly IntervalSet");
         add(el,el);
     }
@@ -117,7 +118,7 @@ public class IntervalSet implements IntSet {
      *  If this is {1..5, 10..20}, adding 6..7 yields
      *  {1..5, 6..7, 10..20}.  Adding 4..8 yields {1..8, 10..20}.
      */
-    public void add(int a, int b) {
+    public void add(long a, long b) {
         add(Interval.of(a, b));
     }
 
@@ -215,7 +216,7 @@ public class IntervalSet implements IntSet {
 											   vocabulary.getClass().getName()+")");
 		}
 		IntervalSet vocabularyIS = ((IntervalSet)vocabulary);
-		int maxElement = vocabularyIS.getMaxElement();
+		long maxElement = vocabularyIS.getMaxElement();
 
 		IntervalSet compl = new IntervalSet();
 		int n = intervals.size();
@@ -346,12 +347,12 @@ public class IntervalSet implements IntSet {
 
     /** Is el in any range of this set? */
     @Override
-    public boolean contains(int el) {
-		int n = intervals.size();
+    public boolean contains(long el) {
+		long n = intervals.size();
 		for (int i = 0; i < n; i++) {
 			Interval I = intervals.get(i);
-			int a = I.a;
-			int b = I.b;
+			long a = I.a;
+			long b = I.b;
 			if ( el<a ) {
 				break; // list is sorted and el is before this interval; not here
 			}
@@ -382,7 +383,7 @@ public class IntervalSet implements IntSet {
 
     /** If this set is a single integer, return it otherwise Token.INVALID_TYPE */
     @Override
-    public int getSingleElement() {
+    public long getSingleElement() {
         if ( intervals!=null && intervals.size()==1 ) {
             Interval I = intervals.get(0);
             if ( I.a == I.b ) {
@@ -392,7 +393,7 @@ public class IntervalSet implements IntSet {
         return Token.INVALID_TYPE;
     }
 
-	public int getMaxElement() {
+	public long getMaxElement() {
 		if ( isNil() ) {
 			return Token.INVALID_TYPE;
 		}
@@ -401,16 +402,16 @@ public class IntervalSet implements IntSet {
 	}
 
 	/** Return minimum element >= 0 */
-	public int getMinElement() {
+	public long getMinElement() {
 		if ( isNil() ) {
 			return Token.INVALID_TYPE;
 		}
 		int n = intervals.size();
 		for (int i = 0; i < n; i++) {
 			Interval I = intervals.get(i);
-			int a = I.a;
-			int b = I.b;
-			for (int v=a; v<=b; v++) {
+			long a = I.a;
+			long b = I.b;
+			for (long v=a; v<=b; v++) {
 				if ( v>=0 ) return v;
 			}
 		}
@@ -462,8 +463,8 @@ public class IntervalSet implements IntSet {
 		Iterator<Interval> iter = this.intervals.iterator();
 		while (iter.hasNext()) {
 			Interval I = iter.next();
-			int a = I.a;
-			int b = I.b;
+			long a = I.a;
+			long b = I.b;
 			if ( a==b ) {
 				if ( a==-1 ) buf.append("<EOF>");
 				else if ( elemAreChar ) buf.append("'").append((char)a).append("'");
@@ -494,13 +495,13 @@ public class IntervalSet implements IntSet {
 		Iterator<Interval> iter = this.intervals.iterator();
 		while (iter.hasNext()) {
 			Interval I = iter.next();
-			int a = I.a;
-			int b = I.b;
+			long a = I.a;
+			long b = I.b;
 			if ( a==b ) {
 				buf.append(elementName(tokenNames, a));
 			}
 			else {
-				for (int i=a; i<=b; i++) {
+				for (long i=a; i<=b; i++) {
 					if ( i>a ) buf.append(", ");
                     buf.append(elementName(tokenNames, i));
 				}
@@ -515,15 +516,15 @@ public class IntervalSet implements IntSet {
         return buf.toString();
     }
 
-    protected String elementName(String[] tokenNames, int a) {
+    protected String elementName(String[] tokenNames, long a) {
         if ( a==Token.EOF ) return "<EOF>";
         else if ( a==Token.EPSILON ) return "<EPSILON>";
-        else return tokenNames[a];
+        else return tokenNames[(int)a];
 
     }
 
     @Override
-    public int size() {
+    public long size() {
 		int n = 0;
 		int numIntervals = intervals.size();
 		if ( numIntervals==1 ) {
@@ -537,41 +538,41 @@ public class IntervalSet implements IntSet {
 		return n;
     }
 
-	public IntegerList toIntegerList() {
-		IntegerList values = new IntegerList(size());
+	public LongList toLongList() {
+		LongList values = new LongList((int)size());
 		int n = intervals.size();
 		for (int i = 0; i < n; i++) {
 			Interval I = intervals.get(i);
-			int a = I.a;
-			int b = I.b;
-			for (int v=a; v<=b; v++) {
-				values.add(v);
+			long a = I.a;
+			long b = I.b;
+			for (long v=a; v<=b; v++) {
+				values.add((int)v);
 			}
 		}
 		return values;
 	}
 
     @Override
-    public List<Integer> toList() {
-		List<Integer> values = new ArrayList<Integer>();
+    public List<Long> toList() {
+		List<Long> values = new ArrayList<Long>();
 		int n = intervals.size();
 		for (int i = 0; i < n; i++) {
 			Interval I = intervals.get(i);
-			int a = I.a;
-			int b = I.b;
-			for (int v=a; v<=b; v++) {
+			long a = I.a;
+			long b = I.b;
+			for (long v=a; v<=b; v++) {
 				values.add(v);
 			}
 		}
 		return values;
 	}
 
-	public Set<Integer> toSet() {
-		Set<Integer> s = new HashSet<Integer>();
+	public Set<Long> toSet() {
+		Set<Long> s = new HashSet<Long>();
 		for (Interval I : intervals) {
-			int a = I.a;
-			int b = I.b;
-			for (int v=a; v<=b; v++) {
+			long a = I.a;
+			long b = I.b;
+			for (long v=a; v<=b; v++) {
 				s.add(v);
 			}
 		}
@@ -582,14 +583,14 @@ public class IntervalSet implements IntSet {
 	 *  don't bother to implement if you're not doing that for a new
 	 *  ANTLR code gen target.
 	 */
-	public int get(int i) {
+	public long get(int i) {
 		int n = intervals.size();
 		int index = 0;
 		for (int j = 0; j < n; j++) {
 			Interval I = intervals.get(j);
-			int a = I.a;
-			int b = I.b;
-			for (int v=a; v<=b; v++) {
+			long a = I.a;
+			long b = I.b;
+			for (long v=a; v<=b; v++) {
 				if ( index==i ) {
 					return v;
 				}
@@ -600,17 +601,31 @@ public class IntervalSet implements IntSet {
 	}
 
 	public int[] toArray() {
-		return toIntegerList().toArray();
+		if (size() == 0) {
+			return new int[0];
+		}
+
+		LongList ll = toLongList();
+		int[] data =  new int[(int)size()];
+		long[] longs = ll.toArray();
+		for (int i = 0; i < longs.length; i++) {
+			data[i] = (int)longs[i];
+		}
+		return data;
+	}
+
+	public long[] toLongArray() {
+		return toLongList().toArray();
 	}
 
 	@Override
-	public void remove(int el) {
+	public void remove(long el) {
         if ( readonly ) throw new IllegalStateException("can't alter readonly IntervalSet");
         int n = intervals.size();
         for (int i = 0; i < n; i++) {
             Interval I = intervals.get(i);
-            int a = I.a;
-            int b = I.b;
+			long a = I.a;
+			long b = I.b;
             if ( el<a ) {
                 break; // list is sorted and el is before this interval; not here
             }
@@ -631,7 +646,7 @@ public class IntervalSet implements IntSet {
             }
             // if in middle a..x..b, split interval
             if ( el>a && el<b ) { // found in this interval
-                int oldb = I.b;
+                long oldb = I.b;
                 I.b = el-1;      // [a..x-1]
                 add(el+1, oldb); // add [x+1..b]
             }

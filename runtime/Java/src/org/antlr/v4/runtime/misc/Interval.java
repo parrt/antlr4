@@ -37,15 +37,15 @@ public class Interval {
 
 	static Interval[] cache = new Interval[INTERVAL_POOL_MAX_VALUE+1];
 
-	public int a;
-	public int b;
+	public long a;
+	public long b;
 
 	public static int creates = 0;
 	public static int misses = 0;
 	public static int hits = 0;
 	public static int outOfRange = 0;
 
-	public Interval(int a, int b) { this.a=a; this.b=b; }
+	public Interval(long a, long b) { this.a=a; this.b=b; }
 
 	/** Interval objects are used readonly so share all with the
 	 *  same single value a==b up to some max size.  Use an array as a perfect hash.
@@ -53,21 +53,21 @@ public class Interval {
 	 *  Interval object with a..a in it.  On Java.g4, 218623 IntervalSets
 	 *  have a..a (set with 1 element).
 	 */
-	public static Interval of(int a, int b) {
+	public static Interval of(long a, long b) {
 		// cache just a..a
 		if ( a!=b || a<0 || a>INTERVAL_POOL_MAX_VALUE ) {
 			return new Interval(a,b);
 		}
-		if ( cache[a]==null ) {
-			cache[a] = new Interval(a,a);
+		if ( cache[(int)a]==null ) {
+			cache[(int)a] = new Interval(a,a);
 		}
-		return cache[a];
+		return cache[(int)a];
 	}
 
 	/** return number of elements between a and b inclusively. x..x is length 1.
 	 *  if b < a, then length is 0.  9..10 has length 2.
 	 */
-	public int length() {
+	public long length() {
 		if ( b<a ) return 0;
 		return b-a+1;
 	}
@@ -83,10 +83,10 @@ public class Interval {
 
 	@Override
 	public int hashCode() {
-		int hash = 23;
+		long hash = 23;
 		hash = hash * 31 + a;
 		hash = hash * 31 + b;
-		return hash;
+		return (int)hash;
 	}
 
 	/** Does this start completely before other? Disjoint */

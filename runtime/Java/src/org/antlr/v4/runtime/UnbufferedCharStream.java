@@ -318,8 +318,8 @@ public class UnbufferedCharStream implements CharStream {
 			                    bufferStartIndex+".."+(bufferStartIndex+n-1));
 		}
 		// convert from absolute to local index
-		int i = interval.a - bufferStartIndex;
-		return new String(data, i, interval.length());
+		long i = interval.a - bufferStartIndex;
+		return new String(data, (int)i, (int)interval.length());
 	}
 
 	protected final int getBufferStartIndex() {

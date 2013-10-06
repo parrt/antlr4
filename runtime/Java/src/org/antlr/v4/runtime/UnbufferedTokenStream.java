@@ -311,19 +311,19 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 		int bufferStartIndex = getBufferStartIndex();
 		int bufferStopIndex = bufferStartIndex + tokens.length - 1;
 
-		int start = interval.a;
-		int stop = interval.b;
+		long start = interval.a;
+		long stop = interval.b;
 		if (start < bufferStartIndex || stop > bufferStopIndex) {
 			throw new UnsupportedOperationException("interval "+interval+" not in token buffer window: "+
 													bufferStartIndex+".."+bufferStopIndex);
 		}
 
-		int a = start - bufferStartIndex;
-		int b = stop - bufferStartIndex;
+		long a = start - bufferStartIndex;
+		long b = stop - bufferStartIndex;
 
 		StringBuilder buf = new StringBuilder();
-		for (int i = a; i <= b; i++) {
-			Token t = tokens[i];
+		for (long i = a; i <= b; i++) {
+			Token t = tokens[(int)i];
 			buf.append(t.getText());
 		}
 

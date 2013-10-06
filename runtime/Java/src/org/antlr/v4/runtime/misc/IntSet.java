@@ -38,7 +38,7 @@ import java.util.List;
  */
 public interface IntSet {
     /** Add an element to the set */
-    void add(int el);
+    void add(long el);
 
     /** Add all elements from incoming set to this set.  Can limit
      *  to set of its own type. Return "this" so we can chain calls.
@@ -59,21 +59,21 @@ public interface IntSet {
     /** Return the size of this set (not the underlying implementation's
      *  allocated memory size, for example).
      */
-    int size();
+	long size();
 
     boolean isNil();
 
     @Override
     boolean equals(Object obj);
 
-    int getSingleElement();
+	long getSingleElement();
 
-    boolean contains(int el);
+    boolean contains(long el);
 
     /** remove this element from this set */
-    void remove(int el);
+    void remove(long el);
 
-    List<Integer> toList();
+    List<Long> toList();
 
     @Override
     String toString();

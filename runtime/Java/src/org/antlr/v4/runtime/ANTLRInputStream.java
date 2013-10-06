@@ -224,15 +224,15 @@ public class ANTLRInputStream implements CharStream {
 
 	@Override
 	public String getText(Interval interval) {
-		int start = interval.a;
-		int stop = interval.b;
+		long start = interval.a;
+		long stop = interval.b;
 		if ( stop >= n ) stop = n-1;
-		int count = stop - start + 1;
+		long count = stop - start + 1;
 		if ( start >= n ) return "";
 //		System.err.println("data: "+Arrays.toString(data)+", n="+n+
 //						   ", start="+start+
 //						   ", stop="+stop);
-		return new String(data, start, count);
+		return new String(data, (int)start, (int)count); // hmm...must be smaller than 2G
 	}
 
 	@Override

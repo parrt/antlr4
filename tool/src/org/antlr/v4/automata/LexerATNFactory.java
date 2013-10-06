@@ -224,7 +224,7 @@ public class LexerATNFactory extends ParserATNFactory {
 			Transition transition;
 			if (set.getIntervals().size() == 1) {
 				Interval interval = set.getIntervals().get(0);
-				transition = new RangeTransition(right, interval.a, interval.b);
+				transition = new RangeTransition(right, (int)interval.a, (int)interval.b);
 			} else {
 				transition = new SetTransition(right, set);
 			}

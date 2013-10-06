@@ -993,7 +993,7 @@ public class ParserATNSimulator extends ATNSimulator {
 			}
 		}
 		if ( alts.size()==0 ) return ATN.INVALID_ALT_NUMBER;
-		return alts.getMinElement();
+		return (int)alts.getMinElement();
 	}
 
 	/** Look through a list of predicate/alt pairs, returning alts for the

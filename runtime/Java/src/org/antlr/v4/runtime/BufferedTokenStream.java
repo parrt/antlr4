@@ -405,15 +405,15 @@ public class BufferedTokenStream implements TokenStream {
 	@NotNull
     @Override
     public String getText(Interval interval) {
-		int start = interval.a;
-		int stop = interval.b;
+		long start = interval.a;
+		long stop = interval.b;
         if ( start<0 || stop<0 ) return "";
         lazyInit();
         if ( stop>=tokens.size() ) stop = tokens.size()-1;
 
 		StringBuilder buf = new StringBuilder();
-		for (int i = start; i <= stop; i++) {
-			Token t = tokens.get(i);
+		for (long i = start; i <= stop; i++) {
+			Token t = tokens.get((int)i);
 			if ( t.getType()==Token.EOF ) break;
 			buf.append(t.getText());
 		}

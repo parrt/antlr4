@@ -50,6 +50,7 @@ import org.antlr.v4.runtime.atn.Transition;
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
+import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.Rule;
 
@@ -224,10 +225,10 @@ public class ATNSerializer {
 					}
 				}
 				else {
-					data.add(I.a);
+					data.add((int)I.a);
 				}
 
-				data.add(I.b);
+				data.add((int)I.b);
 			}
 		}
 

@@ -372,8 +372,8 @@ public class TokenStreamRewriter {
 
 	public String getText(String programName, Interval interval) {
 		List<RewriteOperation> rewrites = programs.get(programName);
-		int start = interval.a;
-		int stop = interval.b;
+		long start = interval.a;
+		long stop = interval.b;
 
         // ensure start/end are in range
         if ( stop>tokens.size()-1 ) stop = tokens.size()-1;
@@ -388,11 +388,11 @@ public class TokenStreamRewriter {
 		Map<Integer, RewriteOperation> indexToOp = reduceToSingleOperationPerIndex(rewrites);
 
         // Walk buffer, executing instructions and emitting tokens
-        int i = start;
+		int i = (int)start;
         while ( i <= stop && i < tokens.size() ) {
 			RewriteOperation op = indexToOp.get(i);
-			indexToOp.remove(i); // remove so any left have index size-1
-			Token t = tokens.get(i);
+			indexToOp.remove((int)i); // remove so any left have index size-1
+			Token t = tokens.get((int)i);
 			if ( op==null ) {
 				// no operation at that index, just dump token
 				if ( t.getType()!=Token.EOF ) buf.append(t.getText());
@@ -556,7 +556,7 @@ public class TokenStreamRewriter {
 			if ( m.get(op.index)!=null ) {
 				throw new Error("should only be one op per index");
 			}
-			m.put(op.index, op);
+			m.put((int)op.index, op);
 		}
 		//System.out.println("index to op: "+m);
 		return m;

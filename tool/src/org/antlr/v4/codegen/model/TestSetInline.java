@@ -53,7 +53,7 @@ public class TestSetInline extends SrcOp {
 
 	private static Bitset[] createBitsets(OutputModelFactory factory, IntervalSet set, boolean useZeroOffset) {
 		List<Bitset> bitsetList = new ArrayList<Bitset>();
-		for (int ttype : set.toArray()) {
+		for (long ttype : set.toArray()) {
 			Bitset current = !bitsetList.isEmpty() ? bitsetList.get(bitsetList.size() - 1) : null;
 			if (current == null || ttype > (current.shift + 63)) {
 				current = new Bitset();
@@ -67,14 +67,14 @@ public class TestSetInline extends SrcOp {
 				bitsetList.add(current);
 			}
 
-			current.ttypes.add(factory.getGenerator().getTarget().getTokenTypeAsTargetLabel(factory.getGrammar(), ttype));
+			current.ttypes.add(factory.getGenerator().getTarget().getTokenTypeAsTargetLabel(factory.getGrammar(), (int)ttype));
 		}
 
 		return bitsetList.toArray(new Bitset[bitsetList.size()]);
 	}
 
 	public static final class Bitset {
-		public int shift;
+		public long shift;
 		public final List<String> ttypes = new ArrayList<String>();
 	}
 }

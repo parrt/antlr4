@@ -31,6 +31,7 @@
 package org.antlr.v4.misc;
 
 import org.antlr.v4.runtime.misc.IntegerList;
+import org.antlr.v4.runtime.misc.LongList;
 import org.antlr.v4.tool.ast.GrammarAST;
 
 import java.util.ArrayList;
@@ -125,6 +126,15 @@ public class Utils {
 	}
 
 	public static char[] toCharArray(IntegerList data) {
+		if ( data==null ) return null;
+		char[] cdata = new char[data.size()];
+		for (int i=0; i<data.size(); i++) {
+			cdata[i] = (char)data.get(i);
+		}
+		return cdata;
+	}
+
+	public static char[] toCharArray(LongList data) {
 		if ( data==null ) return null;
 		char[] cdata = new char[data.size()];
 		for (int i=0; i<data.size(); i++) {

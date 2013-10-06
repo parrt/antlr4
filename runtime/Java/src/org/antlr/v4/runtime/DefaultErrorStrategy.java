@@ -576,7 +576,7 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 	protected Token getMissingSymbol(@NotNull Parser recognizer) {
 		Token currentSymbol = recognizer.getCurrentToken();
 		IntervalSet expecting = getExpectedTokens(recognizer);
-		int expectedTokenType = expecting.getMinElement(); // get any element
+		int expectedTokenType = (int)expecting.getMinElement(); // get any element
 		String tokenText;
 		if ( expectedTokenType== Token.EOF ) tokenText = "<missing EOF>";
 		else tokenText = "<missing "+recognizer.getTokenNames()[expectedTokenType]+">";
