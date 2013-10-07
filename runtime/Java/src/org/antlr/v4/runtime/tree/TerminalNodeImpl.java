@@ -56,7 +56,7 @@ public class TerminalNodeImpl implements TerminalNode {
 	public Interval getSourceInterval() {
 		if ( symbol ==null ) return Interval.INVALID;
 
-		int tokenIndex = symbol.getTokenIndex();
+		long tokenIndex = symbol.getTokenIndex();
 		return new Interval(tokenIndex, tokenIndex);
 	}
 

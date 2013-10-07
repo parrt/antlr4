@@ -75,7 +75,7 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 	 *  Needed, for example, to get the text for current token.  Set at
 	 *  the start of nextToken.
 	 */
-	public int _tokenStartCharIndex = -1;
+	public long _tokenStartCharIndex = -1;
 
 	/** The line on which the first character of the token resides */
 	public int _tokenStartLine;
@@ -140,7 +140,7 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 
 		// Mark start location in char stream so unbuffered streams are
 		// guaranteed at least have text of current token
-		int tokenStartMarker = _input.mark();
+		long tokenStartMarker = _input.mark();
 		try{
 			outer:
 			while (true) {
@@ -277,8 +277,8 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 		// The character position for EOF is one beyond the position of
 		// the previous token's last character
 		if ( _token !=null ) {
-			int n = _token.getStopIndex() - _token.getStartIndex() + 1;
-			cpos = _token.getCharPositionInLine()+n;
+			long n = _token.getStopIndex() - _token.getStartIndex() + 1;
+			cpos = _token.getCharPositionInLine()+(int)n;
 		}
 		Token eof = _factory.create(_tokenFactorySourcePair, Token.EOF, null, Token.DEFAULT_CHANNEL, _input.index(), _input.index()-1,
 									getLine(), cpos);
@@ -305,7 +305,7 @@ public abstract class Lexer extends Recognizer<Integer, LexerATNSimulator>
 	}
 
 	/** What is the index of the current character of lookahead? */
-	public int getCharIndex() {
+	public long getCharIndex() {
 		return _input.index();
 	}
 

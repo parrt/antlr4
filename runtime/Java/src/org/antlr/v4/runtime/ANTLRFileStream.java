@@ -71,7 +71,7 @@ public class ANTLRFileStream extends ANTLRInputStream {
 			data = new char[size];
 			n = isr.read(data);
 			if (n < data.length) {
-				data = Arrays.copyOf(data, n);
+				data = Arrays.copyOf(data, (int)n);
 			}
 		}
 		finally {

@@ -65,6 +65,6 @@ public class LL1StarBlock extends LL1Loop {
 		loopLabel = factory.getGenerator().getTarget().getLoopLabel(starRootAST);
 
 		this.exitLook =
-			factory.getGenerator().getTarget().getTokenTypesAsTargetLabels(factory.getGrammar(), lastLook.toArray());
+			factory.getGenerator().getTarget().getTokenTypesAsTargetLabels(factory.getGrammar(), lastLook.toIntArray());
 	}
 }

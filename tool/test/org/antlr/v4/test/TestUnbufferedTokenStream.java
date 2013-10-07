@@ -132,7 +132,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
 			lexEngine.setInput(input);
 		TestingUnbufferedTokenStream<Token> tokens = new TestingUnbufferedTokenStream<Token>(lexEngine);
 
-		int m = tokens.mark();
+		long m = tokens.mark();
 		assertEquals("[[@0,0:0='x',<1>,1:0]]", tokens.getBuffer().toString());
 		assertEquals("x", tokens.LT(1).getText());
 		tokens.consume(); // consume x
@@ -168,7 +168,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
 		lexEngine.setInput(input);
 		TestingUnbufferedTokenStream<Token> tokens = new TestingUnbufferedTokenStream<Token>(lexEngine);
 
-		int m = tokens.mark();
+		long m = tokens.mark();
 		assertEquals("[[@0,0:0='x',<1>,1:0]]", tokens.getBuffer().toString());
 		assertEquals("x", tokens.LT(1).getText());
 		tokens.consume(); // consume x
@@ -209,7 +209,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
 				return Collections.emptyList();
 			}
 
-			return Arrays.asList(tokens).subList(p, n);
+			return Arrays.asList(tokens).subList((int)p, (int)n);
 		}
 
 		/** For testing.  What's in moving window buffer into data stream.
@@ -220,7 +220,7 @@ public class TestUnbufferedTokenStream extends BaseTest {
 				return Collections.emptyList();
 			}
 
-			return Arrays.asList(tokens).subList(0, n);
+			return Arrays.asList(tokens).subList(0, (int)n);
 		}
 
 	}

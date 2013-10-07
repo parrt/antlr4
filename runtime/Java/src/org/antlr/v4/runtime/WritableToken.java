@@ -41,5 +41,5 @@ public interface WritableToken extends Token {
 
 	public void setChannel(int channel);
 
-	public void setTokenIndex(int index);
+	public void setTokenIndex(long index);
 }

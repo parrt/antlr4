@@ -279,7 +279,7 @@ public class ParserATNSimulator extends ATNSimulator {
 
 	// LAME globals to avoid parameters!!!!! I need these down deep in predTransition
 	protected TokenStream _input;
-	protected int _startIndex;
+	protected long _startIndex;
 	protected ParserRuleContext _outerContext;
 
 	/** Testing only! */
@@ -319,8 +319,8 @@ public class ParserATNSimulator extends ATNSimulator {
 		_outerContext = outerContext;
 		DFA dfa = decisionToDFA[decision];
 
-		int m = input.mark();
-		int index = input.index();
+		long m = input.mark();
+		long index = input.index();
 
 		// Now we are certain to have a specific decision's DFA
 		// But, do we still need an initial state?
@@ -383,7 +383,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	    conflict + preds
 	 */
 	protected int execATN(@NotNull DFA dfa, @NotNull DFAState s0,
-					   @NotNull TokenStream input, int startIndex,
+					   @NotNull TokenStream input, long startIndex,
 					   ParserRuleContext outerContext)
 	{
 		if ( debug || debug_list_atn_decisions) {
@@ -428,7 +428,7 @@ public class ParserATNSimulator extends ATNSimulator {
 				BitSet conflictingAlts = null;
 				if ( D.predicates!=null ) {
 					if ( debug ) System.out.println("DFA state has preds in DFA sim LL failover");
-					int conflictIndex = input.index();
+					long conflictIndex = input.index();
 					if (conflictIndex != startIndex) {
 						input.seek(startIndex);
 					}
@@ -463,7 +463,7 @@ public class ParserATNSimulator extends ATNSimulator {
 					return D.prediction;
 				}
 
-				int stopIndex = input.index();
+				long stopIndex = input.index();
 				input.seek(startIndex);
 				BitSet alts = evalSemanticContext(D.predicates, outerContext, true);
 				switch (alts.cardinality()) {
@@ -596,7 +596,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	protected int execATNWithFullContext(DFA dfa,
 										 DFAState D, // how far we got before failing over
 										 @NotNull ATNConfigSet s0,
-										 @NotNull TokenStream input, int startIndex,
+										 @NotNull TokenStream input, long startIndex,
 										 ParserRuleContext outerContext)
 	{
 		if ( debug || debug_list_atn_decisions ) {
@@ -1233,7 +1233,7 @@ public class ParserATNSimulator extends ATNSimulator {
 				// during closure, which dramatically reduces the size of
 				// the config sets. It also obviates the need to test predicates
 				// later during conflict resolution.
-				int currentPosition = _input.index();
+				long currentPosition = _input.index();
 				_input.seek(_startIndex);
 				boolean predSucceeds = pt.getPredicate().eval(parser, _outerContext);
 				_input.seek(currentPosition);
@@ -1370,7 +1370,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	protected NoViableAltException noViableAlt(@NotNull TokenStream input,
 											@NotNull ParserRuleContext outerContext,
 											@NotNull ATNConfigSet configs,
-											int startIndex)
+											long startIndex)
 	{
 		return new NoViableAltException(parser, input,
 											input.get(startIndex),
@@ -1480,7 +1480,7 @@ public class ParserATNSimulator extends ATNSimulator {
 		}
 	}
 
-	protected void reportAttemptingFullContext(DFA dfa, @Nullable BitSet conflictingAlts, @NotNull ATNConfigSet configs, int startIndex, int stopIndex) {
+	protected void reportAttemptingFullContext(DFA dfa, @Nullable BitSet conflictingAlts, @NotNull ATNConfigSet configs, long startIndex, long stopIndex) {
         if ( debug || retry_debug ) {
 			Interval interval = Interval.of(startIndex, stopIndex);
 			System.out.println("reportAttemptingFullContext decision="+dfa.decision+":"+configs+
@@ -1489,7 +1489,7 @@ public class ParserATNSimulator extends ATNSimulator {
         if ( parser!=null ) parser.getErrorListenerDispatch().reportAttemptingFullContext(parser, dfa, startIndex, stopIndex, conflictingAlts, configs);
     }
 
-	protected void reportContextSensitivity(DFA dfa, int prediction, @NotNull ATNConfigSet configs, int startIndex, int stopIndex) {
+	protected void reportContextSensitivity(DFA dfa, int prediction, @NotNull ATNConfigSet configs, long startIndex, long stopIndex) {
         if ( debug || retry_debug ) {
 			Interval interval = Interval.of(startIndex, stopIndex);
             System.out.println("reportContextSensitivity decision="+dfa.decision+":"+configs+
@@ -1499,7 +1499,7 @@ public class ParserATNSimulator extends ATNSimulator {
     }
 
     /** If context sensitive parsing, we know it's ambiguity not conflict */
-    protected void reportAmbiguity(@NotNull DFA dfa, DFAState D, int startIndex, int stopIndex,
+    protected void reportAmbiguity(@NotNull DFA dfa, DFAState D, long startIndex, long stopIndex,
 								   boolean exact,
 								   @Nullable BitSet ambigAlts,
 								   @NotNull ATNConfigSet configs)

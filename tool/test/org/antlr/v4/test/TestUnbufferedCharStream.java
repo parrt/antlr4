@@ -88,8 +88,8 @@ public class TestUnbufferedCharStream extends BaseTest {
 	@Test(expected = IllegalStateException.class)
 	public void testMarkReleaseOutOfOrder() {
 		CharStream input = createStream("");
-		int m1 = input.mark();
-		int m2 = input.mark();
+		long m1 = input.mark();
+		long m2 = input.mark();
 		input.release(m1);
 	}
 
@@ -101,7 +101,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 	@Test(expected = IllegalStateException.class)
 	public void testMarkReleasedTwice() {
 		CharStream input = createStream("");
-		int m1 = input.mark();
+		long m1 = input.mark();
 		input.release(m1);
 		input.release(m1);
 	}
@@ -114,8 +114,8 @@ public class TestUnbufferedCharStream extends BaseTest {
 	@Test(expected = IllegalStateException.class)
 	public void testNestedMarkReleasedTwice() {
 		CharStream input = createStream("");
-		int m1 = input.mark();
-		int m2 = input.mark();
+		long m1 = input.mark();
+		long m2 = input.mark();
 		input.release(m2);
 		input.release(m2);
 	}
@@ -128,7 +128,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 	@Test(expected = IllegalArgumentException.class)
 	public void testMarkPassedToSeek() {
 		CharStream input = createStream("");
-		int m1 = input.mark();
+		long m1 = input.mark();
 		input.seek(m1);
 	}
 
@@ -136,7 +136,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 	public void testSeekBeforeBufferStart() {
 		CharStream input = createStream("xyz");
 		input.consume();
-		int m1 = input.mark();
+		long m1 = input.mark();
 		assertEquals(1, input.index());
 		input.consume();
 		input.seek(0);
@@ -146,7 +146,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 	public void testGetTextBeforeBufferStart() {
 		CharStream input = createStream("xyz");
 		input.consume();
-		int m1 = input.mark();
+		long m1 = input.mark();
 		assertEquals(1, input.index());
 		input.getText(new Interval(0, 1));
 	}
@@ -155,7 +155,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 	public void testGetTextInMarkedRange() {
 		CharStream input = createStream("xyz");
 		input.consume();
-		int m1 = input.mark();
+		long m1 = input.mark();
 		assertEquals(1, input.index());
 		input.consume();
 		input.consume();
@@ -169,7 +169,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 		input.consume();
 		assertEquals('a', input.LA(-1));
 
-		int m1 = input.mark();
+		long m1 = input.mark();
 		input.consume();
 		input.consume();
 		input.consume();
@@ -260,7 +260,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 
 	@Test public void test1Mark() throws Exception {
 		TestingUnbufferedCharStream input = createStream("xyz");
-		int m = input.mark();
+		long m = input.mark();
 		assertEquals('x', input.LA(1));
 		assertEquals('y', input.LA(2));
 		assertEquals('z', input.LA(3));
@@ -271,7 +271,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 
 	@Test public void test1MarkWithConsumesInSequence() throws Exception {
 		TestingUnbufferedCharStream input = createStream("xyz");
-		int m = input.mark();
+		long m = input.mark();
 		input.consume(); // x, moves to y
 		input.consume(); // y
 		input.consume(); // z, moves to EOF
@@ -285,10 +285,10 @@ public class TestUnbufferedCharStream extends BaseTest {
 		TestingUnbufferedCharStream input = createStream("xyz", 100);
    		assertEquals('x', input.LA(1));
         input.consume(); // reset buffer index (p) to 0
-        int m1 = input.mark();
+        long m1 = input.mark();
    		assertEquals('y', input.LA(1));
         input.consume();
-        int m2 = input.mark();
+        long m2 = input.mark();
 		assertEquals("yz", input.getBuffer());
         input.release(m2); // drop to 1 marker
         input.consume();
@@ -334,7 +334,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 		return new TestingUnbufferedCharStream(new StringReader(text));
 	}
 
-	protected static TestingUnbufferedCharStream createStream(String text, int bufferSize) {
+	protected static TestingUnbufferedCharStream createStream(String text, long bufferSize) {
 		return new TestingUnbufferedCharStream(new StringReader(text), bufferSize);
 	}
 
@@ -344,7 +344,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 			super(input);
 		}
 
-		public TestingUnbufferedCharStream(Reader input, int bufferSize) {
+		public TestingUnbufferedCharStream(Reader input, long bufferSize) {
 			super(input, bufferSize);
 		}
 
@@ -353,7 +353,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 		 */
 		public String getRemainingBuffer() {
 			if ( n==0 ) return "";
-			return new String(data,p,n-p);
+			return new String(data,(int)p,(int)(n-p));
 		}
 
 		/** For testing.  What's in moving window buffer into data stream.
@@ -361,7 +361,7 @@ public class TestUnbufferedCharStream extends BaseTest {
 		 */
 		public String getBuffer() {
 			if ( n==0 ) return "";
-			return new String(data,0,n);
+			return new String(data,0,(int)n);
 		}
 
 	}

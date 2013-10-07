@@ -112,13 +112,13 @@ public class LexerInterpreter implements TokenSource {
 	@Override
 	public Token nextToken() {
 		// TODO: Deal with off channel tokens
-		int start = input.index();
+		long start = input.index();
 		int tokenStartCharPositionInLine = interp.getCharPositionInLine();
 		int tokenStartLine = interp.getLine();
-		int mark = input.mark(); // make sure unuffered stream holds chars long enough to get text
+		long mark = input.mark(); // make sure unuffered stream holds chars long enough to get text
 		try {
 			int ttype = interp.match(input, Lexer.DEFAULT_MODE);
-			int stop = input.index()-1;
+			long stop = input.index()-1;
 
 			return _factory.create(tokenFactorySourcePair, ttype, null, Token.DEFAULT_CHANNEL, start, stop,
 								   tokenStartLine, tokenStartCharPositionInLine);

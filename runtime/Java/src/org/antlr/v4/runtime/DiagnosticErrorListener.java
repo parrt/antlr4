@@ -88,8 +88,8 @@ public class DiagnosticErrorListener extends BaseErrorListener {
 	@Override
 	public void reportAmbiguity(@NotNull Parser recognizer,
 								DFA dfa,
-								int startIndex,
-								int stopIndex,
+								long startIndex,
+								long stopIndex,
 								boolean exact,
 								@Nullable BitSet ambigAlts,
 								@NotNull ATNConfigSet configs)
@@ -109,8 +109,8 @@ public class DiagnosticErrorListener extends BaseErrorListener {
 	@Override
 	public void reportAttemptingFullContext(@NotNull Parser recognizer,
 											@NotNull DFA dfa,
-											int startIndex,
-											int stopIndex,
+											long startIndex,
+											long stopIndex,
 											@Nullable BitSet conflictingAlts,
 											@NotNull ATNConfigSet configs)
 	{
@@ -124,8 +124,8 @@ public class DiagnosticErrorListener extends BaseErrorListener {
 	@Override
 	public void reportContextSensitivity(@NotNull Parser recognizer,
 										 @NotNull DFA dfa,
-										 int startIndex,
-										 int stopIndex,
+										 long startIndex,
+										 long stopIndex,
 										 int prediction,
 										 @NotNull ATNConfigSet configs)
 	{

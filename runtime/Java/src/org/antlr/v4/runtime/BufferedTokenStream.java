@@ -65,9 +65,9 @@ public class BufferedTokenStream implements TokenStream {
 	/**
 	 * The index into {@link #tokens} of the current token (next token to
 	 * consume). {@link #tokens}{@code [}{@link #p}{@code ]} should be
-	 * {@link #LT LT(1)}. {@link #p}{@code =-1} indicates need to initialize
+	 * {@link TokenStream#LT LT(1)}. {@link #p}{@code =-1} indicates need to initialize
 	 * with first token. The constructor doesn't get a token. First call to
-	 * {@link #LT LT(1)} or whatever gets the first token and sets
+	 * {@link TokenStream#LT LT(1)} or whatever gets the first token and sets
 	 * {@link #p}{@code =0;}.
 	 */
     protected int p = -1;
@@ -92,15 +92,15 @@ public class BufferedTokenStream implements TokenStream {
     public TokenSource getTokenSource() { return tokenSource; }
 
 	@Override
-	public int index() { return p; }
+	public long index() { return p; }
 
     @Override
-    public int mark() {
+    public long mark() {
 		return 0;
 	}
 
 	@Override
-	public void release(int marker) {
+	public void release(long marker) {
 		// no resources to release
 	}
 
@@ -109,13 +109,13 @@ public class BufferedTokenStream implements TokenStream {
     }
 
     @Override
-    public void seek(int index) {
+    public void seek(long index) {
         lazyInit();
-        p = adjustSeekIndex(index);
+        p = adjustSeekIndex((int)index);
     }
 
     @Override
-    public int size() { return tokens.size(); }
+    public long size() { return tokens.size(); }
 
     @Override
     public void consume() {
@@ -132,7 +132,7 @@ public class BufferedTokenStream implements TokenStream {
 	 *
 	 * @return {@code true} if a token is located at index {@code i}, otherwise
 	 *    {@code false}.
-	 * @see #get(int i)
+	 * @see #get(long i)
 	 */
     protected boolean sync(int i) {
 		assert i >= 0;
@@ -171,11 +171,11 @@ public class BufferedTokenStream implements TokenStream {
     }
 
     @Override
-    public Token get(int i) {
+    public Token get(long i) {
         if ( i < 0 || i >= tokens.size() ) {
             throw new IndexOutOfBoundsException("token index "+i+" out of range 0.."+(tokens.size()-1));
         }
-        return tokens.get(i);
+        return tokens.get((int)i);
     }
 
 	/** Get all tokens from start..stop inclusively */
@@ -193,7 +193,7 @@ public class BufferedTokenStream implements TokenStream {
 	}
 
 	@Override
-	public int LA(int i) { return LT(i).getType(); }
+	public int LA(long i) { return LT(i).getType(); }
 
     protected Token LB(int k) {
         if ( (p-k)<0 ) return null;
@@ -201,12 +201,12 @@ public class BufferedTokenStream implements TokenStream {
     }
 
     @Override
-    public Token LT(int k) {
+    public Token LT(long k) {
         lazyInit();
         if ( k==0 ) return null;
-        if ( k < 0 ) return LB(-k);
+        if ( k < 0 ) return LB((int)-k);
 
-		int i = p + k - 1;
+		int i = p + (int)k - 1;
 		sync(i);
         if ( i >= tokens.size() ) { // return EOF token
             // EOF must be last token
@@ -334,7 +334,7 @@ public class BufferedTokenStream implements TokenStream {
 		int to;
 		int from = tokenIndex+1;
 		// if none onchannel to right, nextOnChannel=-1 so set to = last token
-		if ( nextOnChannel == -1 ) to = size()-1;
+		if ( nextOnChannel == -1 ) to = (int)size()-1;
 		else to = nextOnChannel;
 
 		return filterForChannel(from, to, channel);

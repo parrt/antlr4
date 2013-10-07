@@ -56,7 +56,7 @@ public class UnbufferedCharStream implements CharStream {
 	 * <p/>
 	 * This is not the buffer capacity, that's {@code data.length}.
 	 */
-   	protected int n;
+   	protected long n;
 
 	/**
 	 * 0..n-1 index into {@link #data data} of next character.
@@ -64,15 +64,15 @@ public class UnbufferedCharStream implements CharStream {
 	 * The {@code LA(1)} character is {@code data[p]}. If {@code p == n}, we are
 	 * out of buffered characters.
 	 */
-   	protected int p=0;
+   	protected long p=0;
 
 	/**
 	 * Count up with {@link #mark mark()} and down with
-	 * {@link #release release()}. When we {@code release()} the last mark,
+	 * {@link IntStream#release release()}. When we {@code release()} the last mark,
 	 * {@code numMarkers} reaches 0 and we reset the buffer. Copy
 	 * {@code data[p]..data[n-1]} to {@code data[0]..data[(n-1)-p]}.
 	 */
-	protected int numMarkers = 0;
+	protected long numMarkers = 0;
 
 	/**
 	 * This is the {@code LA(-1)} character for the current position.
@@ -91,7 +91,7 @@ public class UnbufferedCharStream implements CharStream {
 	 * entire stream, although the stream size is unknown before the end is
 	 * reached.
 	 */
-    protected int currentCharIndex = 0;
+    protected long currentCharIndex = 0;
 
     protected Reader input;
 
@@ -104,9 +104,9 @@ public class UnbufferedCharStream implements CharStream {
 	}
 
 	/** Useful for subclasses that pull char from other than this.input. */
-	public UnbufferedCharStream(int bufferSize) {
+	public UnbufferedCharStream(long bufferSize) {
 		n = 0;
-		data = new char[bufferSize];
+		data = new char[(int)bufferSize];
 	}
 
 	public UnbufferedCharStream(InputStream input) {
@@ -117,13 +117,13 @@ public class UnbufferedCharStream implements CharStream {
 		this(input, 256);
 	}
 
-	public UnbufferedCharStream(InputStream input, int bufferSize) {
+	public UnbufferedCharStream(InputStream input, long bufferSize) {
 		this(bufferSize);
 		this.input = new InputStreamReader(input);
 		fill(1); // prime
 	}
 
-	public UnbufferedCharStream(Reader input, int bufferSize) {
+	public UnbufferedCharStream(Reader input, long bufferSize) {
 		this(bufferSize);
 		this.input = input;
 		fill(1); // prime
@@ -136,7 +136,7 @@ public class UnbufferedCharStream implements CharStream {
 		}
 
 		// buf always has at least data[p==0] in this method due to ctor
-		lastChar = data[p];   // track last char for LA(-1)
+		lastChar = data[(int)p];   // track last char for LA(-1)
 
 		if (p == n-1 && numMarkers==0) {
 			n = 0;
@@ -155,8 +155,8 @@ public class UnbufferedCharStream implements CharStream {
 	 * the char index 'need' elements ahead. If we need 1 element,
 	 * {@code (p+1-1)==p} must be less than {@code data.length}.
 	 */
-	protected void sync(int want) {
-		int need = (p+want-1) - n + 1; // how many more elements we need?
+	protected void sync(long want) {
+		long need = (p+want-1) - n + 1; // how many more elements we need?
 		if ( need > 0 ) {
 			fill(need);
 		}
@@ -167,9 +167,9 @@ public class UnbufferedCharStream implements CharStream {
 	 * actually added to the buffer. If the return value is less than {@code n},
 	 * then EOF was reached before {@code n} characters could be added.
 	 */
-	protected int fill(int n) {
-		for (int i=0; i<n; i++) {
-			if (this.n > 0 && data[this.n - 1] == (char)IntStream.EOF) {
+	protected long fill(long n) {
+		for (long i=0; i<n; i++) {
+			if (this.n > 0 && data[(int)this.n - 1] == (char)IntStream.EOF) {
 				return i;
 			}
 
@@ -197,17 +197,18 @@ public class UnbufferedCharStream implements CharStream {
 		if ( n>=data.length ) {
 			data = Arrays.copyOf(data, data.length * 2);
         }
-        data[n++] = (char)c;
+        data[(int)n] = (char)c;
+		n++;
     }
 
     @Override
-    public int LA(int i) {
+    public int LA(long i) {
 		if ( i==-1 ) return lastChar; // special case
         sync(i);
-        int index = p + i - 1;
+		long index = p + i - 1;
         if ( index < 0 ) throw new IndexOutOfBoundsException();
 		if ( index >= n ) return IntStream.EOF;
-        char c = data[index];
+        char c = data[(int)index];
         if ( c==(char)IntStream.EOF ) return IntStream.EOF;
         return c;
     }
@@ -220,12 +221,12 @@ public class UnbufferedCharStream implements CharStream {
 	 * {@code release()} is called in the wrong order.
 	 */
     @Override
-    public int mark() {
+    public long mark() {
 		if (numMarkers == 0) {
 			lastCharBufferStart = lastChar;
 		}
 
-		int mark = -numMarkers - 1;
+		long mark = -numMarkers - 1;
 		numMarkers++;
 		return mark;
     }
@@ -234,8 +235,8 @@ public class UnbufferedCharStream implements CharStream {
 	 * @param marker
 	 */
     @Override
-    public void release(int marker) {
-		int expectedMark = -numMarkers;
+    public void release(long marker) {
+		long expectedMark = -numMarkers;
 		if ( marker!=expectedMark ) {
 			throw new IllegalStateException("release() called with an invalid marker.");
 		}
@@ -244,7 +245,7 @@ public class UnbufferedCharStream implements CharStream {
 		if ( numMarkers==0 && p > 0 ) { // release buffer when we can, but don't do unnecessary work
 			// Copy data[p]..data[n-1] to data[0]..data[(n-1)-p], reset ptrs
 			// p is last valid char; move nothing if p==n as we have no valid char
-			System.arraycopy(data, p, data, 0, n - p); // shift n-p char from p to 0
+			System.arraycopy(data, (int)p, data, 0, (int)(n - p)); // shift n-p char from p to 0
 			n = n - p;
 			p = 0;
 			lastCharBufferStart = lastChar;
@@ -252,15 +253,16 @@ public class UnbufferedCharStream implements CharStream {
     }
 
     @Override
-    public int index() {
+    public long index() {
 		return currentCharIndex;
     }
 
 	/** Seek to absolute character index, which might not be in the current
 	 *  sliding window.  Move {@code p} to {@code index-bufferStartIndex}.
+	 * @param index
 	 */
     @Override
-    public void seek(int index) {
+    public void seek(long index) {
 		if (index == currentCharIndex) {
 			return;
 		}
@@ -271,7 +273,7 @@ public class UnbufferedCharStream implements CharStream {
 		}
 
         // index == to bufferStartIndex should set p to 0
-        int i = index - getBufferStartIndex();
+		long i = index - getBufferStartIndex();
         if ( i < 0 ) {
 			throw new IllegalArgumentException("cannot seek to negative index " + index);
 		}
@@ -286,12 +288,12 @@ public class UnbufferedCharStream implements CharStream {
 			lastChar = lastCharBufferStart;
 		}
 		else {
-			lastChar = data[p-1];
+			lastChar = data[(int)p-1];
 		}
     }
 
     @Override
-    public int size() {
+    public long size() {
         throw new UnsupportedOperationException("Unbuffered stream cannot know its size");
     }
 
@@ -303,11 +305,11 @@ public class UnbufferedCharStream implements CharStream {
 	@Override
 	public String getText(Interval interval) {
 		if (interval.a < 0 || interval.b < interval.a - 1) {
-			throw new IllegalArgumentException("invalid interval");
+			throw new IllegalArgumentException("invalid interval "+interval);
 		}
 
-		int bufferStartIndex = getBufferStartIndex();
-		if (n > 0 && data[n - 1] == Character.MAX_VALUE) {
+		long bufferStartIndex = getBufferStartIndex();
+		if (n > 0 && data[(int)(n - 1)] == Character.MAX_VALUE) {
 			if (interval.a + interval.length() > bufferStartIndex + n) {
 				throw new IllegalArgumentException("the interval extends past the end of the stream");
 			}
@@ -322,7 +324,7 @@ public class UnbufferedCharStream implements CharStream {
 		return new String(data, (int)i, (int)interval.length());
 	}
 
-	protected final int getBufferStartIndex() {
+	protected final long getBufferStartIndex() {
 		return currentCharIndex - p;
 	}
 }

@@ -1099,35 +1099,35 @@ public abstract class BaseTest {
 
 	public static class IntTokenStream implements TokenStream {
 		IntegerList types;
-		int p=0;
+		long p=0;
 		public IntTokenStream(IntegerList types) { this.types = types; }
 
 		@Override
 		public void consume() { p++; }
 
 		@Override
-		public int LA(int i) { return LT(i).getType(); }
+		public int LA(long i) { return LT(i).getType(); }
 
 		@Override
-		public int mark() {
+		public long mark() {
 			return index();
 		}
 
 		@Override
-		public int index() { return p; }
+		public long index() { return p; }
 
 		@Override
-		public void release(int marker) {
+		public void release(long marker) {
 			seek(marker);
 		}
 
 		@Override
-		public void seek(int index) {
+		public void seek(long index) {
 			p = index;
 		}
 
 		@Override
-		public int size() {
+		public long size() {
 			return types.size();
 		}
 
@@ -1137,18 +1137,18 @@ public abstract class BaseTest {
 		}
 
 		@Override
-		public Token LT(int i) {
+		public Token LT(long i) {
 			CommonToken t;
-			int rawIndex = p + i - 1;
+			long rawIndex = p + i - 1;
 			if ( rawIndex>=types.size() ) t = new CommonToken(Token.EOF);
-			else t = new CommonToken(types.get(rawIndex));
+			else t = new CommonToken(types.get((int)rawIndex));
 			t.setTokenIndex(rawIndex);
 			return t;
 		}
 
 		@Override
-		public Token get(int i) {
-			return new org.antlr.v4.runtime.CommonToken(types.get(i));
+		public Token get(long i) {
+			return new org.antlr.v4.runtime.CommonToken(types.get((int)i));
 		}
 
 		@Override

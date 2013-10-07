@@ -51,8 +51,8 @@ public class BaseErrorListener implements ANTLRErrorListener {
 	@Override
 	public void reportAmbiguity(Parser recognizer,
 								DFA dfa,
-								int startIndex,
-								int stopIndex,
+								long startIndex,
+								long stopIndex,
 								boolean exact,
 								BitSet ambigAlts,
 								ATNConfigSet configs)
@@ -62,8 +62,8 @@ public class BaseErrorListener implements ANTLRErrorListener {
 	@Override
 	public void reportAttemptingFullContext(Parser recognizer,
 											DFA dfa,
-											int startIndex,
-											int stopIndex,
+											long startIndex,
+											long stopIndex,
 											BitSet conflictingAlts,
 											ATNConfigSet configs)
 	{
@@ -72,8 +72,8 @@ public class BaseErrorListener implements ANTLRErrorListener {
 	@Override
 	public void reportContextSensitivity(Parser recognizer,
 										 DFA dfa,
-										 int startIndex,
-										 int stopIndex,
+										 long startIndex,
+										 long stopIndex,
 										 int prediction,
 										 ATNConfigSet configs)
 	{

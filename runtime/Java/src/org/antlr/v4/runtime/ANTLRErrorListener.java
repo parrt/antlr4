@@ -111,8 +111,8 @@ public interface ANTLRErrorListener {
 	 */
 	void reportAmbiguity(@NotNull Parser recognizer,
 						 @NotNull DFA dfa,
-						 int startIndex,
-						 int stopIndex,
+						 long startIndex,
+						 long stopIndex,
 						 boolean exact,
 						 @NotNull BitSet ambigAlts,
 						 @NotNull ATNConfigSet configs);
@@ -140,8 +140,8 @@ public interface ANTLRErrorListener {
 	 */
 	void reportAttemptingFullContext(@NotNull Parser recognizer,
 									 @NotNull DFA dfa,
-									 int startIndex,
-									 int stopIndex,
+									 long startIndex,
+									 long stopIndex,
 									 @Nullable BitSet conflictingAlts,
 									 @NotNull ATNConfigSet configs);
 
@@ -175,8 +175,8 @@ public interface ANTLRErrorListener {
 	 */
 	void reportContextSensitivity(@NotNull Parser recognizer,
 								  @NotNull DFA dfa,
-								  int startIndex,
-								  int stopIndex,
+								  long startIndex,
+								  long stopIndex,
 								  int prediction,
 								  @NotNull ATNConfigSet configs);
 }

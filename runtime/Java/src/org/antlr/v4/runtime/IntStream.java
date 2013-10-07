@@ -42,6 +42,9 @@ import org.antlr.v4.runtime.misc.NotNull;
  * unspecified behavior if no call to an initializing method has occurred after
  * the stream was constructed. The following is a list of initializing methods:
  *
+ * The size of the stream could be bigger than 32bits so we use long markers
+ * and indexes.
+ *
  * <ul>
  *   <li>{@link #LA}</li>
  *   <li>{@link #consume}</li>
@@ -118,8 +121,9 @@ public interface IntStream {
 	 *
 	 * @throws UnsupportedOperationException if the stream does not support
 	 * retrieving the value of the specified symbol
-	 */
-	int LA(int i);
+
+	 * @param i*/
+	int LA(long i);
 
 	/**
 	 * A mark provides a guarantee that {@link #seek seek()} operations will be
@@ -151,8 +155,8 @@ public interface IntStream {
 	 * release the mark.
 	 * <pre>
 	 * IntStream stream = ...;
-	 * int index = -1;
-	 * int mark = stream.mark();
+	 * long index = -1;
+	 * long mark = stream.mark();
 	 * try {
 	 *   index = stream.index();
 	 *   // perform work here...
@@ -167,7 +171,7 @@ public interface IntStream {
 	 * @return An opaque marker which should be passed to
 	 * {@link #release release()} when the marked range is no longer required.
 	 */
-	int mark();
+	long mark();
 
 	/**
 	 * This method releases a marked range created by a call to
@@ -178,10 +182,11 @@ public interface IntStream {
 	 * <p/>
 	 * For more information and an example, see {@link #mark}.
 	 *
+	 *
 	 * @param marker A marker returned by a call to {@code mark()}.
 	 * @see #mark
 	 */
-	void release(int marker);
+	void release(long marker);
 
 	/**
 	 * Return the index into the stream of the input symbol referred to by
@@ -191,7 +196,7 @@ public interface IntStream {
 	 * {@link IntStream initializing method} has occurred after this stream was
 	 * constructed.
 	 */
-	int index();
+	long index();
 
 	/**
 	 * Set the input cursor to the position indicated by {@code index}. If the
@@ -215,13 +220,14 @@ public interface IntStream {
 	 * an {@link IntStream initializing method} has occurred after this stream
 	 * was constructed.
 	 *
+	 *
 	 * @param index The absolute index to seek to.
 	 *
 	 * @throws IllegalArgumentException if {@code index} is less than 0
 	 * @throws UnsupportedOperationException if the stream does not support
 	 * seeking to the specified index
 	 */
-	void seek(int index);
+	void seek(long index);
 
 	/**
 	 * Returns the total number of symbols in the stream, including a single EOF
@@ -230,7 +236,7 @@ public interface IntStream {
 	 * @throws UnsupportedOperationException if the size of the stream is
 	 * unknown.
 	 */
-	int size();
+	long size();
 
 	/**
 	 * Gets the name of the underlying symbol source. This method returns a

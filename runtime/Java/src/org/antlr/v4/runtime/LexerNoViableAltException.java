@@ -40,7 +40,7 @@ import java.util.Locale;
 
 public class LexerNoViableAltException extends RecognitionException {
 	/** Matching attempted at what input index? */
-	private final int startIndex;
+	private final long startIndex;
 
 	/** Which configurations did we try at input.index() that couldn't match input.LA(1)? */
 	@Nullable
@@ -48,14 +48,14 @@ public class LexerNoViableAltException extends RecognitionException {
 
 	public LexerNoViableAltException(@Nullable Lexer lexer,
 									 @NotNull CharStream input,
-									 int startIndex,
+									 long startIndex,
 									 @Nullable ATNConfigSet deadEndConfigs) {
 		super(lexer, input, null);
 		this.startIndex = startIndex;
 		this.deadEndConfigs = deadEndConfigs;
 	}
 
-	public int getStartIndex() {
+	public long getStartIndex() {
 		return startIndex;
 	}
 

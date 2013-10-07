@@ -52,10 +52,10 @@ public class ANTLRInputStream implements CharStream {
 	protected char[] data;
 
 	/** How many characters are actually in the buffer */
-	protected int n;
+	protected long n;
 
 	/** 0..n-1 index into string of next char */
-	protected int p=0;
+	protected long p=0;
 
 	/** What is name or source of this char stream? */
 	public String name;
@@ -69,7 +69,7 @@ public class ANTLRInputStream implements CharStream {
 	}
 
 	/** This is the preferred constructor for strings as no data is copied */
-	public ANTLRInputStream(char[] data, int numberOfActualCharsInArray) {
+	public ANTLRInputStream(char[] data, long numberOfActualCharsInArray) {
 		this.data = data;
 		this.n = numberOfActualCharsInArray;
 	}
@@ -159,7 +159,7 @@ public class ANTLRInputStream implements CharStream {
     }
 
     @Override
-    public int LA(int i) {
+    public int LA(long i) {
 		if ( i==0 ) {
 			return 0; // undefined
 		}
@@ -176,7 +176,8 @@ public class ANTLRInputStream implements CharStream {
         }
         //System.out.println("char LA("+i+")="+(char)data[p+i-1]+"; p="+p);
 		//System.out.println("LA("+i+"); p="+p+" n="+n+" data.length="+data.length);
-		return data[p+i-1];
+		// currently we use a buffer than can only be 32-bits big.
+		return data[(int)(p+i-1)];
     }
 
 	public int LT(int i) {
@@ -188,30 +189,31 @@ public class ANTLRInputStream implements CharStream {
 	 *  be returned from LA(1).
      */
     @Override
-    public int index() {
+    public long index() {
         return p;
     }
 
 	@Override
-	public int size() {
+	public long size() {
 		return n;
 	}
 
     /** mark/release do nothing; we have entire buffer */
 	@Override
-	public int mark() {
+	public long mark() {
 		return -1;
     }
 
 	@Override
-	public void release(int marker) {
+	public void release(long marker) {
 	}
 
 	/** consume() ahead until p==index; can't just set p=index as we must
 	 *  update line and charPositionInLine. If we seek backwards, just set p
+	 * @param index
 	 */
 	@Override
-	public void seek(int index) {
+	public void seek(long index) {
 		if ( index<=p ) {
 			p = index; // just jump; don't update stream state (line, ...)
 			return;

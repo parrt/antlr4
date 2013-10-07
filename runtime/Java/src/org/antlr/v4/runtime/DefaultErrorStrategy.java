@@ -56,7 +56,7 @@ public class DefaultErrorStrategy implements ANTLRErrorStrategy {
 	 *  ad nauseum.  This is a failsafe mechanism to guarantee that at least
 	 *  one token/tree node is consumed for two errors.
 	 */
-	protected int lastErrorIndex = -1;
+	protected long lastErrorIndex = -1;
 
 	protected IntervalSet lastErrorStates;
 

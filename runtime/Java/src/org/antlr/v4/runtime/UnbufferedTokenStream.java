@@ -50,7 +50,7 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	 * <p/>
 	 * This is not the buffer capacity, that's {@code tokens.length}.
 	 */
-	protected int n;
+	protected long n;
 
 	/**
 	 * 0..n-1 index into {@link #tokens tokens} of next token.
@@ -58,15 +58,15 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	 * The {@code LT(1)} token is {@code tokens[p]}. If {@code p == n}, we are
 	 * out of buffered tokens.
 	 */
-	protected int p=0;
+	protected long p=0;
 
 	/**
 	 * Count up with {@link #mark mark()} and down with
-	 * {@link #release release()}. When we {@code release()} the last mark,
+	 * {@link IntStream#release release()}. When we {@code release()} the last mark,
 	 * {@code numMarkers} reaches 0 and we reset the buffer. Copy
 	 * {@code tokens[p]..tokens[n-1]} to {@code tokens[0]..tokens[(n-1)-p]}.
 	 */
-	protected int numMarkers = 0;
+	protected long numMarkers = 0;
 
 	/**
 	 * This is the {@code LT(-1)} token for the current position.
@@ -87,51 +87,51 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	 * This value is used to set the token indexes if the stream provides tokens
 	 * that implement {@link WritableToken}.
 	 */
-	protected int currentTokenIndex = 0;
+	protected long currentTokenIndex = 0;
 
 	public UnbufferedTokenStream(TokenSource tokenSource) {
 		this(tokenSource, 256);
 	}
 
-	public UnbufferedTokenStream(TokenSource tokenSource, int bufferSize) {
+	public UnbufferedTokenStream(TokenSource tokenSource, long bufferSize) {
 		this.tokenSource = tokenSource;
-		tokens = new Token[bufferSize];
+		tokens = new Token[(int)bufferSize];
 		n = 0;
 		fill(1); // prime the pump
 	}
 
 	@Override
-	public Token get(int i) { // get absolute index
-		int bufferStartIndex = getBufferStartIndex();
+	public Token get(long i) { // get absolute index
+		long bufferStartIndex = getBufferStartIndex();
 		if (i < bufferStartIndex || i >= bufferStartIndex + n) {
 			throw new IndexOutOfBoundsException("get("+i+") outside buffer: "+
 			                    bufferStartIndex+".."+(bufferStartIndex+n));
 		}
-		return tokens[i - bufferStartIndex];
+		return tokens[(int)(i - bufferStartIndex)];
 	}
 
 	@Override
-	public Token LT(int i) {
+	public Token LT(long i) {
 		if ( i==-1 ) {
 			return lastToken;
 		}
 
 		sync(i);
-        int index = p + i - 1;
+		long index = p + i - 1;
         if ( index < 0 ) {
 			throw new IndexOutOfBoundsException("LT("+i+") gives negative index");
 		}
 
 		if ( index >= n ) {
-			assert n > 0 && tokens[n-1].getType() == Token.EOF;
-			return tokens[n-1];
+			assert n > 0 && tokens[(int)n-1].getType() == Token.EOF;
+			return tokens[(int)n-1];
 		}
 
-		return tokens[index];
+		return tokens[(int)index];
 	}
 
 	@Override
-	public int LA(int i) {
+	public int LA(long i) {
 		return LT(i).getType();
 	}
 
@@ -165,7 +165,7 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 		}
 
 		// buf always has at least tokens[p==0] in this method due to ctor
-		lastToken = tokens[p];   // track last token for LT(-1)
+		lastToken = tokens[(int)p];   // track last token for LT(-1)
 
 		// if we're at last token and no markers, opportunity to flush buffer
 		if ( p == n-1 && numMarkers==0 ) {
@@ -183,8 +183,8 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	 *  {@code p} index is {@code tokens.length-1}.  {@code p+need-1} is the tokens index 'need' elements
 	 *  ahead.  If we need 1 element, {@code (p+1-1)==p} must be less than {@code tokens.length}.
 	 */
-	protected void sync(int want) {
-		int need = (p+want-1) - n + 1; // how many more elements we need?
+	protected void sync(long want) {
+		long need = (p+want-1) - n + 1; // how many more elements we need?
 		if ( need > 0 ) {
 			fill(need);
 		}
@@ -195,9 +195,9 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	 * actually added to the buffer. If the return value is less than {@code n},
 	 * then EOF was reached before {@code n} tokens could be added.
 	 */
-	protected int fill(int n) {
-		for (int i=0; i<n; i++) {
-			if (this.n > 0 && tokens[this.n-1].getType() == Token.EOF) {
+	protected long fill(long n) {
+		for (long i=0; i<n; i++) {
+			if (this.n > 0 && tokens[(int)this.n-1].getType() == Token.EOF) {
 				return i;
 			}
 
@@ -217,7 +217,8 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 			((WritableToken)t).setTokenIndex(getBufferStartIndex() + n);
 		}
 
-		tokens[n++] = t;
+		tokens[(int)n] = t;
+		n++;
 	}
 
 	/**
@@ -228,19 +229,19 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	 * {@code release()} is called in the wrong order.
 	 */
 	@Override
-	public int mark() {
+	public long mark() {
 		if (numMarkers == 0) {
 			lastTokenBufferStart = lastToken;
 		}
 
-		int mark = -numMarkers - 1;
+		long mark = -numMarkers - 1;
 		numMarkers++;
 		return mark;
 	}
 
 	@Override
-	public void release(int marker) {
-		int expectedMark = -numMarkers;
+	public void release(long marker) {
+		long expectedMark = -numMarkers;
 		if ( marker!=expectedMark ) {
 			throw new IllegalStateException("release() called with an invalid marker.");
 		}
@@ -250,7 +251,7 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 			if (p > 0) {
 				// Copy tokens[p]..tokens[n-1] to tokens[0]..tokens[(n-1)-p], reset ptrs
 				// p is last valid token; move nothing if p==n as we have no valid char
-				System.arraycopy(tokens, p, tokens, 0, n - p); // shift n-p tokens from p to 0
+				System.arraycopy(tokens, (int)p, tokens, 0, (int)(n - p)); // shift n-p tokens from p to 0
 				n = n - p;
 				p = 0;
 			}
@@ -260,12 +261,12 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	}
 
 	@Override
-	public int index() {
+	public long index() {
 		return currentTokenIndex;
 	}
 
 	@Override
-	public void seek(int index) { // seek to absolute index
+	public void seek(long index) { // seek to absolute index
 		if (index == currentTokenIndex) {
 			return;
 		}
@@ -275,8 +276,8 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 			index = Math.min(index, getBufferStartIndex() + n - 1);
 		}
 
-		int bufferStartIndex = getBufferStartIndex();
-		int i = index - bufferStartIndex;
+		long bufferStartIndex = getBufferStartIndex();
+		long i = index - bufferStartIndex;
 		if ( i < 0 ) {
 			throw new IllegalArgumentException("cannot seek to negative index " + index);
 		}
@@ -291,12 +292,12 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 			lastToken = lastTokenBufferStart;
 		}
 		else {
-			lastToken = tokens[p-1];
+			lastToken = tokens[(int)p-1];
 		}
 	}
 
 	@Override
-	public int size() {
+	public long size() {
 		throw new UnsupportedOperationException("Unbuffered stream cannot know its size");
 	}
 
@@ -308,8 +309,8 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 	@NotNull
 	@Override
 	public String getText(Interval interval) {
-		int bufferStartIndex = getBufferStartIndex();
-		int bufferStopIndex = bufferStartIndex + tokens.length - 1;
+		long bufferStartIndex = getBufferStartIndex();
+		long bufferStopIndex = bufferStartIndex + tokens.length - 1;
 
 		long start = interval.a;
 		long stop = interval.b;
@@ -330,7 +331,7 @@ public class UnbufferedTokenStream<T extends Token> implements TokenStream {
 		return buf.toString();
 	}
 
-	protected final int getBufferStartIndex() {
+	protected final long getBufferStartIndex() {
 		return currentTokenIndex - p;
 	}
 }

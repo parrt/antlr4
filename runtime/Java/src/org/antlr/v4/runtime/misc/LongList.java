@@ -77,7 +77,7 @@ public class LongList {
 		}
 	}
 
-	public final void add(int value) {
+	public final void add(long value) {
 		if (_data.length == _size) {
 			ensureCapacity(_size + 1);
 		}
@@ -259,11 +259,11 @@ public class LongList {
 		return Arrays.toString(toArray());
 	}
 
-	public final int binarySearch(int key) {
+	public final int binarySearch(long key) {
 		return Arrays.binarySearch(_data, 0, _size, key);
 	}
 
-	public final int binarySearch(int fromIndex, int toIndex, int key) {
+	public final int binarySearch(int fromIndex, int toIndex, long key) {
 		if (fromIndex < 0 || toIndex < 0 || fromIndex > _size || toIndex > _size) {
 			throw new IndexOutOfBoundsException();
 		}

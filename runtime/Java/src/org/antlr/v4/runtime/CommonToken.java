@@ -53,19 +53,19 @@ public class CommonToken implements WritableToken, Serializable {
 	protected String text;
 
 	/** What token number is this from 0..n-1 tokens; < 0 implies invalid index */
-	protected int index = -1;
+	protected long index = -1;
 
 	/** The char position into the input buffer where this token starts */
-	protected int start;
+	protected long start;
 
 	/** The char position into the input buffer where this token stops */
-	protected int stop;
+	protected long stop;
 
 	public CommonToken(int type) {
 		this.type = type;
 	}
 
-	public CommonToken(@NotNull Pair<TokenSource, CharStream> source, int type, int channel, int start, int stop) {
+	public CommonToken(@NotNull Pair<TokenSource, CharStream> source, int type, int channel, long start, long stop) {
 		this.source = source;
 		this.type = type;
 		this.channel = channel;
@@ -120,7 +120,7 @@ public class CommonToken implements WritableToken, Serializable {
 
 		CharStream input = getInputStream();
 		if ( input==null ) return null;
-		int n = input.size();
+		long n = input.size();
 		if ( start<n && stop<n) {
 			return input.getText(Interval.of(start,stop));
 		}
@@ -170,7 +170,7 @@ public class CommonToken implements WritableToken, Serializable {
 	}
 
 	@Override
-	public int getStartIndex() {
+	public long getStartIndex() {
 		return start;
 	}
 
@@ -179,7 +179,7 @@ public class CommonToken implements WritableToken, Serializable {
 	}
 
 	@Override
-	public int getStopIndex() {
+	public long getStopIndex() {
 		return stop;
 	}
 
@@ -188,12 +188,12 @@ public class CommonToken implements WritableToken, Serializable {
 	}
 
 	@Override
-	public int getTokenIndex() {
+	public long getTokenIndex() {
 		return index;
 	}
 
 	@Override
-	public void setTokenIndex(int index) {
+	public void setTokenIndex(long index) {
 		this.index = index;
 	}
 

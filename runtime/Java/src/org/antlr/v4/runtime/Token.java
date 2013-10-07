@@ -86,17 +86,17 @@ public interface Token {
 	 *  Return -1 to indicate that this token was conjured up since
 	 *  it doesn't have a valid index.
 	 */
-	int getTokenIndex();
+	long getTokenIndex();
 
 	/** The starting character index of the token
 	 *  This method is optional; return -1 if not implemented.
 	 */
-	int getStartIndex();
+	long getStartIndex();
 
 	/** The last character index of the token.
 	 *  This method is optional; return -1 if not implemented.
 	 */
-	int getStopIndex();
+	long getStopIndex();
 
 	/** Gets the {@link TokenSource} which created this token.
 	 */

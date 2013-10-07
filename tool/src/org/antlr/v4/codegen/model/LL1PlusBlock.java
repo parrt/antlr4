@@ -75,6 +75,6 @@ public class LL1PlusBlock extends LL1Loop {
 
 		IntervalSet exitLookSet = altLookSets[altLookSets.length-1];
 		this.exitLook = gen.getTarget().getTokenTypesAsTargetLabels(g,
-															   exitLookSet.toArray());
+															   exitLookSet.toIntArray());
 	}
 }

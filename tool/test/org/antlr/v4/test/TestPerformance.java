@@ -1147,7 +1147,8 @@ public class TestPerformance extends BaseTest {
         }
     }
 
-	private static void updateChecksum(Checksum checksum, int value) {
+	private static void updateChecksum(Checksum checksum, long v) {
+		int value = (int)v; // TODO: SAM does this break when we pass longs?
 		checksum.update((value) & 0xFF);
 		checksum.update((value >>> 8) & 0xFF);
 		checksum.update((value >>> 16) & 0xFF);
@@ -1229,7 +1230,7 @@ public class TestPerformance extends BaseTest {
 
                         CommonTokenStream tokens = new CommonTokenStream(lexer);
                         tokens.fill();
-                        tokenCount.addAndGet(currentPass, tokens.size());
+                        tokenCount.addAndGet(currentPass, (int)tokens.size());
 
 						if (COMPUTE_CHECKSUM) {
 							for (Token token : tokens.getTokens()) {
@@ -1238,7 +1239,9 @@ public class TestPerformance extends BaseTest {
 						}
 
                         if (!RUN_PARSER) {
-                            return new FileParseResult(input.getSourceName(), (int)checksum.getValue(), null, tokens.size(), startTime, lexer, null);
+                            return new FileParseResult(input.getSourceName(),
+													   (int)checksum.getValue(), null,
+													   (int)tokens.size(), startTime, lexer, null);
                         }
 
 						final long parseStartTime = System.nanoTime();
@@ -1349,7 +1352,7 @@ public class TestPerformance extends BaseTest {
                             ParseTreeWalker.DEFAULT.walk(listener, (ParseTree)parseResult);
                         }
 
-						return new FileParseResult(input.getSourceName(), (int)checksum.getValue(), (ParseTree)parseResult, tokens.size(), TIME_PARSE_ONLY ? parseStartTime : startTime, lexer, parser);
+						return new FileParseResult(input.getSourceName(), (int)checksum.getValue(), (ParseTree)parseResult, (int)tokens.size(), TIME_PARSE_ONLY ? parseStartTime : startTime, lexer, parser);
                     } catch (Exception e) {
 						if (!REPORT_SYNTAX_ERRORS && e instanceof ParseCancellationException) {
 							return new FileParseResult("unknown", (int)checksum.getValue(), null, 0, startTime, null, null);
@@ -1531,7 +1534,7 @@ public class TestPerformance extends BaseTest {
 		}
 
 		@Override
-		protected int execATNWithFullContext(DFA dfa, DFAState D, ATNConfigSet s0, TokenStream input, int startIndex, ParserRuleContext outerContext) {
+		protected int execATNWithFullContext(DFA dfa, DFAState D, ATNConfigSet s0, TokenStream input, long startIndex, ParserRuleContext outerContext) {
 			fullContextFallback[decision]++;
 			return super.execATNWithFullContext(dfa, D, s0, input, startIndex, outerContext);
 		}
@@ -1587,7 +1590,7 @@ public class TestPerformance extends BaseTest {
 		private ATNConfigSet _sllConfigs;
 
 		@Override
-		public void reportAmbiguity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, boolean exact, BitSet ambigAlts, ATNConfigSet configs) {
+		public void reportAmbiguity(Parser recognizer, DFA dfa, long startIndex, long stopIndex, boolean exact, BitSet ambigAlts, ATNConfigSet configs) {
 			if (COMPUTE_TRANSITION_STATS && DETAILED_DFA_STATE_STATS) {
 				BitSet sllPredictions = getConflictingAlts(_sllConflict, _sllConfigs);
 				int sllPrediction = sllPredictions.nextSetBit(0);
@@ -1611,7 +1614,7 @@ public class TestPerformance extends BaseTest {
 		}
 
 		@Override
-		public void reportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, ATNConfigSet configs) {
+		public void reportAttemptingFullContext(Parser recognizer, DFA dfa, long startIndex, long stopIndex, BitSet conflictingAlts, ATNConfigSet configs) {
 			_sllConflict = conflictingAlts;
 			_sllConfigs = configs;
 			if (!REPORT_FULL_CONTEXT) {
@@ -1628,7 +1631,7 @@ public class TestPerformance extends BaseTest {
 		}
 
 		@Override
-		public void reportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, ATNConfigSet configs) {
+		public void reportContextSensitivity(Parser recognizer, DFA dfa, long startIndex, long stopIndex, int prediction, ATNConfigSet configs) {
 			if (COMPUTE_TRANSITION_STATS && DETAILED_DFA_STATE_STATS) {
 				BitSet sllPredictions = getConflictingAlts(_sllConflict, _sllConfigs);
 				int sllPrediction = sllPredictions.nextSetBit(0);

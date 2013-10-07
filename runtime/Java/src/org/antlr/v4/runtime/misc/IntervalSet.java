@@ -600,7 +600,7 @@ public class IntervalSet implements IntSet {
 		return -1;
 	}
 
-	public int[] toArray() {
+	public int[] toIntArray() {
 		if (size() == 0) {
 			return new int[0];
 		}
@@ -614,7 +614,7 @@ public class IntervalSet implements IntSet {
 		return data;
 	}
 
-	public long[] toLongArray() {
+	public long[] toArray() {
 		return toLongList().toArray();
 	}
 

@@ -45,9 +45,10 @@ public interface TokenStream extends IntStream {
 	 * {@code LT(k).getType()==LA(k)}.
 	 *
 	 * @see IntStream#LA
+	 * @param k
 	 */
 	@NotNull
-	public Token LT(int k);
+	public Token LT(long k);
 
 	/**
 	 * Gets the {@link Token} at the specified {@code index} in the stream. When
@@ -68,7 +69,7 @@ public interface TokenStream extends IntStream {
 	 * retrieving the token at the specified index
 	 */
 	@NotNull
-	public Token get(int index);
+	public Token get(long index);
 
 	/**
 	 * Gets the underlying {@link TokenSource} which provides tokens for this
@@ -86,7 +87,7 @@ public interface TokenStream extends IntStream {
 	 * <pre>
 	 * TokenStream stream = ...;
 	 * String text = "";
-	 * for (int i = interval.a; i <= interval.b; i++) {
+	 * for (long i = interval.a; i <= interval.b; i++) {
 	 *   text += stream.get(i).getText();
 	 * }
 	 * </pre>
@@ -154,7 +155,7 @@ public interface TokenStream extends IntStream {
 	 * <pre>
 	 * TokenStream stream = ...;
 	 * String text = "";
-	 * for (int i = start.getTokenIndex(); i <= stop.getTokenIndex(); i++) {
+	 * for (long i = start.getTokenIndex(); i <= stop.getTokenIndex(); i++) {
 	 *   text += stream.get(i).getText();
 	 * }
 	 * </pre>

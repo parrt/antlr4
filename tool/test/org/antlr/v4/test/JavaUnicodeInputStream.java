@@ -33,6 +33,7 @@ package org.antlr.v4.test;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.misc.IntegerList;
 import org.antlr.v4.runtime.misc.Interval;
+import org.antlr.v4.runtime.misc.LongList;
 import org.antlr.v4.runtime.misc.NotNull;
 
 /**
@@ -42,12 +43,12 @@ import org.antlr.v4.runtime.misc.NotNull;
 public class JavaUnicodeInputStream implements CharStream {
 	@NotNull
 	private final CharStream source;
-	private final IntegerList escapeIndexes = new IntegerList();
+	private final LongList escapeIndexes = new LongList();
 	private final IntegerList escapeCharacters = new IntegerList();
 	private final IntegerList escapeIndirectionLevels = new IntegerList();
 
 	private int escapeListIndex;
-	private int range;
+	private long range;
 	private int slashCount;
 
 	private int la1;
@@ -62,12 +63,12 @@ public class JavaUnicodeInputStream implements CharStream {
 	}
 
 	@Override
-	public int size() {
+	public long size() {
 		return source.size();
 	}
 
 	@Override
-	public int index() {
+	public long index() {
 		return source.index();
 	}
 
@@ -113,13 +114,13 @@ public class JavaUnicodeInputStream implements CharStream {
 	}
 
 	@Override
-	public int LA(int i) {
+	public int LA(long i) {
 		if (i == 1 && la1 != '\\') {
 			return la1;
 		}
 
 		if (i <= 0) {
-			int desiredIndex = index() + i;
+			long desiredIndex = index() + i;
 			for (int j = escapeListIndex - 1; j >= 0; j--) {
 				if (escapeIndexes.get(j) + 6 + escapeIndirectionLevels.get(j) > desiredIndex) {
 					desiredIndex -= 5 + escapeIndirectionLevels.get(j);
@@ -133,7 +134,7 @@ public class JavaUnicodeInputStream implements CharStream {
 			return source.LA(desiredIndex - index());
 		}
 		else {
-			int desiredIndex = index() + i - 1;
+			long desiredIndex = index() + i - 1;
 			for (int j = escapeListIndex; j < escapeIndexes.size(); j++) {
 				if (escapeIndexes.get(j) == desiredIndex) {
 					return escapeCharacters.get(j);
@@ -146,11 +147,11 @@ public class JavaUnicodeInputStream implements CharStream {
 				}
 			}
 
-			int[] currentIndex = { index() };
+			long[] currentIndex = { index() };
 			int[] slashCountPtr = { slashCount };
 			int[] indirectionLevelPtr = { 0 };
 			for (int j = 0; j < i; j++) {
-				int previousIndex = currentIndex[0];
+				long previousIndex = currentIndex[0];
 				int c = readCharAt(currentIndex, slashCountPtr, indirectionLevelPtr);
 				if (currentIndex[0] > range) {
 					if (currentIndex[0] - previousIndex > 1) {
@@ -172,17 +173,17 @@ public class JavaUnicodeInputStream implements CharStream {
 	}
 
 	@Override
-	public int mark() {
+	public long mark() {
 		return source.mark();
 	}
 
 	@Override
-	public void release(int marker) {
+	public void release(long marker) {
 		source.release(marker);
 	}
 
 	@Override
-	public void seek(int index) {
+	public void seek(long index) {
 		if (index > range) {
 			throw new UnsupportedOperationException();
 		}
@@ -223,7 +224,7 @@ public class JavaUnicodeInputStream implements CharStream {
 		throw new IllegalArgumentException("c");
 	}
 
-	private int readCharAt(int[] nextIndexPtr, int[] slashCountPtr, int[] indirectionLevelPtr) {
+	private int readCharAt(long[] nextIndexPtr, int[] slashCountPtr, int[] indirectionLevelPtr) {
 		assert nextIndexPtr != null && nextIndexPtr.length == 1;
 		assert slashCountPtr != null && slashCountPtr.length == 1;
 		assert indirectionLevelPtr != null && indirectionLevelPtr.length == 1;
