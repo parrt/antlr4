@@ -280,6 +280,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	// LAME globals to avoid parameters!!!!! I need these down deep in predTransition
 	protected TokenStream _input;
 	protected int _startIndex;
+	protected int _stopIndex;
 	protected ParserRuleContext _outerContext;
 
 	/** Testing only! */
@@ -315,12 +316,12 @@ public class ParserATNSimulator extends ATNSimulator {
 		}
 
 		_input = input;
-		_startIndex = input.index();
+		_startIndex = _stopIndex = input.index();
 		_outerContext = outerContext;
 		DFA dfa = decisionToDFA[decision];
 
 		int m = input.mark();
-		int index = input.index();
+		int index = _startIndex;
 
 		// Now we are certain to have a specific decision's DFA
 		// But, do we still need an initial state?
@@ -485,6 +486,7 @@ public class ParserATNSimulator extends ATNSimulator {
 
 			if (t != IntStream.EOF) {
 				input.consume();
+				_stopIndex = input.index();
 				t = input.LA(1);
 			}
 		}
@@ -670,6 +672,7 @@ public class ParserATNSimulator extends ATNSimulator {
 			previous = reach;
 			if (t != IntStream.EOF) {
 				input.consume();
+				_stopIndex = input.index();
 				t = input.LA(1);
 			}
 		}
