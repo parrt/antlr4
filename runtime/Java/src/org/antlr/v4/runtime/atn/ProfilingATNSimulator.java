@@ -5,7 +5,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
-import org.apache.commons.math3.stat.descriptive.rank.Median;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -115,21 +114,21 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 		System.out.println("invocations:");
 		for (int i=0; i<numDecisions; i++) {
 			List<Integer> ks = lookahead[i];
-			Median median = new Median();
-			double[] values = new double[ks.size()];
-			for (int j=0; j<ks.size(); j++) {
-				values[j] = ks.get(j);
-			}
-			double m = median.evaluate(values);
+//			Median median = new Median();
+//			double[] values = new double[ks.size()];
+//			for (int j=0; j<ks.size(); j++) {
+//				values[j] = ks.get(j);
+//			}
+//			double m = median.evaluate(values);
 			if ( ks.size()>0 ) {
-				System.out.printf("\t[%d]: %d (median depth=%f)\n", i, ks.size(), m);
+				System.out.printf("\t[%d]: %d (median depth=%f)\n", i, ks.size(), 0.0);
 			}
 			i++;
 		}
 		System.out.println("depths:");
 		int i = 0;
 		for (List<Integer> look : lookahead) {
-			System.out.printf("\t[%d]: %s\n", i, look);
+			if ( look.size()>0 ) System.out.printf("\t[%d]: %s\n", i, look);
 			i++;
 		}
 		List<Integer> ll = new ArrayList<Integer>();
