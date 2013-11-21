@@ -1,7 +1,7 @@
 /*
  * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
+ *  Copyright (c) 2013 Terence Parr
+ *  Copyright (c) 2013 Sam Harwell
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -32,45 +32,65 @@ package org.antlr.v4.runtime.atn;
 
 import org.antlr.v4.runtime.misc.NotNull;
 
-/** TODO: this is old comment:
- *  A tree of semantic predicates from the grammar AST if label==SEMPRED.
- *  In the ATN, labels will always be exactly one predicate, but the DFA
- *  may have to combine a bunch of them as it collects predicates from
- *  multiple ATN configurations into a single DFA state.
+/**
+ *
+ * @author Sam Harwell
  */
-public final class PredicateTransition extends AbstractPredicateTransition {
-	public final int ruleIndex;
-	public final int predIndex;
-	public final boolean isCtxDependent;  // e.g., $i ref in pred
-
-	public PredicateTransition(@NotNull ATNState target, int ruleIndex, int predIndex, boolean isCtxDependent) {
-		super(target);
-		this.ruleIndex = ruleIndex;
-		this.predIndex = predIndex;
-		this.isCtxDependent = isCtxDependent;
+public class ATNDeserializationOptions {
+	private static final ATNDeserializationOptions defaultOptions;
+	static {
+		defaultOptions = new ATNDeserializationOptions();
+		defaultOptions.makeReadOnly();
 	}
 
-	@Override
-	public int getSerializationType() {
-		return PREDICATE;
+	private boolean readOnly;
+	private boolean verifyATN;
+	private boolean generateRuleBypassTransitions;
+
+	public ATNDeserializationOptions() {
+		this.verifyATN = true;
+		this.generateRuleBypassTransitions = false;
 	}
 
-	@Override
-	public boolean isEpsilon() { return true; }
-
-	@Override
-	public boolean matches(int symbol, int minVocabSymbol, int maxVocabSymbol) {
-		return false;
+	public ATNDeserializationOptions(ATNDeserializationOptions options) {
+		this.verifyATN = options.verifyATN;
+		this.generateRuleBypassTransitions = options.generateRuleBypassTransitions;
 	}
 
-    public SemanticContext.Predicate getPredicate() {
-   		return new SemanticContext.Predicate(ruleIndex, predIndex, isCtxDependent);
-   	}
-
-	@Override
 	@NotNull
-	public String toString() {
-		return "pred_"+ruleIndex+":"+predIndex;
+	public static ATNDeserializationOptions getDefaultOptions() {
+		return defaultOptions;
 	}
 
+	public final boolean isReadOnly() {
+		return readOnly;
+	}
+
+	public final void makeReadOnly() {
+		readOnly = true;
+	}
+
+	public final boolean isVerifyATN() {
+		return verifyATN;
+	}
+
+	public final void setVerifyATN(boolean verifyATN) {
+		throwIfReadOnly();
+		this.verifyATN = verifyATN;
+	}
+
+	public final boolean isGenerateRuleBypassTransitions() {
+		return generateRuleBypassTransitions;
+	}
+
+	public final void setGenerateRuleBypassTransitions(boolean generateRuleBypassTransitions) {
+		throwIfReadOnly();
+		this.generateRuleBypassTransitions = generateRuleBypassTransitions;
+	}
+
+	protected void throwIfReadOnly() {
+		if (isReadOnly()) {
+			throw new IllegalStateException("The object is read only.");
+		}
+	}
 }
