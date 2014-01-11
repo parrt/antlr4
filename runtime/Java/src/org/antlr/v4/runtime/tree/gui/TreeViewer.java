@@ -45,21 +45,7 @@ import org.antlr.v4.runtime.tree.Trees;
 
 import javax.imageio.ImageIO;
 import javax.print.PrintException;
-import javax.swing.BorderFactory;
-import javax.swing.Icon;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JSplitPane;
-import javax.swing.JTree;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -68,19 +54,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Desktop;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.CubicCurve2D;
@@ -159,15 +133,10 @@ public class TreeViewer extends JComponent {
 	protected Color textColor = Color.black;
 
 	public TreeViewer(@Nullable List<String> ruleNames, Tree tree) {
-		setTreeTextProvider(new DefaultTreeTextProvider(ruleNames));
-        boolean useIdentity = true; // compare node identity
-		this.treeLayout =
-			new TreeLayout<Tree>(new TreeLayoutAdaptor(tree),
-								 new TreeViewer.VariableExtentProvide(this),
-								 new DefaultConfiguration<Tree>(gapBetweenLevels,
-																gapBetweenNodes),
-                                 useIdentity);
-		updatePreferredSize();
+		setRuleNames(ruleNames);
+		if ( tree!=null ) {
+			setTree(tree);
+		}
 		setFont(font);
 	}
 
@@ -194,9 +163,9 @@ public class TreeViewer extends JComponent {
 
 	protected void paintEdges(Graphics g, Tree parent) {
 		if (!getTree().isLeaf(parent)) {
-            BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND);
-            ((Graphics2D)g).setStroke(stroke);
+			BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_ROUND,
+												 BasicStroke.JOIN_ROUND);
+			((Graphics2D)g).setStroke(stroke);
 
 			Rectangle2D.Double parentBounds = getBoundsOfNode(parent);
 			double x1 = parentBounds.getCenterX();
@@ -226,7 +195,7 @@ public class TreeViewer extends JComponent {
 		Rectangle2D.Double box = getBoundsOfNode(tree);
 		// draw the box in the background
 		if ( isHighlighted(tree) || boxColor!=null ||
-			 tree instanceof ErrorNode )
+			tree instanceof ErrorNode )
 		{
 			if ( isHighlighted(tree) ) g.setColor(highlightedBoxColor);
 			else if ( tree instanceof ErrorNode ) g.setColor(LIGHT_RED);
@@ -235,10 +204,10 @@ public class TreeViewer extends JComponent {
 							(int) box.height - 1, arcSize, arcSize);
 		}
 		if ( borderColor!=null ) {
-            g.setColor(borderColor);
-            g.drawRoundRect((int) box.x, (int) box.y, (int) box.width - 1,
-                    (int) box.height - 1, arcSize, arcSize);
-        }
+			g.setColor(borderColor);
+			g.drawRoundRect((int) box.x, (int) box.y, (int) box.width - 1,
+							(int) box.height - 1, arcSize, arcSize);
+		}
 
 		// draw the text on top of the box (possibly multiple lines)
 		g.setColor(textColor);
@@ -263,14 +232,18 @@ public class TreeViewer extends JComponent {
 	public void paint(Graphics g) {
 		super.paint(g);
 
+		if ( treeLayout==null ) {
+			return;
+		}
+
 		Graphics2D g2 = (Graphics2D)g;
 		// anti-alias the lines
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-      						RenderingHints.VALUE_ANTIALIAS_ON);
+							RenderingHints.VALUE_ANTIALIAS_ON);
 
 		// Anti-alias the text
 		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                         	RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+							RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
 //		AffineTransform at = g2.getTransform();
 //        g2.scale(
@@ -326,7 +299,7 @@ public class TreeViewer extends JComponent {
 					dialog.dispose();
 				}
 			}
-		);
+							);
 		wrapper.add(ok);
 
 		// Add an export-to-png button right of the "OK" button
@@ -338,7 +311,7 @@ public class TreeViewer extends JComponent {
 					generatePNGFile(viewer, dialog);
 				}
 			}
-		);
+							 );
 		wrapper.add(png);
 
 		bottomPanel.add(wrapper, BorderLayout.SOUTH);
@@ -346,7 +319,7 @@ public class TreeViewer extends JComponent {
 		// Add scale slider
 		int sliderValue = (int) ((viewer.getScale()-1.0) * 1000);
 		final JSlider scaleSlider = new JSlider(JSlider.HORIZONTAL,
-										  -999,1000,sliderValue);
+												-999,1000,sliderValue);
 		scaleSlider.addChangeListener(
 			new ChangeListener() {
 				@Override
@@ -355,7 +328,7 @@ public class TreeViewer extends JComponent {
 					viewer.setScale(v / 1000.0 + 1.0);
 				}
 			}
-		);
+									 );
 		bottomPanel.add(scaleSlider, BorderLayout.CENTER);
 
 		// Add a JTree representing the parser tree of the input.
@@ -383,14 +356,7 @@ public class TreeViewer extends JComponent {
 				TreeNodeWrapper treeNode = (TreeNodeWrapper) path.getLastPathComponent();
 
 				// Set the clicked AST.
-				viewer.treeLayout = new TreeLayout<Tree>(
-						new TreeLayoutAdaptor((Tree) treeNode.getUserObject()),
-						new TreeViewer.VariableExtentProvide(viewer),
-						new DefaultConfiguration<Tree>(
-								viewer.gapBetweenLevels, viewer.gapBetweenNodes), true);
-
-				// Let the UI display this new AST.
-				viewer.updatePreferredSize();
+				viewer.setTree((Tree) treeNode.getUserObject());
 			}
 		});
 
@@ -398,7 +364,7 @@ public class TreeViewer extends JComponent {
 
 		// Create the pane for both the JTree and the AST
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-				treePanel, contentPane);
+											  treePanel, contentPane);
 
 		mainPane.add(splitPane, BorderLayout.CENTER);
 
@@ -463,7 +429,7 @@ public class TreeViewer extends JComponent {
 					// We could not launch the file manager: just show a popup that we
 					// succeeded in saving the PNG file.
 					JOptionPane.showMessageDialog(dialog, "Saved PNG to: " +
-												  pngFile.getAbsolutePath());
+						pngFile.getAbsolutePath());
 					ex.printStackTrace();
 				}
 			}
@@ -478,7 +444,6 @@ public class TreeViewer extends JComponent {
 	}
 
 	private static File generateNonExistingPngFile() {
-
 		final String parent = ".";
 		final String name = "antlr4_parse_tree";
 		final String extension = ".png";
@@ -497,7 +462,6 @@ public class TreeViewer extends JComponent {
 	}
 
 	private static void fillTree(TreeNodeWrapper node, Tree tree, TreeViewer viewer) {
-
 		if (tree == null) {
 			return;
 		}
@@ -527,7 +491,6 @@ public class TreeViewer extends JComponent {
 		viewer.setScale(1.5);
 		Callable<JDialog> callable = new Callable<JDialog>() {
 			JDialog result;
-
 			@Override
 			public JDialog call() throws Exception {
 				SwingUtilities.invokeAndWait(new Runnable() {
@@ -542,7 +505,6 @@ public class TreeViewer extends JComponent {
 		};
 
 		ExecutorService executor = Executors.newSingleThreadExecutor();
-
 		try {
 			return executor.submit(callable);
 		}
@@ -555,7 +517,7 @@ public class TreeViewer extends JComponent {
 		JDialog dialog = new JDialog();
 		Container contentPane = dialog.getContentPane();
 		((JComponent) contentPane).setBorder(BorderFactory.createEmptyBorder(
-				10, 10, 10, 10));
+			10, 10, 10, 10));
 		contentPane.add(this);
 		contentPane.setBackground(Color.white);
 		dialog.pack();
@@ -677,6 +639,24 @@ public class TreeViewer extends JComponent {
 		return treeLayout.getTree();
 	}
 
+	public void setTree(Tree root) {
+		if ( root!=null ) {
+			boolean useIdentity = true; // compare node identity
+			this.treeLayout =
+				new TreeLayout<Tree>(new TreeLayoutAdaptor(root),
+									 new TreeViewer.VariableExtentProvide(this),
+									 new DefaultConfiguration<Tree>(gapBetweenLevels,
+																	gapBetweenNodes),
+									 useIdentity);
+			// Let the UI display this new AST.
+			updatePreferredSize();
+		}
+		else {
+			this.treeLayout = null;
+			repaint();
+		}
+	}
+
 	public double getScale() {
 		return scale;
 	}
@@ -687,6 +667,10 @@ public class TreeViewer extends JComponent {
 		}
 		this.scale = scale;
 		updatePreferredSize();
+	}
+
+	public void setRuleNames(List<String> ruleNames) {
+		setTreeTextProvider(new DefaultTreeTextProvider(ruleNames));
 	}
 
 	private static class TreeNodeWrapper extends DefaultMutableTreeNode {
