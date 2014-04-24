@@ -65,6 +65,12 @@ public class ATNDeserializer {
 	 */
 	private static final UUID ADDED_PRECEDENCE_TRANSITIONS;
 	/**
+	 * This UUID indicates an extension of {@link #ADDED_PRECEDENCE_TRANSITIONS}
+	 * for the addition of lexer actions encoded as a sequence of
+	 * {@link LexerAction} instances.
+	 */
+	private static final UUID ADDED_LEXER_ACTIONS;
+	/**
 	 * This list contains all of the currently supported UUIDs, ordered by when
 	 * the feature first appeared in this branch.
 	 */
@@ -75,17 +81,19 @@ public class ATNDeserializer {
 	 */
 	public static final UUID SERIALIZED_UUID;
 	static {
-		/* WARNING: DO NOT MERGE THIS LINE. If UUIDs differ during a merge,
+		/* WARNING: DO NOT MERGE THESE LINES. If UUIDs differ during a merge,
 		 * resolve the conflict by generating a new ID!
 		 */
 		BASE_SERIALIZED_UUID = UUID.fromString("33761B2D-78BB-4A43-8B0B-4F5BEE8AACF3");
 		ADDED_PRECEDENCE_TRANSITIONS = UUID.fromString("1DA0C57D-6C06-438A-9B27-10BCB3CE0F61");
+		ADDED_LEXER_ACTIONS = UUID.fromString("AADB8D7E-AEEF-4415-AD2B-8204D6CF042E");
 
 		SUPPORTED_UUIDS = new ArrayList<UUID>();
 		SUPPORTED_UUIDS.add(BASE_SERIALIZED_UUID);
 		SUPPORTED_UUIDS.add(ADDED_PRECEDENCE_TRANSITIONS);
+		SUPPORTED_UUIDS.add(ADDED_LEXER_ACTIONS);
 
-		SERIALIZED_UUID = ADDED_PRECEDENCE_TRANSITIONS;
+		SERIALIZED_UUID = ADDED_LEXER_ACTIONS;
 	}
 
 	@NotNull
@@ -125,6 +133,7 @@ public class ATNDeserializer {
 		return SUPPORTED_UUIDS.indexOf(actualUuid) >= featureIndex;
 	}
 
+	@SuppressWarnings("deprecation")
 	public ATN deserialize(@NotNull char[] data) {
 		data = data.clone();
 		// don't adjust the first value since that's the version number
@@ -141,13 +150,13 @@ public class ATNDeserializer {
 
 		UUID uuid = toUUID(data, p);
 		p += 8;
-		if (!uuid.equals(SERIALIZED_UUID)
-			&& !uuid.equals(BASE_SERIALIZED_UUID)) {
+		if (!SUPPORTED_UUIDS.contains(uuid)) {
 			String reason = String.format(Locale.getDefault(), "Could not deserialize ATN with UUID %s (expected %s or a legacy UUID).", uuid, SERIALIZED_UUID);
 			throw new UnsupportedOperationException(new InvalidClassException(ATN.class.getName(), reason));
 		}
 
 		boolean supportsPrecedencePredicates = isFeatureSupported(ADDED_PRECEDENCE_TRANSITIONS, uuid);
+		boolean supportsLexerActions = isFeatureSupported(ADDED_LEXER_ACTIONS, uuid);
 
 		ATNType grammarType = ATNType.values()[toInt(data[p++])];
 		int maxTokenType = toInt(data[p++]);
@@ -213,8 +222,8 @@ public class ATNDeserializer {
 		int nrules = toInt(data[p++]);
 		if ( atn.grammarType == ATNType.LEXER ) {
 			atn.ruleToTokenType = new int[nrules];
-			atn.ruleToActionIndex = new int[nrules];
 		}
+
 		atn.ruleToStartState = new RuleStartState[nrules];
 		for (int i=0; i<nrules; i++) {
 			int s = toInt(data[p++]);
@@ -227,12 +236,15 @@ public class ATNDeserializer {
 				}
 
 				atn.ruleToTokenType[i] = tokenType;
-				int actionIndex = toInt(data[p++]);
-				if (actionIndex == 0xFFFF) {
-					actionIndex = -1;
-				}
 
-				atn.ruleToActionIndex[i] = actionIndex;
+				if (!isFeatureSupported(ADDED_LEXER_ACTIONS, uuid)) {
+					// this piece of unused metadata was serialized prior to the
+					// addition of LexerAction
+					int actionIndexIgnored = toInt(data[p++]);
+					if (actionIndexIgnored == 0xFFFF) {
+						actionIndexIgnored = -1;
+					}
+				}
 			}
 		}
 
@@ -358,6 +370,55 @@ public class ATNDeserializer {
 			decState.decision = i-1;
 		}
 
+		//
+		// LEXER ACTIONS
+		//
+		if (atn.grammarType == ATNType.LEXER) {
+			if (supportsLexerActions) {
+				atn.lexerActions = new LexerAction[toInt(data[p++])];
+				for (int i = 0; i < atn.lexerActions.length; i++) {
+					LexerActionType actionType = LexerActionType.values()[toInt(data[p++])];
+					int data1 = toInt(data[p++]);
+					if (data1 == 0xFFFF) {
+						data1 = -1;
+					}
+
+					int data2 = toInt(data[p++]);
+					if (data2 == 0xFFFF) {
+						data2 = -1;
+					}
+
+					LexerAction lexerAction = lexerActionFactory(actionType, data1, data2);
+
+					atn.lexerActions[i] = lexerAction;
+				}
+			}
+			else {
+				// for compatibility with older serialized ATNs, convert the old
+				// serialized action index for action transitions to the new
+				// form, which is the index of a LexerCustomAction
+				List<LexerAction> legacyLexerActions = new ArrayList<LexerAction>();
+				for (ATNState state : atn.states) {
+					for (int i = 0; i < state.getNumberOfTransitions(); i++) {
+						Transition transition = state.transition(i);
+						if (!(transition instanceof ActionTransition)) {
+							continue;
+						}
+
+						int ruleIndex = ((ActionTransition)transition).ruleIndex;
+						int actionIndex = ((ActionTransition)transition).actionIndex;
+						LexerCustomAction lexerAction = new LexerCustomAction(ruleIndex, actionIndex);
+						state.setTransition(i, new ActionTransition(transition.target, ruleIndex, legacyLexerActions.size(), false));
+						legacyLexerActions.add(lexerAction);
+					}
+				}
+
+				atn.lexerActions = legacyLexerActions.toArray(new LexerAction[legacyLexerActions.size()]);
+			}
+		}
+
+		markPrecedenceDecisions(atn);
+
 		if (deserializationOptions.isVerifyATN()) {
 			verifyATN(atn);
 		}
@@ -455,6 +516,34 @@ public class ATNDeserializer {
 		return atn;
 	}
 
+	/**
+	 * Analyze the {@link StarLoopEntryState} states in the specified ATN to set
+	 * the {@link StarLoopEntryState#precedenceRuleDecision} field to the
+	 * correct value.
+	 *
+	 * @param atn The ATN.
+	 */
+	protected void markPrecedenceDecisions(@NotNull ATN atn) {
+		for (ATNState state : atn.states) {
+			if (!(state instanceof StarLoopEntryState)) {
+				continue;
+			}
+
+			/* We analyze the ATN to determine if this ATN decision state is the
+			 * decision for the closure block that determines whether a
+			 * precedence rule should continue or complete.
+			 */
+			if (atn.ruleToStartState[state.ruleIndex].isPrecedenceRule) {
+				ATNState maybeLoopEndState = state.transition(state.getNumberOfTransitions() - 1).target;
+				if (maybeLoopEndState instanceof LoopEndState) {
+					if (maybeLoopEndState.epsilonOnlyTransitions && maybeLoopEndState.transition(0).target instanceof RuleStopState) {
+						((StarLoopEntryState)state).precedenceRuleDecision = true;
+					}
+				}
+			}
+		}
+	}
+
 	protected void verifyATN(ATN atn) {
 		// verify assumptions
 		for (ATNState state : atn.states) {
@@ -527,20 +616,20 @@ public class ATNDeserializer {
 		}
 	}
 
-	protected int toInt(char c) {
+	protected static int toInt(char c) {
 		return c;
 	}
 
-	protected int toInt32(char[] data, int offset) {
+	protected static int toInt32(char[] data, int offset) {
 		return (int)data[offset] | ((int)data[offset + 1] << 16);
 	}
 
-	protected long toLong(char[] data, int offset) {
+	protected static long toLong(char[] data, int offset) {
 		long lowOrder = toInt32(data, offset) & 0x00000000FFFFFFFFL;
 		return lowOrder | ((long)toInt32(data, offset + 2) << 32);
 	}
 
-	protected UUID toUUID(char[] data, int offset) {
+	protected static UUID toUUID(char[] data, int offset) {
 		long leastSigBits = toLong(data, offset);
 		long mostSigBits = toLong(data, offset + 4);
 		return new UUID(mostSigBits, leastSigBits);
@@ -613,4 +702,35 @@ public class ATNDeserializer {
 		return s;
 	}
 
+	protected LexerAction lexerActionFactory(LexerActionType type, int data1, int data2) {
+		switch (type) {
+		case CHANNEL:
+			return new LexerChannelAction(data1);
+
+		case CUSTOM:
+			return new LexerCustomAction(data1, data2);
+
+		case MODE:
+			return new LexerModeAction(data1);
+
+		case MORE:
+			return LexerMoreAction.INSTANCE;
+
+		case POP_MODE:
+			return LexerPopModeAction.INSTANCE;
+
+		case PUSH_MODE:
+			return new LexerPushModeAction(data1);
+
+		case SKIP:
+			return LexerSkipAction.INSTANCE;
+
+		case TYPE:
+			return new LexerTypeAction(data1);
+
+		default:
+			String message = String.format(Locale.getDefault(), "The specified lexer action type %d is not valid.", type);
+			throw new IllegalArgumentException(message);
+		}
+	}
 }

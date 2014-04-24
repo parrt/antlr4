@@ -109,39 +109,39 @@ public class <file.grammarName>BaseListener implements <file.grammarName>Listene
 	<file.listenerNames:{lname |
 /**
  * {@inheritDoc\}
- * \<p/>
- * The default implementation does nothing.
+ *
+ * \<p>The default implementation does nothing.\</p>
  */
 @Override public void enter<lname; format="cap">(@NotNull <file.parserName>.<lname; format="cap">Context ctx) { \}
 /**
  * {@inheritDoc\}
- * \<p/>
- * The default implementation does nothing.
+ *
+ * \<p>The default implementation does nothing.\</p>
  */
 @Override public void exit<lname; format="cap">(@NotNull <file.parserName>.<lname; format="cap">Context ctx) { \}}; separator="\n">
 
 	/**
 	 * {@inheritDoc\}
-	 * \<p/>
-	 * The default implementation does nothing.
+	 *
+	 * \<p>The default implementation does nothing.\</p>
 	 */
 	@Override public void enterEveryRule(@NotNull ParserRuleContext ctx) { }
 	/**
 	 * {@inheritDoc\}
-	 * \<p/>
-	 * The default implementation does nothing.
+	 *
+	 * \<p>The default implementation does nothing.\</p>
 	 */
 	@Override public void exitEveryRule(@NotNull ParserRuleContext ctx) { }
 	/**
 	 * {@inheritDoc\}
-	 * \<p/>
-	 * The default implementation does nothing.
+	 *
+	 * \<p>The default implementation does nothing.\</p>
 	 */
 	@Override public void visitTerminal(@NotNull TerminalNode node) { }
 	/**
 	 * {@inheritDoc\}
-	 * \<p/>
-	 * The default implementation does nothing.
+	 *
+	 * \<p>The default implementation does nothing.\</p>
 	 */
 	@Override public void visitErrorNode(@NotNull ErrorNode node) { }
 }
@@ -195,9 +195,9 @@ public class <file.grammarName>BaseVisitor\<T> extends AbstractParseTreeVisitor\
 	<file.visitorNames:{lname |
 /**
  * {@inheritDoc\}
- * \<p/>
- * The default implementation returns the result of calling
- * {@link #visitChildren\} on {@code ctx\}.
+ *
+ * \<p>The default implementation returns the result of calling
+ * {@link #visitChildren\} on {@code ctx\}.\</p>
  */
 @Override public T visit<lname; format="cap">(@NotNull <file.parserName>.<lname; format="cap">Context ctx) { return visitChildren(ctx); \}}; separator="\n">
 }
@@ -238,6 +238,9 @@ public class <parser.name> extends <superClass> {
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
+
+	@Override
+	public String getSerializedATN() { return _serializedATN; }
 
 	@Override
 	public ATN getATN() { return _ATN; }
@@ -369,7 +372,7 @@ private <currentRule.ctxType> <currentRule.name>(int _p<currentRule.args:{a | , 
 	<currentRule.ctxType> _localctx = new <currentRule.ctxType>(_ctx, _parentState<currentRule.args:{a | , <a.name>}>);
 	<currentRule.ctxType> _prevctx = _localctx;
 	int _startState = <currentRule.startState>;
-	enterRecursionRule(_localctx, RULE_<currentRule.name>, _p);
+	enterRecursionRule(_localctx, <currentRule.startState>, RULE_<currentRule.name>, _p);
 	<namedActions.init>
 	<locals; separator="\n">
 	try {
@@ -531,7 +534,7 @@ StarBlock(choice, alts, sync, iteration) ::= <<
 setState(<choice.stateNumber>);
 _errHandler.sync(this);
 _alt = getInterpreter().adaptivePredict(_input,<choice.decision>,_ctx);
-while ( _alt!=<choice.exitAlt> && _alt!=-1 ) {
+while ( _alt!=<choice.exitAlt> && _alt!=ATN.INVALID_ALT_NUMBER ) {
 	if ( _alt==1<if(!choice.ast.greedy)>+1<endif> ) {
 		<iteration>
 		<alts> <! should only be one !>
@@ -545,7 +548,7 @@ while ( _alt!=<choice.exitAlt> && _alt!=-1 ) {
 PlusBlock(choice, alts, error) ::= <<
 setState(<choice.blockStartStateNumber>); <! alt block decision !>
 _errHandler.sync(this);
-_alt = getInterpreter().adaptivePredict(_input,<choice.decision>,_ctx);
+_alt = 1<if(!choice.ast.greedy)>+1<endif>;
 do {
 	switch (_alt) {
 	<alts:{alt|
@@ -558,7 +561,7 @@ case <i><if(!choice.ast.greedy)>+1<endif>:
 	setState(<choice.loopBackStateNumber>); <! loopback/exit decision !>
 	_errHandler.sync(this);
 	_alt = getInterpreter().adaptivePredict(_input,<choice.decision>,_ctx);
-} while ( _alt!=<choice.exitAlt> && _alt!=-1 );
+} while ( _alt!=<choice.exitAlt> && _alt!=ATN.INVALID_ALT_NUMBER );
 >>
 
 Sync(s) ::= "sync(<s.expecting.name>);"
@@ -878,6 +881,9 @@ public class <lexer.name> extends <superClass> {
 
 	@Override
 	public String[] getRuleNames() { return ruleNames; }
+
+	@Override
+	public String getSerializedATN() { return _serializedATN; }
 
 	@Override
 	public String[] getModeNames() { return modeNames; }

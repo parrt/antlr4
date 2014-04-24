@@ -90,12 +90,10 @@ public class ATN {
 	public int[] ruleToTokenType;
 
 	/**
-	 * For lexer ATNs, this maps the rule index to the action which should be
-	 * executed following a match.
-	 * <p/>
-	 * This is {@code null} for parser ATNs.
+	 * For lexer ATNs, this is an array of {@link LexerAction} objects which may
+	 * be referenced by action transitions in the ATN.
 	 */
-	public int[] ruleToActionIndex;
+	public LexerAction[] lexerActions;
 
 	@NotNull
 	public final List<TokensStartState> modeToStartState = new ArrayList<TokensStartState>();
@@ -169,9 +167,9 @@ public class ATN {
 	 * assumed true). If a path in the ATN exists from the starting state to the
 	 * {@link RuleStopState} of the outermost context without matching any
 	 * symbols, {@link Token#EOF} is added to the returned set.
-	 * <p/>
-	 * If {@code context} is {@code null}, it is treated as
-	 * {@link ParserRuleContext#EMPTY}.
+	 *
+	 * <p>If {@code context} is {@code null}, it is treated as
+	 * {@link ParserRuleContext#EMPTY}.</p>
 	 *
 	 * @param stateNumber the ATN state number
 	 * @param context the full parse context

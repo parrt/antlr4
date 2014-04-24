@@ -46,6 +46,8 @@ import org.antlr.v4.runtime.ParserInterpreter;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.ATNSerializer;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.IntSet;
 import org.antlr.v4.runtime.misc.IntegerList;
@@ -271,7 +273,7 @@ public class Grammar implements AttributeResolver {
 		org.antlr.runtime.ANTLRStringStream in = new org.antlr.runtime.ANTLRStringStream(grammarText);
 		in.name = fileName;
 
-		this.ast = tool.load(fileName, in);
+		this.ast = tool.parse(fileName, in);
 		if ( ast==null ) {
 			throw new UnsupportedOperationException();
 		}
@@ -355,11 +357,59 @@ public class Grammar implements AttributeResolver {
         }
     }
 
-    public void defineRule(Rule r) {
-		if ( rules.get(r.name)!=null ) return;
+	/**
+	 * Define the specified rule in the grammar. This method assigns the rule's
+	 * {@link Rule#index} according to the {@link #ruleNumber} field, and adds
+	 * the {@link Rule} instance to {@link #rules} and {@link #indexToRule}.
+	 *
+	 * @param r The rule to define in the grammar.
+	 * @return {@code true} if the rule was added to the {@link Grammar}
+	 * instance; otherwise, {@code false} if a rule with this name already
+	 * existed in the grammar instance.
+	 */
+	public boolean defineRule(@NotNull Rule r) {
+		if ( rules.get(r.name)!=null ) {
+			return false;
+		}
+
 		rules.put(r.name, r);
 		r.index = ruleNumber++;
 		indexToRule.add(r);
+		return true;
+	}
+
+	/**
+	 * Undefine the specified rule from this {@link Grammar} instance. The
+	 * instance {@code r} is removed from {@link #rules} and
+	 * {@link #indexToRule}. This method updates the {@link Rule#index} field
+	 * for all rules defined after {@code r}, and decrements {@link #ruleNumber}
+	 * in preparation for adding new rules.
+	 * <p>
+	 * This method does nothing if the current {@link Grammar} does not contain
+	 * the instance {@code r} at index {@code r.index} in {@link #indexToRule}.
+	 * </p>
+	 *
+	 * @param r
+	 * @return {@code true} if the rule was removed from the {@link Grammar}
+	 * instance; otherwise, {@code false} if the specified rule was not defined
+	 * in the grammar.
+	 */
+	public boolean undefineRule(@NotNull Rule r) {
+		if (r.index < 0 || r.index >= indexToRule.size() || indexToRule.get(r.index) != r) {
+			return false;
+		}
+
+		assert rules.get(r.name) == r;
+
+		rules.remove(r.name);
+		indexToRule.remove(r.index);
+		for (int i = r.index; i < indexToRule.size(); i++) {
+			assert indexToRule.get(i).index == i + 1;
+			indexToRule.get(i).index--;
+		}
+
+		ruleNumber--;
+		return true;
 	}
 
 //	public int getNumRules() {
@@ -425,7 +475,17 @@ public class Grammar implements AttributeResolver {
     }
 */
 
-    /** Return list of imported grammars from root down to our parent.
+	public LexerGrammar getImplicitLexer() {
+		return implicitLexer;
+	}
+
+	/** convenience method for Tool.loadGrammar() */
+	public static Grammar load(String fileName) {
+		Tool antlr = new Tool();
+		return antlr.loadGrammar(fileName);
+	}
+
+	/** Return list of imported grammars from root down to our parent.
      *  Order is [root, ..., this.parent].  (us not included).
      */
     public List<Grammar> getGrammarAncestors() {
@@ -554,7 +614,10 @@ public class Grammar implements AttributeResolver {
 		String[] tokenNames = new String[numTokens+1];
 		for (String tokenName : tokenNameToTypeMap.keySet()) {
 			Integer ttype = tokenNameToTypeMap.get(tokenName);
-			if ( tokenName!=null && tokenName.startsWith(AUTO_GENERATED_TOKEN_NAME_PREFIX) ) {
+			if ( tokenName!=null &&
+                 tokenName.startsWith(AUTO_GENERATED_TOKEN_NAME_PREFIX) &&
+                 ttype < typeToStringLiteralList.size() )
+            {
 				tokenName = typeToStringLiteralList.get(ttype);
 			}
 			if ( ttype>0 ) tokenNames[ttype] = tokenName;
@@ -691,6 +754,11 @@ public class Grammar implements AttributeResolver {
 	}
 
 	public void setTokenForType(int ttype, String text) {
+		if (ttype == Token.EOF) {
+			// ignore EOF, it will be reported as an error separately
+			return;
+		}
+
 		if ( ttype>=typeToTokenList.size() ) {
 			Utils.setSize(typeToTokenList, ttype+1);
 		}
@@ -878,7 +946,9 @@ public class Grammar implements AttributeResolver {
 			return implicitLexer.createLexerInterpreter(input);
 		}
 
-		return new LexerInterpreter(fileName, Arrays.asList(getTokenNames()), Arrays.asList(getRuleNames()), ((LexerGrammar)this).modes.keySet(), atn, input);
+		char[] serializedAtn = ATNSerializer.getSerializedAsChars(atn);
+		ATN deserialized = new ATNDeserializer().deserialize(serializedAtn);
+		return new LexerInterpreter(fileName, Arrays.asList(getTokenNames()), Arrays.asList(getRuleNames()), ((LexerGrammar)this).modes.keySet(), deserialized, input);
 	}
 
 	public ParserInterpreter createParserInterpreter(TokenStream tokenStream) {
@@ -886,6 +956,8 @@ public class Grammar implements AttributeResolver {
 			throw new IllegalStateException("A parser interpreter can only be created for a parser or combined grammar.");
 		}
 
-		return new ParserInterpreter(fileName, Arrays.asList(getTokenNames()), Arrays.asList(getRuleNames()), atn, tokenStream);
+		char[] serializedAtn = ATNSerializer.getSerializedAsChars(atn);
+		ATN deserialized = new ATNDeserializer().deserialize(serializedAtn);
+		return new ParserInterpreter(fileName, Arrays.asList(getTokenNames()), Arrays.asList(getRuleNames()), deserialized, tokenStream);
 	}
 }

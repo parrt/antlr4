@@ -34,12 +34,21 @@ import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNSimulator;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.misc.Utils;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 	public static final int EOF=-1;
+
+	private static final Map<String[], Map<String, Integer>> tokenTypeMapCache =
+		new WeakHashMap<String[], Map<String, Integer>>();
+	private static final Map<String[], Map<String, Integer>> ruleIndexMapCache =
+		new WeakHashMap<String[], Map<String, Integer>>();
 
 	@NotNull
 	private List<ANTLRErrorListener> _listeners =
@@ -59,23 +68,108 @@ public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 
 	public abstract String[] getRuleNames();
 
+	/**
+	 * Get a map from token names to token types.
+	 *
+	 * <p>Used for XPath and tree pattern compilation.</p>
+	 */
+	@NotNull
+	public Map<String, Integer> getTokenTypeMap() {
+		String[] tokenNames = getTokenNames();
+		if (tokenNames == null) {
+			throw new UnsupportedOperationException("The current recognizer does not provide a list of token names.");
+		}
+
+		synchronized (tokenTypeMapCache) {
+			Map<String, Integer> result = tokenTypeMapCache.get(tokenNames);
+			if (result == null) {
+				result = Utils.toMap(tokenNames);
+				result.put("EOF", Token.EOF);
+				result = Collections.unmodifiableMap(result);
+				tokenTypeMapCache.put(tokenNames, result);
+			}
+
+			return result;
+		}
+	}
+
+	/**
+	 * Get a map from rule names to rule indexes.
+	 *
+	 * <p>Used for XPath and tree pattern compilation.</p>
+	 */
+	@NotNull
+	public Map<String, Integer> getRuleIndexMap() {
+		String[] ruleNames = getRuleNames();
+		if (ruleNames == null) {
+			throw new UnsupportedOperationException("The current recognizer does not provide a list of rule names.");
+		}
+
+		synchronized (ruleIndexMapCache) {
+			Map<String, Integer> result = ruleIndexMapCache.get(ruleNames);
+			if (result == null) {
+				result = Collections.unmodifiableMap(Utils.toMap(ruleNames));
+				ruleIndexMapCache.put(ruleNames, result);
+			}
+
+			return result;
+		}
+	}
+
+	public int getTokenType(String tokenName) {
+		Integer ttype = getTokenTypeMap().get(tokenName);
+		if ( ttype!=null ) return ttype;
+		return Token.INVALID_TYPE;
+	}
+
+	/**
+	 * If this recognizer was generated, it will have a serialized ATN
+	 * representation of the grammar.
+	 *
+	 * <p>For interpreters, we don't know their serialized ATN despite having
+	 * created the interpreter from it.</p>
+	 */
+	@NotNull
+	public String getSerializedATN() {
+		throw new UnsupportedOperationException("there is no serialized ATN");
+	}
+
 	/** For debugging and other purposes, might want the grammar name.
 	 *  Have ANTLR generate an implementation for this method.
 	 */
 	public abstract String getGrammarFileName();
 
+	/**
+	 * Get the {@link ATN} used by the recognizer for prediction.
+	 *
+	 * @return The {@link ATN} used by the recognizer for prediction.
+	 */
+	@NotNull
 	public abstract ATN getATN();
 
+	/**
+	 * Get the ATN interpreter used by the recognizer for prediction.
+	 *
+	 * @return The ATN interpreter used by the recognizer for prediction.
+	 */
+	@NotNull
 	public ATNInterpreter getInterpreter() {
 		return _interp;
 	}
 
-	public void setInterpreter(ATNInterpreter interpreter) {
+	/**
+	 * Set the ATN interpreter used by the recognizer for prediction.
+	 *
+	 * @param interpreter The ATN interpreter used by the recognizer for
+	 * prediction.
+	 */
+	public void setInterpreter(@NotNull ATNInterpreter interpreter) {
 		_interp = interpreter;
 	}
 
 	/** What is the error header, normally line/character position information? */
-	public String getErrorHeader(RecognitionException e) {
+	@NotNull
+	public String getErrorHeader(@NotNull RecognitionException e) {
 		int line = e.getOffendingToken().getLine();
 		int charPositionInLine = e.getOffendingToken().getCharPositionInLine();
 		return "line "+line+":"+charPositionInLine;
@@ -88,7 +182,13 @@ public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 	 *  the token). This is better than forcing you to override a method in
 	 *  your token objects because you don't have to go modify your lexer
 	 *  so that it creates a new Java type.
+	 *
+	 * @deprecated This method is not called by the ANTLR 4 Runtime. Specific
+	 * implementations of {@link ANTLRErrorStrategy} may provide a similar
+	 * feature when necessary. For example, see
+	 * {@link DefaultErrorStrategy#getTokenErrorDisplay}.
 	 */
+	@Deprecated
 	public String getTokenErrorDisplay(Token t) {
 		if ( t==null ) return "<no token>";
 		String s = t.getText();
@@ -107,7 +207,7 @@ public abstract class Recognizer<Symbol, ATNInterpreter extends ATNSimulator> {
 	}
 
 	/**
-	 * @throws NullPointerException if {@code listener} is {@code null}.
+	 * @exception NullPointerException if {@code listener} is {@code null}.
 	 */
 	public void addErrorListener(@NotNull ANTLRErrorListener listener) {
 		if (listener == null) {

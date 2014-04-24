@@ -8,11 +8,11 @@
     </target>
 
     <target name="antlr3-init" depends="basic-init">
-        <property name="antlr3.version" value="3.5"/>
+        <property name="antlr3.version" value="3.5.2"/>
         <property name="antlr3.jar.name" value="antlr-${antlr3.version}-complete-no-st3.jar"/>
         <property name="antlr3.jar" value="${lib.dir}/${antlr3.jar.name}"/>
         <mkdir dir="${lib.dir}"/>
-        <get src="http://antlr3.org/download/${antlr3.jar.name}" dest="${antlr3.jar}" skipexisting="true"/>
+        <get src="http://www.antlr3.org/download/${antlr3.jar.name}" dest="${antlr3.jar}" skipexisting="true"/>
         <path id="cp.antlr3" path="${antlr3.jar}"/>
 
         <property name="build.antlr3.dir" value="${build.dir}/generated-sources/antlr3" />
@@ -20,11 +20,11 @@
     </target>
 
     <target name="antlr4-init" depends="basic-init">
-        <property name="antlr4.version" value="4.1"/>
+        <property name="antlr4.version" value="4.2"/>
         <property name="antlr4.jar.name" value="antlr-${antlr4.version}-complete.jar"/>
         <property name="antlr4.jar" value="${lib.dir}/${antlr4.jar.name}"/>
         <mkdir dir="${lib.dir}"/>
-        <get src="http://antlr.org/download/${antlr4.jar.name}" dest="${antlr4.jar}" skipexisting="true"/>
+        <get src="http://www.antlr.org/download/${antlr4.jar.name}" dest="${antlr4.jar}" skipexisting="true"/>
         <path id="cp.antlr4" path="${antlr4.jar}"/>
 
         <property name="build.antlr4.dir" value="${build.dir}/generated-sources/antlr4" />
@@ -32,7 +32,7 @@
     </target>
 
     <target name="build-init" depends="basic-init">
-        <property name="version" value="4.1.1-dev"/>
+        <property name="version" value="4.2.3-dev"/>
         <property name="build.sysclasspath" value="ignore"/>
         <property name="install.root.dir" value="${dist.dir}/antlr-${version}" />
         <property name="jar.file" value="${dist.dir}/antlr-${version}-complete.jar" />
@@ -199,8 +199,8 @@
         <mkdir dir="${build.dir}/classes"/>
         <javac
                 destdir="${build.dir}/classes"
-                source="1.5"
-                target="1.5"
+                source="1.6"
+                target="1.6"
                 debug="true"
                 excludes="org/antlr/v4/test/**">
             <compilerarg value="-Xlint"/>
@@ -209,7 +209,7 @@
                 <path refid="cp.antlr3"/>
                 <pathelement location="${basedir}/runtime/Java/lib/org.abego.treelayout.core.jar"/>
             </classpath>
-            <src path="${basedir}/tool/src:${basedir}/runtime/Java/src:${build.antlr3.dir}:${build.antlr4.dir}"/>
+            <src path="${basedir}/tool/src:${basedir}/runtime/JavaAnnotations/src:${basedir}/runtime/Java/src:${build.antlr3.dir}:${build.antlr4.dir}"/>
         </javac>
     </target>
 
@@ -246,6 +246,12 @@
 				<include name="**/*.st"/>
 				<include name="**/*.stg"/>
 			</fileset>
+			<fileset dir="${basedir}/runtime/JavaAnnotations/resources/">
+				<include name="**/*.Processor"/>
+			</fileset>
+			<fileset dir="${basedir}/runtime/JavaAnnotations/src/">
+				<include name="**/*.java"/>
+			</fileset>
 			<fileset dir="${basedir}/runtime/Java/src/">
 				<include name="**/*.java"/>
 				<include name="**/*.g"/>
@@ -260,7 +266,7 @@
                 <include name="build.properties"/>
                 <include name="build.xml"/>
                 <include name="LICENSE.txt"/>
-                <include name="README.txt"/>
+                <include name="README.md"/>
                 <include name="doxyfile"/>
             </fileset>
         </copy>

@@ -51,7 +51,7 @@ import org.antlr.v4.parse.GrammarTreeVisitor;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.OrderedHashSet;
-import org.antlr.v4.runtime.misc.Triple;
+import org.antlr.v4.runtime.misc.Pair;
 import org.antlr.v4.tool.Attribute;
 import org.antlr.v4.tool.ErrorType;
 import org.antlr.v4.tool.Rule;
@@ -149,17 +149,28 @@ public class RuleFunction extends OutputModelObject {
 
 		// make structs for -> labeled alts, define ctx labels for elements
 		altLabelCtxs = new HashMap<String,AltLabelStructDecl>();
-		List<Triple<Integer,AltAST,String>> labels = r.getAltLabels();
+		Map<String, List<Pair<Integer, AltAST>>> labels = r.getAltLabels();
 		if ( labels!=null ) {
-			for (Triple<Integer,AltAST,String> pair : labels) {
-				Integer altNum = pair.a;
-				AltAST altAST = pair.b;
-				String label = pair.c;
-				altToContext[altNum] = new AltLabelStructDecl(factory, r, altNum, label);
-				altLabelCtxs.put(label, altToContext[altNum]);
-				Set<Decl> decls = getDeclsForAltElements(altAST);
-				// we know which ctx to put in, so do it directly
-				for (Decl d : decls) altToContext[altNum].addDecl(d);
+			for (Map.Entry<String, List<Pair<Integer, AltAST>>> entry : labels.entrySet()) {
+				String label = entry.getKey();
+				List<AltAST> alts = new ArrayList<AltAST>();
+				for (Pair<Integer, AltAST> pair : entry.getValue()) {
+					alts.add(pair.b);
+				}
+
+				Set<Decl> decls = getDeclsForAllElements(alts);
+				for (Pair<Integer, AltAST> pair : entry.getValue()) {
+					Integer altNum = pair.a;
+					altToContext[altNum] = new AltLabelStructDecl(factory, r, altNum, label);
+					if (!altLabelCtxs.containsKey(label)) {
+						altLabelCtxs.put(label, altToContext[altNum]);
+					}
+
+					// we know which ctx to put in, so do it directly
+					for (Decl d : decls) {
+						altToContext[altNum].addDecl(d);
+					}
+				}
 			}
 		}
 	}
@@ -221,28 +232,6 @@ public class RuleFunction extends OutputModelObject {
 			factory.getGrammar().tool.errMgr.toolError(ErrorType.INTERNAL_ERROR, ex);
 			return new FrequencySet<String>();
 		}
-	}
-
-	/** Get list of decls for token/rule refs.
-	 *  Single ref X becomes X() getter
-	 *  Multiple refs to X becomes List X() method, X(int i) method.
-	 *  Ref X in a loop then we get List X(), X(int i)
-	 *
-	 *  Does not gen labels for literals like '+', 'begin', ';', ...
- 	 */
-	public Set<Decl> getDeclsForAltElements(AltAST altAST) {
-		IntervalSet reftypes = new IntervalSet(RULE_REF,
-											   TOKEN_REF);
-		List<GrammarAST> refs = altAST.getNodesWithType(reftypes);
-		Set<Decl> decls = new HashSet<Decl>();
-		FrequencySet<String> freq = getElementFrequenciesForAlt(altAST);
-		for (GrammarAST t : refs) {
-			String refLabelName = t.getText();
-			boolean needList = freq.count(refLabelName)>1;
-			List<Decl> d = getDeclForAltElement(t, refLabelName, needList);
-			decls.addAll(d);
-		}
-		return decls;
 	}
 
 	public List<Decl> getDeclForAltElement(GrammarAST t, String refLabelName, boolean needList) {
@@ -307,13 +296,23 @@ public class RuleFunction extends OutputModelObject {
 		 * Common
 		 */
 
+		/**
+		 * Generate a frequency set as the union of two input sets. If an
+		 * element is contained in both sets, the value for the output will be
+		 * the maximum of the two input values.
+		 *
+		 * @param a The first set.
+		 * @param b The second set.
+		 * @return The union of the two sets, with the maximum value chosen
+		 * whenever both sets contain the same key.
+		 */
 		protected static FrequencySet<String> combineMax(FrequencySet<String> a, FrequencySet<String> b) {
 			FrequencySet<String> result = combineAndClip(a, b, 1);
 			for (Map.Entry<String, MutableInt> entry : a.entrySet()) {
 				result.get(entry.getKey()).v = entry.getValue().v;
 			}
 
-			for (Map.Entry<String, MutableInt> entry : a.entrySet()) {
+			for (Map.Entry<String, MutableInt> entry : b.entrySet()) {
 				MutableInt slot = result.get(entry.getKey());
 				slot.v = Math.max(slot.v, entry.getValue().v);
 			}
@@ -321,6 +320,18 @@ public class RuleFunction extends OutputModelObject {
 			return result;
 		}
 
+		/**
+		 * Generate a frequency set as the union of two input sets, with the
+		 * values clipped to a specified maximum value. If an element is
+		 * contained in both sets, the value for the output, prior to clipping,
+		 * will be the sum of the two input values.
+		 *
+		 * @param a The first set.
+		 * @param b The second set.
+		 * @param clip The maximum value to allow for any output.
+		 * @return The sum of the two sets, with the individual elements clipped
+		 * to the maximum value gived by {@code clip}.
+		 */
 		protected static FrequencySet<String> combineAndClip(FrequencySet<String> a, FrequencySet<String> b, int clip) {
 			FrequencySet<String> result = new FrequencySet<String>();
 			for (Map.Entry<String, MutableInt> entry : a.entrySet()) {

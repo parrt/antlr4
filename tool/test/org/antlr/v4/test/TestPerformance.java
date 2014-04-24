@@ -60,6 +60,7 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.antlr.v4.runtime.misc.Utils;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeListener;
@@ -291,6 +292,12 @@ public class TestPerformance extends BaseTest {
 	 */
 	private static final boolean TIME_PARSE_ONLY = false;
 
+	/**
+	 * When {@code true}, messages will be printed to {@link System#err} when
+	 * the first stage (SLL) parsing resulted in a syntax error. This option is
+	 * ignored when {@link #TWO_STAGE_PARSING} is {@code false}.
+	 */
+	private static final boolean REPORT_SECOND_STAGE_RETRY = true;
 	private static final boolean REPORT_SYNTAX_ERRORS = true;
 	private static final boolean REPORT_AMBIGUITIES = false;
 	private static final boolean REPORT_FULL_CONTEXT = false;
@@ -877,12 +884,12 @@ public class TestPerformance extends BaseTest {
 		executorService.shutdown();
 		executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 
-        System.out.format("%d. Total parse time for %d files (%d KB, %d tokens, checksum 0x%8X): %.0fms%n",
+        System.out.format("%d. Total parse time for %d files (%d KB, %d tokens%s): %.0fms%n",
 						  currentPass + 1,
                           inputCount,
                           inputSize / 1024,
                           tokenCount.get(currentPass),
-						  COMPUTE_CHECKSUM ? checksum.getValue() : 0,
+						  COMPUTE_CHECKSUM ? String.format(", checksum 0x%8X", checksum.getValue()) : "",
                           (double)(System.nanoTime() - startTime) / 1000000.0);
 
 		if (sharedLexers.length > 0) {
@@ -1322,7 +1329,9 @@ public class TestPerformance extends BaseTest {
 
 							String sourceName = tokens.getSourceName();
 							sourceName = sourceName != null && !sourceName.isEmpty() ? sourceName+": " : "";
-							System.err.println(sourceName+"Forced to retry with full context.");
+							if (REPORT_SECOND_STAGE_RETRY) {
+								System.err.println(sourceName+"Forced to retry with full context.");
+							}
 
 							if (!(ex.getCause() instanceof ParseCancellationException)) {
 								throw ex;
@@ -1962,5 +1971,58 @@ public class TestPerformance extends BaseTest {
 		public T get() {
 			return referent;
 		}
+	}
+
+	/**
+	 * This is a regression test for antlr/antlr4#192 "Poor performance of
+	 * expression parsing".
+	 * https://github.com/antlr/antlr4/issues/192
+	 */
+	@Test(timeout = 60000)
+	public void testExpressionGrammar() {
+		String grammar =
+			"grammar Expr;\n" +
+			"\n" +
+			"program: expr EOF;\n" +
+			"\n" +
+			"expr: ID\n" +
+			"    | 'not' expr\n" +
+			"    | expr 'and' expr\n" +
+			"    | expr 'or' expr\n" +
+			"    ;\n" +
+			"\n" +
+			"ID: [a-zA-Z_][a-zA-Z_0-9]*;\n" +
+			"WS: [ \\t\\n\\r\\f]+ -> skip;\n" +
+			"ERROR: .;\n";
+		String input =
+			"not X1 and not X2 and not X3 and not X4 and not X5 and not X6 and not X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"    X1 and not X2 and not X3 and not X4 and not X5 and not X6 and not X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and     X2 and not X3 and not X4 and not X5 and not X6 and not X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and     X3 and not X4 and not X5 and not X6 and not X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and     X4 and not X5 and not X6 and not X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and     X5 and not X6 and not X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and not X5 and     X6 and not X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and not X5 and not X6 and     X7 and not X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and not X5 and not X6 and not X7 and     X8 and not X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and not X5 and not X6 and not X7 and not X8 and     X9 and not X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and not X5 and not X6 and not X7 and not X8 and not X9 and     X10 and not X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and not X5 and not X6 and not X7 and not X8 and not X9 and not X10 and     X11 and not X12 or\n" +
+			"not X1 and not X2 and not X3 and not X4 and not X5 and not X6 and not X7 and not X8 and not X9 and not X10 and not X11 and     X12\n";
+
+		String found = execParser("Expr.g4", grammar, "ExprParser", "ExprLexer", "program",
+								  input, false);
+		Assert.assertEquals("", found);
+		Assert.assertEquals(null, stderrDuringParse);
+
+		List<String> inputs = new ArrayList<String>();
+		for (int i = 0; i < 10; i++) {
+			inputs.add(input);
+		}
+
+		input = Utils.join(inputs.iterator(), " or\n");
+		found = execParser("Expr.g4", grammar, "ExprParser", "ExprLexer", "program",
+								  input, false);
+		Assert.assertEquals("", found);
+		Assert.assertEquals(null, stderrDuringParse);
 	}
 }

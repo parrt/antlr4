@@ -136,8 +136,8 @@ public class Utils {
 		t.join();
 	}
 
-	/** Convert array of strings to string->index map. Useful for
-	 *  converting rulenames to name->ruleindex map.
+	/** Convert array of strings to string&rarr;index map. Useful for
+	 *  converting rulenames to name&rarr;ruleindex map.
 	 */
 	public static Map<String, Integer> toMap(String[] keys) {
 		Map<String, Integer> m = new HashMap<String, Integer>();
@@ -145,5 +145,14 @@ public class Utils {
 			m.put(keys[i], i);
 		}
 		return m;
+	}
+
+	public static char[] toCharArray(IntegerList data) {
+		if ( data==null ) return null;
+		char[] cdata = new char[data.size()];
+		for (int i=0; i<data.size(); i++) {
+			cdata[i] = (char)data.get(i);
+		}
+		return cdata;
 	}
 }

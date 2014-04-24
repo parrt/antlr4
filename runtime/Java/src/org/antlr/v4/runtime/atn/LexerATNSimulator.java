@@ -58,13 +58,13 @@ public class LexerATNSimulator extends ATNSimulator {
 	 *  and current character position in that line. Note that the Lexer is
 	 *  tracking the starting line and characterization of the token. These
 	 *  variables track the "state" of the simulator when it hits an accept state.
-	 * <p/>
-	 *  We track these variables separately for the DFA and ATN simulation
+	 *
+	 *  <p>We track these variables separately for the DFA and ATN simulation
 	 *  because the DFA simulation often has to fail over to the ATN
 	 *  simulation. If the ATN simulation fails, we need the DFA to fall
 	 *  back to its previously accepted state, if any. If the ATN succeeds,
 	 *  then the ATN does the accept and the DFA simulator that invoked it
-	 *  can simply return the predicted token type.
+	 *  can simply return the predicted token type.</p>
 	 */
 	protected static class SimState {
 		protected int index = -1;
@@ -290,9 +290,12 @@ public class LexerATNSimulator extends ATNSimulator {
 		getReachableConfigSet(input, s.configs, reach, t);
 
 		if ( reach.isEmpty() ) { // we got nowhere on t from s
-			// we got nowhere on t, don't throw out this knowledge; it'd
-			// cause a failover from DFA later.
-			addDFAEdge(s, t, ERROR);
+			if (!reach.hasSemanticContext) {
+				// we got nowhere on t, don't throw out this knowledge; it'd
+				// cause a failover from DFA later.
+				addDFAEdge(s, t, ERROR);
+			}
+
 			// stop when we can't match any more char
 			return ERROR;
 		}
@@ -305,9 +308,8 @@ public class LexerATNSimulator extends ATNSimulator {
 							   ATNConfigSet reach, int t)
 	{
 		if (prevAccept.dfaState != null) {
-			int ruleIndex = prevAccept.dfaState.lexerRuleIndex;
-			int actionIndex = prevAccept.dfaState.lexerActionIndex;
-			accept(input, ruleIndex, actionIndex,
+			LexerActionExecutor lexerActionExecutor = prevAccept.dfaState.lexerActionExecutor;
+			accept(input, lexerActionExecutor, startIndex,
 				prevAccept.index, prevAccept.line, prevAccept.charPos);
 			return prevAccept.dfaState.prediction;
 		}
@@ -344,7 +346,13 @@ public class LexerATNSimulator extends ATNSimulator {
 				Transition trans = c.state.transition(ti);
 				ATNState target = getReachableTarget(trans, t);
 				if ( target!=null ) {
-					if (closure(input, new LexerATNConfig((LexerATNConfig)c, target), reach, currentAltReachedAcceptState, true)) {
+					LexerActionExecutor lexerActionExecutor = ((LexerATNConfig)c).getLexerActionExecutor();
+					if (lexerActionExecutor != null) {
+						lexerActionExecutor = lexerActionExecutor.fixOffsetBeforeMatch(input.index() - startIndex);
+					}
+
+					boolean treatEofAsEpsilon = t == CharStream.EOF;
+					if (closure(input, new LexerATNConfig((LexerATNConfig)c, target, lexerActionExecutor), reach, currentAltReachedAcceptState, true, treatEofAsEpsilon)) {
 						// any remaining configs for this alt have a lower priority than
 						// the one that just reached an accept state.
 						skipAlt = c.alt;
@@ -355,14 +363,12 @@ public class LexerATNSimulator extends ATNSimulator {
 		}
 	}
 
-	protected void accept(@NotNull CharStream input, int ruleIndex, int actionIndex,
-						  int index, int line, int charPos)
+	protected void accept(@NotNull CharStream input, LexerActionExecutor lexerActionExecutor,
+						  int startIndex, int index, int line, int charPos)
 	{
 		if ( debug ) {
-			System.out.format(Locale.getDefault(), "ACTION %s:%d\n", recog != null ? recog.getRuleNames()[ruleIndex] : ruleIndex, actionIndex);
+			System.out.format(Locale.getDefault(), "ACTION %s\n", lexerActionExecutor);
 		}
-
-		if ( actionIndex>=0 && recog!=null ) recog.action(null, ruleIndex, actionIndex);
 
 		// seek to after last char in token
 		input.seek(index);
@@ -370,6 +376,10 @@ public class LexerATNSimulator extends ATNSimulator {
 		this.charPositionInLine = charPos;
 		if (input.LA(1) != IntStream.EOF) {
 			consume(input);
+		}
+
+		if (lexerActionExecutor != null && recog != null) {
+			lexerActionExecutor.execute(recog, input, startIndex);
 		}
 	}
 
@@ -391,7 +401,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			ATNState target = p.transition(i).target;
 			LexerATNConfig c = new LexerATNConfig(target, i+1, initialContext);
-			closure(input, c, configs, false, false);
+			closure(input, c, configs, false, false, false);
 		}
 		return configs;
 	}
@@ -406,7 +416,7 @@ public class LexerATNSimulator extends ATNSimulator {
 	 * @return {@code true} if an accept state is reached, otherwise
 	 * {@code false}.
 	 */
-	protected boolean closure(@NotNull CharStream input, @NotNull LexerATNConfig config, @NotNull ATNConfigSet configs, boolean currentAltReachedAcceptState, boolean speculative) {
+	protected boolean closure(@NotNull CharStream input, @NotNull LexerATNConfig config, @NotNull ATNConfigSet configs, boolean currentAltReachedAcceptState, boolean speculative, boolean treatEofAsEpsilon) {
 		if ( debug ) {
 			System.out.println("closure("+config.toString(recog, true)+")");
 		}
@@ -437,8 +447,8 @@ public class LexerATNSimulator extends ATNSimulator {
 					if (config.context.getReturnState(i) != PredictionContext.EMPTY_RETURN_STATE) {
 						PredictionContext newContext = config.context.getParent(i); // "pop" return state
 						ATNState returnState = atn.states.get(config.context.getReturnState(i));
-						LexerATNConfig c = new LexerATNConfig(returnState, config.alt, newContext);
-						currentAltReachedAcceptState = closure(input, c, configs, currentAltReachedAcceptState, speculative);
+						LexerATNConfig c = new LexerATNConfig(config, returnState, newContext);
+						currentAltReachedAcceptState = closure(input, c, configs, currentAltReachedAcceptState, speculative, treatEofAsEpsilon);
 					}
 				}
 			}
@@ -456,9 +466,9 @@ public class LexerATNSimulator extends ATNSimulator {
 		ATNState p = config.state;
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			Transition t = p.transition(i);
-			LexerATNConfig c = getEpsilonTarget(input, config, t, configs, speculative);
+			LexerATNConfig c = getEpsilonTarget(input, config, t, configs, speculative, treatEofAsEpsilon);
 			if ( c!=null ) {
-				currentAltReachedAcceptState = closure(input, c, configs, currentAltReachedAcceptState, speculative);
+				currentAltReachedAcceptState = closure(input, c, configs, currentAltReachedAcceptState, speculative, treatEofAsEpsilon);
 			}
 		}
 
@@ -471,7 +481,8 @@ public class LexerATNSimulator extends ATNSimulator {
 										   @NotNull LexerATNConfig config,
 										   @NotNull Transition t,
 										   @NotNull ATNConfigSet configs,
-										   boolean speculative)
+										   boolean speculative,
+										   boolean treatEofAsEpsilon)
 	{
 		LexerATNConfig c = null;
 		switch (t.getSerializationType()) {
@@ -513,12 +524,45 @@ public class LexerATNSimulator extends ATNSimulator {
 					c = new LexerATNConfig(config, t.target);
 				}
 				break;
-			// ignore actions; just exec one per rule upon accept
+
 			case Transition.ACTION:
-				c = new LexerATNConfig(config, t.target, ((ActionTransition)t).actionIndex);
-				break;
+				if (config.context == null || config.context.hasEmptyPath()) {
+					// execute actions anywhere in the start rule for a token.
+					//
+					// TODO: if the entry rule is invoked recursively, some
+					// actions may be executed during the recursive call. The
+					// problem can appear when hasEmptyPath() is true but
+					// isEmpty() is false. In this case, the config needs to be
+					// split into two contexts - one with just the empty path
+					// and another with everything but the empty path.
+					// Unfortunately, the current algorithm does not allow
+					// getEpsilonTarget to return two configurations, so
+					// additional modifications are needed before we can support
+					// the split operation.
+					LexerActionExecutor lexerActionExecutor = LexerActionExecutor.append(config.getLexerActionExecutor(), atn.lexerActions[((ActionTransition)t).actionIndex]);
+					c = new LexerATNConfig(config, t.target, lexerActionExecutor);
+					break;
+				}
+				else {
+					// ignore actions in referenced rules
+					c = new LexerATNConfig(config, t.target);
+					break;
+				}
+
 			case Transition.EPSILON:
 				c = new LexerATNConfig(config, t.target);
+				break;
+
+			case Transition.ATOM:
+			case Transition.RANGE:
+			case Transition.SET:
+				if (treatEofAsEpsilon) {
+					if (t.matches(CharStream.EOF, Character.MIN_VALUE, Character.MAX_VALUE)) {
+						c = new LexerATNConfig(config, t.target);
+						break;
+					}
+				}
+
 				break;
 		}
 
@@ -527,15 +571,15 @@ public class LexerATNSimulator extends ATNSimulator {
 
 	/**
 	 * Evaluate a predicate specified in the lexer.
-	 * <p/>
-	 * If {@code speculative} is {@code true}, this method was called before
+	 *
+	 * <p>If {@code speculative} is {@code true}, this method was called before
 	 * {@link #consume} for the matched character. This method should call
 	 * {@link #consume} before evaluating the predicate to ensure position
 	 * sensitive values, including {@link Lexer#getText}, {@link Lexer#getLine},
 	 * and {@link Lexer#getCharPositionInLine}, properly reflect the current
 	 * lexer state. This method should restore {@code input} and the simulator
 	 * to the original state before returning (i.e. undo the actions made by the
-	 * call to {@link #consume}.
+	 * call to {@link #consume}.</p>
 	 *
 	 * @param input The input stream.
 	 * @param ruleIndex The rule containing the predicate.
@@ -654,10 +698,8 @@ public class LexerATNSimulator extends ATNSimulator {
 
 		if ( firstConfigWithRuleStopState!=null ) {
 			proposed.isAcceptState = true;
-			proposed.lexerRuleIndex = firstConfigWithRuleStopState.state.ruleIndex;
-			proposed.lexerActionIndex =
-				((LexerATNConfig)firstConfigWithRuleStopState).lexerActionIndex;
-			proposed.prediction = atn.ruleToTokenType[proposed.lexerRuleIndex];
+			proposed.lexerActionExecutor = ((LexerATNConfig)firstConfigWithRuleStopState).getLexerActionExecutor();
+			proposed.prediction = atn.ruleToTokenType[firstConfigWithRuleStopState.state.ruleIndex];
 		}
 
 		DFA dfa = decisionToDFA[mode];

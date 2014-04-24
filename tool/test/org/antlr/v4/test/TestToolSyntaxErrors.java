@@ -372,9 +372,155 @@ public class TestToolSyntaxErrors extends BaseTest {
 			"\n" +
 			"WS   : [ \\r\\t\\n]+ -> skip ;\n";
 		String expected =
-			"error(" + ErrorType.LEXER_ACTION_PLACEMENT_ISSUE.code + "): A.g4:8:21: action in lexer rule 'CharacterLiteral' must be last element of single outermost alt\n";
+			"";
 		
 		String[] pair = new String[] { grammar, expected };
+		super.testErrors(pair, true);
+	}
+
+	/**
+	 * This is a regression test for antlr/antlr4#308 "NullPointer exception"
+	 * https://github.com/antlr/antlr4/issues/308
+	 */
+	@Test public void testDoubleQuotedStringLiteral() {
+		String grammar =
+			"lexer grammar A;\n"
+			+ "WHITESPACE : (\" \" | \"\\t\" | \"\\n\" | \"\\r\" | \"\\f\");\n";
+		String expected =
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:14: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:16: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:20: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:21: syntax error: '\\' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:23: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:27: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:28: syntax error: '\\' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:30: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:34: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:35: syntax error: '\\' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:37: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:41: syntax error: '\"' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:42: syntax error: '\\' came as a complete surprise to me\n" +
+			"error(" + ErrorType.SYNTAX_ERROR.code + "): A.g4:2:44: syntax error: '\"' came as a complete surprise to me\n";
+
+		String[] pair = new String[] {
+			grammar,
+			expected
+		};
+
+		super.testErrors(pair, true);
+	}
+
+	/**
+	 * This test ensures that the {@link ErrorType#INVALID_ESCAPE_SEQUENCE}
+	 * error is not reported for escape sequences that are known to be valid.
+	 */
+	@Test public void testValidEscapeSequences() {
+		String grammar =
+			"lexer grammar A;\n" +
+			"NORMAL_ESCAPE : '\\b \\t \\n \\f \\r \\\" \\' \\\\';\n" +
+			"UNICODE_ESCAPE : '\\u0001 \\u00A1 \\u00a1 \\uaaaa \\uAAAA';\n";
+		String expected =
+			"";
+
+		String[] pair = new String[] {
+			grammar,
+			expected
+		};
+
+		super.testErrors(pair, true);
+	}
+
+	/**
+	 * This is a regression test for antlr/antlr4#507 "NullPointerException When
+	 * Generating Code from Grammar".
+	 * https://github.com/antlr/antlr4/issues/507
+	 */
+	@Test public void testInvalidEscapeSequences() {
+		String grammar =
+			"lexer grammar A;\n" +
+			"RULE : 'Foo \\uAABG \\x \\u';\n";
+		String expected =
+			"error(" + ErrorType.INVALID_ESCAPE_SEQUENCE.code + "): A.g4:2:12: invalid escape sequence\n" +
+			"error(" + ErrorType.INVALID_ESCAPE_SEQUENCE.code + "): A.g4:2:19: invalid escape sequence\n" +
+			"error(" + ErrorType.INVALID_ESCAPE_SEQUENCE.code + "): A.g4:2:22: invalid escape sequence\n";
+
+		String[] pair = new String[] {
+			grammar,
+			expected
+		};
+
+		super.testErrors(pair, true);
+	}
+
+	/**
+	 * This test ensures the {@link ErrorType#UNRECOGNIZED_ASSOC_OPTION} warning
+	 * is produced as described in the documentation.
+	 */
+	@Test public void testUnrecognizedAssocOption() {
+		String grammar =
+			"grammar A;\n" +
+			"x : 'x'\n" +
+			"  | x '+'<assoc=right> x   // warning 157\n" +
+			"  |<assoc=right> x '*' x   // ok\n" +
+			"  ;\n";
+		String expected =
+			"warning(" + ErrorType.UNRECOGNIZED_ASSOC_OPTION.code + "): A.g4:3:10: rule 'x' contains an 'assoc' terminal option in an unrecognized location\n";
+
+		String[] pair = new String[] {
+			grammar,
+			expected
+		};
+
+		super.testErrors(pair, true);
+	}
+
+	/**
+	 * This test ensures the {@link ErrorType#FRAGMENT_ACTION_IGNORED} warning
+	 * is produced as described in the documentation.
+	 */
+	@Test public void testFragmentActionIgnored() {
+		String grammar =
+			"lexer grammar A;\n" +
+			"X1 : 'x' -> more    // ok\n" +
+			"   ;\n" +
+			"Y1 : 'x' {more();}  // ok\n" +
+			"   ;\n" +
+			"fragment\n" +
+			"X2 : 'x' -> more    // warning 158\n" +
+			"   ;\n" +
+			"fragment\n" +
+			"Y2 : 'x' {more();}  // warning 158\n" +
+			"   ;\n";
+		String expected =
+			"warning(" + ErrorType.FRAGMENT_ACTION_IGNORED.code + "): A.g4:7:12: fragment rule 'X2' contains an action or command which can never be executed\n" +
+			"warning(" + ErrorType.FRAGMENT_ACTION_IGNORED.code + "): A.g4:10:9: fragment rule 'Y2' contains an action or command which can never be executed\n";
+
+		String[] pair = new String[] {
+			grammar,
+			expected
+		};
+
+		super.testErrors(pair, true);
+	}
+
+	/**
+	 * This is a regression test for antlr/antlr4#500 "Array Index Out Of
+	 * Bounds".
+	 * https://github.com/antlr/antlr4/issues/500
+	 */
+	@Test public void testTokenNamedEOF() {
+		String grammar =
+			"lexer grammar A;\n" +
+			"WS : ' ';\n" +
+			" EOF : 'a';\n";
+		String expected =
+			"error(" + ErrorType.RESERVED_RULE_NAME.code + "): A.g4:3:1: cannot declare a rule with reserved name 'EOF'\n";
+
+		String[] pair = new String[] {
+			grammar,
+			expected
+		};
+
 		super.testErrors(pair, true);
 	}
 }

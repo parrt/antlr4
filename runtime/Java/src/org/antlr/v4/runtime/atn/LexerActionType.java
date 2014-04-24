@@ -1,7 +1,7 @@
 /*
  * [The "BSD license"]
- *  Copyright (c) 2012 Terence Parr
- *  Copyright (c) 2012 Sam Harwell
+ *  Copyright (c) 2013 Terence Parr
+ *  Copyright (c) 2013 Sam Harwell
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -28,10 +28,45 @@
  *  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.antlr.v4.runtime.misc;
+package org.antlr.v4.runtime.atn;
 
-@java.lang.annotation.Documented
-@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.CLASS)
-@java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.METHOD, java.lang.annotation.ElementType.PARAMETER, java.lang.annotation.ElementType.LOCAL_VARIABLE})
-public @interface NotNull {
+/**
+ * Represents the serialization type of a {@link LexerAction}.
+ *
+ * @author Sam Harwell
+ * @since 4.2
+ */
+public enum LexerActionType {
+	/**
+	 * The type of a {@link LexerChannelAction} action.
+	 */
+	CHANNEL,
+	/**
+	 * The type of a {@link LexerCustomAction} action.
+	 */
+	CUSTOM,
+	/**
+	 * The type of a {@link LexerModeAction} action.
+	 */
+	MODE,
+	/**
+	 * The type of a {@link LexerMoreAction} action.
+	 */
+	MORE,
+	/**
+	 * The type of a {@link LexerPopModeAction} action.
+	 */
+	POP_MODE,
+	/**
+	 * The type of a {@link LexerPushModeAction} action.
+	 */
+	PUSH_MODE,
+	/**
+	 * The type of a {@link LexerSkipAction} action.
+	 */
+	SKIP,
+	/**
+	 * The type of a {@link LexerTypeAction} action.
+	 */
+	TYPE,
 }

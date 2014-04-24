@@ -139,7 +139,7 @@ public class ATNConfigSet implements Set<ATNConfig> {
 	}
 
 	@Override
-	public boolean add(@NotNull ATNConfig config) {
+	public boolean add(ATNConfig config) {
 		return add(config, null);
 	}
 
@@ -149,9 +149,9 @@ public class ATNConfigSet implements Set<ATNConfig> {
 	 * {@link ATNConfig#state}, {@code i} is the {@link ATNConfig#alt}, and
 	 * {@code pi} is the {@link ATNConfig#semanticContext}. We use
 	 * {@code (s,i,pi)} as key.
-	 * <p/>
-	 * This method updates {@link #dipsIntoOuterContext} and
-	 * {@link #hasSemanticContext} when necessary.
+	 *
+	 * <p>This method updates {@link #dipsIntoOuterContext} and
+	 * {@link #hasSemanticContext} when necessary.</p>
 	 */
 	public boolean add(
 		@NotNull ATNConfig config,

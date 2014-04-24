@@ -30,12 +30,6 @@
 
 package org.antlr.v4.runtime;
 
-import org.antlr.v4.runtime.FailedPredicateException;
-import org.antlr.v4.runtime.InterpreterRuleContext;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNState;
 import org.antlr.v4.runtime.atn.ActionTransition;
@@ -47,7 +41,6 @@ import org.antlr.v4.runtime.atn.PrecedencePredicateTransition;
 import org.antlr.v4.runtime.atn.PredicateTransition;
 import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.atn.RuleStartState;
-import org.antlr.v4.runtime.atn.RuleStopState;
 import org.antlr.v4.runtime.atn.RuleTransition;
 import org.antlr.v4.runtime.atn.StarLoopEntryState;
 import org.antlr.v4.runtime.atn.Transition;
@@ -85,9 +78,10 @@ public class ParserInterpreter extends Parser {
 	protected final String[] ruleNames;
 
 	protected final Deque<Pair<ParserRuleContext, Integer>> _parentContextStack = new ArrayDeque<Pair<ParserRuleContext, Integer>>();
-	protected final Deque<InterpreterRuleContext> _contextStack = new ArrayDeque<InterpreterRuleContext>();
 
-	public ParserInterpreter(String grammarFileName, Collection<String> tokenNames, Collection<String> ruleNames, ATN atn, TokenStream input) {
+	public ParserInterpreter(String grammarFileName, Collection<String> tokenNames,
+							 Collection<String> ruleNames, ATN atn, TokenStream input)
+	{
 		super(input);
 		this.grammarFileName = grammarFileName;
 		this.atn = atn;
@@ -105,17 +99,7 @@ public class ParserInterpreter extends Parser {
 				continue;
 			}
 
-			RuleStartState ruleStartState = atn.ruleToStartState[state.ruleIndex];
-			if (!ruleStartState.isPrecedenceRule) {
-				continue;
-			}
-
-			ATNState maybeLoopEndState = state.transition(state.getNumberOfTransitions() - 1).target;
-			if (!(maybeLoopEndState instanceof LoopEndState)) {
-				continue;
-			}
-
-			if (maybeLoopEndState.epsilonOnlyTransitions && maybeLoopEndState.transition(0).target instanceof RuleStopState) {
+			if (((StarLoopEntryState)state).precedenceRuleDecision) {
 				this.pushRecursionContextStates.set(state.stateNumber);
 			}
 		}
@@ -152,7 +136,7 @@ public class ParserInterpreter extends Parser {
 
 		InterpreterRuleContext rootContext = new InterpreterRuleContext(null, ATNState.INVALID_STATE_NUMBER, startRuleIndex);
 		if (startRuleStartState.isPrecedenceRule) {
-			enterRecursionRule(rootContext, startRuleIndex, 0);
+			enterRecursionRule(rootContext, startRuleStartState.stateNumber, startRuleIndex, 0);
 		}
 		else {
 			enterRule(rootContext, startRuleStartState.stateNumber, startRuleIndex);
@@ -164,24 +148,41 @@ public class ParserInterpreter extends Parser {
 			case ATNState.RULE_STOP :
 				// pop; return from rule
 				if ( _ctx.isEmpty() ) {
-					exitRule();
-					return rootContext;
+					if (startRuleStartState.isPrecedenceRule) {
+						ParserRuleContext result = _ctx;
+						Pair<ParserRuleContext, Integer> parentContext = _parentContextStack.pop();
+						unrollRecursionContexts(parentContext.a);
+						return result;
+					}
+					else {
+						exitRule();
+						return rootContext;
+					}
 				}
 
 				visitRuleStopState(p);
 				break;
 
 			default :
-				visitState(p);
+				try {
+					visitState(p);
+				}
+				catch (RecognitionException e) {
+					setState(atn.ruleToStopState[p.ruleIndex].stateNumber);
+					getContext().exception = e;
+					getErrorHandler().reportError(this, e);
+					getErrorHandler().recover(this, e);
+				}
+
 				break;
 			}
 		}
 	}
 
 	@Override
-	public void enterRecursionRule(ParserRuleContext localctx, int ruleIndex, int precedence) {
+	public void enterRecursionRule(ParserRuleContext localctx, int state, int ruleIndex, int precedence) {
 		_parentContextStack.push(new Pair<ParserRuleContext, Integer>(_ctx, localctx.invokingState));
-		super.enterRecursionRule(localctx, ruleIndex, precedence);
+		super.enterRecursionRule(localctx, state, ruleIndex, precedence);
 	}
 
 	protected ATNState getATNState() {
@@ -191,6 +192,7 @@ public class ParserInterpreter extends Parser {
 	protected void visitState(ATNState p) {
 		int edge;
 		if (p.getNumberOfTransitions() > 1) {
+			getErrorHandler().sync(this);
 			edge = getInterpreter().adaptivePredict(_input, ((DecisionState)p).decision, _ctx);
 		}
 		else {
@@ -228,7 +230,7 @@ public class ParserInterpreter extends Parser {
 			int ruleIndex = ruleStartState.ruleIndex;
 			InterpreterRuleContext ctx = new InterpreterRuleContext(_ctx, p.stateNumber, ruleIndex);
 			if (ruleStartState.isPrecedenceRule) {
-				enterRecursionRule(ctx, ruleIndex, ((RuleTransition)transition).precedence);
+				enterRecursionRule(ctx, ruleStartState.stateNumber, ruleIndex, ((RuleTransition)transition).precedence);
 			}
 			else {
 				enterRule(ctx, transition.target.stateNumber, ruleIndex);

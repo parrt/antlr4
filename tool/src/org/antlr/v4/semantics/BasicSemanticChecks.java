@@ -102,10 +102,26 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 	public ErrorManager errMgr;
 
 	/**
+	 * When this is {@code true}, the semantic checks will report
+	 * {@link ErrorType#UNRECOGNIZED_ASSOC_OPTION} where appropriate. This may
+	 * be set to {@code false} to disable this specific check.
+	 *
+	 * <p>The default value is {@code true}.</p>
+	 */
+	public boolean checkAssocElementOption = true;
+
+	/**
 	 * This field is used for reporting the {@link ErrorType#MODE_WITHOUT_RULES}
 	 * error when necessary.
 	 */
 	protected int nonFragmentRuleCount;
+
+	/**
+	 * This is {@code true} from the time {@link #discoverLexerRule} is called
+	 * for a lexer rule with the {@code fragment} modifier until
+	 * {@link #exitLexerRule} is called.
+	 */
+	private boolean inFragmentRule;
 
 	public BasicSemanticChecks(Grammar g, RuleCollector ruleCollector) {
 		this.g = g;
@@ -191,18 +207,22 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 	{
 		checkInvalidRuleDef(ID.token);
 
-		boolean fragmentRule = false;
 		if (modifiers != null) {
 			for (GrammarAST tree : modifiers) {
 				if (tree.getType() == ANTLRParser.FRAGMENT) {
-					fragmentRule = true;
+					inFragmentRule = true;
 				}
 			}
 		}
 
-		if (!fragmentRule) {
+		if (!inFragmentRule) {
 			nonFragmentRuleCount++;
 		}
+	}
+
+	@Override
+	protected void exitLexerRule(GrammarAST tree) {
+		inFragmentRule = false;
 	}
 
 	@Override
@@ -290,6 +310,11 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 
 	void checkGrammarName(Token nameToken) {
 		String fullyQualifiedName = nameToken.getInputStream().getSourceName();
+		if (fullyQualifiedName == null) {
+			// This wasn't read from a file.
+			return;
+		}
+
 		File f = new File(fullyQualifiedName);
 		String fileName = f.getName();
 		if ( g.originalGrammar!=null ) return; // don't warn about diff if this is implicit lexer
@@ -367,14 +392,26 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 
 	@Override
 	protected void enterLexerElement(GrammarAST tree) {
-		if ( tree.getType() == ACTION ) {
-			checkElementIsOuterMostInSingleAlt(tree);
-		}
 	}
 
 	@Override
 	protected void enterLexerCommand(GrammarAST tree) {
 		checkElementIsOuterMostInSingleAlt(tree);
+
+		if (inFragmentRule) {
+			String fileName = tree.token.getInputStream().getSourceName();
+			String ruleName = currentRuleName;
+			g.tool.errMgr.grammarError(ErrorType.FRAGMENT_ACTION_IGNORED, fileName, tree.token, ruleName);
+		}
+	}
+
+	@Override
+	public void actionInAlt(ActionAST action) {
+		if (inFragmentRule) {
+			String fileName = action.token.getInputStream().getSourceName();
+			String ruleName = currentRuleName;
+			g.tool.errMgr.grammarError(ErrorType.FRAGMENT_ACTION_IGNORED, fileName, action.token, ruleName);
+		}
 	}
 
 	/**
@@ -393,7 +430,6 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 		if ( !outerMostAlt || blk.getChildCount()>1 )
 		{
 			ErrorType e = ErrorType.LEXER_COMMAND_PLACEMENT_ISSUE;
-			if ( tree.getType() == ACTION ) e = ErrorType.LEXER_ACTION_PLACEMENT_ISSUE;
 			g.tool.errMgr.grammarError(e,
 									   fileName,
 									   tree.getToken(),
@@ -481,6 +517,17 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 								GrammarAST ID,
 								GrammarAST valueAST)
 	{
+		if (checkAssocElementOption && ID != null && "assoc".equals(ID.getText())) {
+			if (elem.getType() != ANTLRParser.ALT) {
+				Token optionID = ID.token;
+				String fileName = optionID.getInputStream().getSourceName();
+				g.tool.errMgr.grammarError(ErrorType.UNRECOGNIZED_ASSOC_OPTION,
+										   fileName,
+										   optionID,
+										   currentRuleName);
+			}
+		}
+
 		if ( elem instanceof TerminalAST ) {
 			return checkTokenOptions((TerminalAST)elem, ID, valueAST);
 		}

@@ -377,4 +377,68 @@ public class TestParserExec extends BaseTest {
 		assertEquals("(file (item a) <EOF>)\n", found);
 		assertNull(stderrDuringParse);
 	}
+
+	/**
+	 * This is a regressino test for antlr/antlr4#299 "Repeating subtree not
+	 * accessible in visitor".
+	 * https://github.com/antlr/antlr4/issues/299
+	 */
+	@Test public void testListLabelForClosureContext() throws Exception {
+		String grammar =
+			"grammar T;\n" +
+			"ifStatement\n" +
+			"@after { List<? extends ElseIfStatementContext> items = $ctx.elseIfStatement(); }\n" +
+			"    : 'if' expression\n" +
+			"      ( ( 'then'\n" +
+			"          executableStatement*\n" +
+			"          elseIfStatement*  // <--- problem is here\n" +
+			"          elseStatement?\n" +
+			"          'end' 'if'\n" +
+			"        ) | executableStatement )\n" +
+			"    ;\n" +
+			"\n" +
+			"elseIfStatement\n" +
+			"    : 'else' 'if' expression 'then' executableStatement*\n" +
+			"    ;\n"
+			+ "expression : 'a' ;\n"
+			+ "executableStatement : 'a' ;\n"
+			+ "elseStatement : 'a' ;\n";
+		String input = "a";
+		String found = execParser("T.g4", grammar, "TParser", "TLexer", "expression", input, false);
+		assertEquals("", found);
+		assertNull(stderrDuringParse);
+	}
+
+	/**
+	 * This test ensures that {@link ParserATNSimulator} produces a correct
+	 * result when the grammar contains multiple explicit references to
+	 * {@code EOF} inside of parser rules.
+	 */
+	@Test
+	public void testMultipleEOFHandling() throws Exception {
+		String grammar =
+			"grammar T;\n" +
+			"prog : ('x' | 'x' 'y') EOF EOF;\n";
+		String input = "x";
+		String found = execParser("T.g4", grammar, "TParser", "TLexer", "prog", input, false);
+		assertEquals("", found);
+		assertNull(stderrDuringParse);
+	}
+
+	/**
+	 * This test ensures that {@link ParserATNSimulator} does not produce a
+	 * {@link StackOverflowError} when it encounters an {@code EOF} transition
+	 * inside a closure.
+	 */
+	@Test
+	public void testEOFInClosure() throws Exception {
+		String grammar =
+			"grammar T;\n" +
+			"prog : stat EOF;\n" +
+			"stat : 'x' ('y' | EOF)*?;\n";
+		String input = "x";
+		String found = execParser("T.g4", grammar, "TParser", "TLexer", "prog", input, false);
+		assertEquals("", found);
+		assertNull(stderrDuringParse);
+	}
 }
