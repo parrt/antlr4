@@ -6,101 +6,105 @@ import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 public class ProfilingATNSimulator extends ParserATNSimulator {
-//	public final long[] decisionInvocations;
-	public final long[] fullContextFallback;
-//	public final long[] nonSLL;
-	public final long[] totalTransitions;
-	public final long[] ATNTransitions;
-	public final long[] fullContextTransitions;
-	/** Track every lookahead depth used to make a decision for each decision */
-	public final List<Integer>[] lookahead;
+    public static class DecisionInfo {
+        public int decision;                // which decision number 0..n-1
+        public long invocations;
+       	public long LLFallback;             // how many times SLL failed and we tried LL; always 0 if SLL mode
+//       	public long nonSLL;
+       	public long transitions; // TODO: isn't this just sum of lookahead elements?
+       	public long ATNTransitions;         // ATN (not DFA) transitions
+       	public long LLTransitions;          // LL ATN transitions; always 0 if SLL mode
+       	/** Track every lookahead depth used to make a decision for each decision */
+       	public List<Integer> lookahead = new ArrayList<Integer>();
 
-	public int numDecisions;
+        public DecisionInfo(int decision) {
+            this.decision = decision;
+        }
 
-	public int decision;
+        @Override
+        public String toString() {
+            return "{" +
+                   "invocations=" + invocations +
+                   ", LLFallback=" + LLFallback +
+//                   ", nonSLL=" + nonSLL +
+                   ", transitions=" + transitions +
+                   ", ATNTransitions=" + ATNTransitions +
+                   ", LLTransitions=" + LLTransitions +
+                   ", lookahead=" + lookahead +
+                   '}';
+        }
+    }
+
+    protected final DecisionInfo[] decisions;
+
+    protected int numDecisions;
+
+    protected int currentDecision;
 
 	public ProfilingATNSimulator(Parser parser) {
-		super(parser,
-			  parser.getInterpreter().atn,
-			  parser.getInterpreter().decisionToDFA,
-			  parser.getInterpreter().sharedContextCache);
-		numDecisions = atn.decisionToState.size();
-//		decisionInvocations = new long[n];
-		fullContextFallback = new long[numDecisions];
-//		nonSLL = new long[numDecisions];
-		totalTransitions = new long[numDecisions];
-		ATNTransitions = new long[numDecisions];
-		fullContextTransitions = new long[numDecisions];
-		lookahead = (List<Integer>[])Array.newInstance(ArrayList.class, numDecisions);
-		for (int i=0; i<numDecisions; i++) {
-			lookahead[i] = new ArrayList<Integer>();
-		}
+        super(parser,
+                parser.getInterpreter().atn,
+                parser.getInterpreter().decisionToDFA,
+                parser.getInterpreter().sharedContextCache);
+        numDecisions = atn.decisionToState.size();
+        decisions = new DecisionInfo[numDecisions];
+        for (int i=0; i<numDecisions; i++) {
+            decisions[i] = new DecisionInfo(i);
+        }
 	}
-
-//	public ProfilingATNSimulator(Parser parser, ATN atn,
-//								 DFA[] decisionToDFA,
-//								 PredictionContextCache sharedContextCache)
-//	{
-//		super(parser, parser.getATN(), parser.getATN().decisionToDFA, sharedContextCache);
-//		decisionInvocations = new long[atn.decisionToState.size()];
-//		fullContextFallback = new long[atn.decisionToState.size()];
-//		nonSll = new long[atn.decisionToState.size()];
-//		totalTransitions = new long[atn.decisionToState.size()];
-//		ATNTransitions = new long[atn.decisionToState.size()];
-//		fullContextTransitions = new long[atn.decisionToState.size()];
-//		lookahead = (List<Integer>[])Array.newInstance(ArrayList.class, atn.decisionToState.size());
-//	}
 
 	@Override
 	public int adaptivePredict(TokenStream input, int decision, ParserRuleContext outerContext) {
 		try {
-			this.decision = decision;
-//			decisionInvocations[decision]++;
+			this.currentDecision = decision;
+			decisions[decision].invocations++;
 			int alt = super.adaptivePredict(input, decision, outerContext);
 			int k = _stopIndex - _startIndex + 1;
-			lookahead[decision].add(k);
+            decisions[decision].lookahead.add(k);
 			return alt;
 		}
 		finally {
-			this.decision = -1;
+			this.currentDecision = -1;
 		}
 	}
 
 	@Override
 	protected int execATNWithFullContext(DFA dfa, DFAState D, ATNConfigSet s0, TokenStream input, int startIndex, ParserRuleContext outerContext) {
-		fullContextFallback[decision]++;
+        decisions[currentDecision].LLFallback++;
 		return super.execATNWithFullContext(dfa, D, s0, input, startIndex, outerContext);
 	}
 
 	@Override
 	protected DFAState getExistingTargetState(DFAState previousD, int t) {
-		totalTransitions[decision]++;
+        decisions[currentDecision].transitions++;
 		return super.getExistingTargetState(previousD, t);
 	}
 
 	@Override
 	protected DFAState computeTargetState(DFA dfa, DFAState previousD, int t) {
-		ATNTransitions[decision]++;
+        decisions[currentDecision].ATNTransitions++;
 		return super.computeTargetState(dfa, previousD, t);
 	}
 
 	@Override
 	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean fullCtx) {
 		if (fullCtx) {
-			totalTransitions[decision]++;
-			ATNTransitions[decision]++;
-			fullContextTransitions[decision]++;
+            decisions[currentDecision].transitions++;
+            decisions[currentDecision].ATNTransitions++;
+            decisions[currentDecision].LLTransitions++;
 		}
 
 		return super.computeReachSet(closure, t, fullCtx);
 	}
+
+    public DecisionInfo[] getDecisionInfo() {
+        return decisions;
+    }
 
 	public int getDFASize() {
 		int n = 0;
@@ -110,35 +114,46 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 		return n;
 	}
 
-	public void dump() {
-		System.out.println("invocations:");
-		for (int i=0; i<numDecisions; i++) {
-			List<Integer> ks = lookahead[i];
-//			Median median = new Median();
-//			double[] values = new double[ks.size()];
-//			for (int j=0; j<ks.size(); j++) {
-//				values[j] = ks.get(j);
-//			}
-//			double m = median.evaluate(values);
-			if ( ks.size()>0 ) {
-				System.out.printf("\t[%d]: %d (median depth=%f)\n", i, ks.size(), 0.0);
-			}
-			i++;
-		}
-		System.out.println("depths:");
-		int i = 0;
-		for (List<Integer> look : lookahead) {
-			if ( look.size()>0 ) System.out.printf("\t[%d]: %s\n", i, look);
-			i++;
-		}
-		List<Integer> ll = new ArrayList<Integer>();
-		i = 0;
-		for (long a : fullContextFallback) {
-			if ( a>0 ) ll.add(i);
-			i++;
-		}
-		if ( ll.size()>0 ) {
-			System.out.println("Full LL decisions: "+ll);
-		}
-	}
+    protected static int[] toIntArray(List<Integer> ks) {
+        int[] values = new int[ks.size()];
+        for (int j=0; j<ks.size(); j++) {
+            values[j] = ks.get(j);
+        }
+        return values;
+    }
+
+    /** warning: sorts data arg */
+    public static double median(int[] data) {
+        Arrays.sort(data);
+        int middle = data.length/2;
+        if ( data.length % 2 == 1 ) { // if odd number, grab middle
+            return data[middle];
+        }
+        else {
+            return (data[middle-1] + data[middle]) / 2.0; // average of middle pair
+        }
+    }
+
+    public static void dump(DecisionInfo[] decisions) {
+   		System.out.println("invocations:");
+   		for (int i=0; i<decisions.length; i++) {
+               long count = decisions[i].invocations;
+               System.out.printf("\t[%d]: %d\n", i, count);
+           }
+           System.out.println("depths:");
+           for (int i=0; i<decisions.length; i++) {
+               List<Integer> look = decisions[i].lookahead;
+   			if ( look.size()>0 ) System.out.printf("\t[%d]: %s median=%7.1f\n", i, look.toString(), median(toIntArray(look)));
+   			i++;
+   		}
+   		List<Integer> LL = new ArrayList<Integer>();
+           for (int i=0; i<decisions.length; i++) {
+   		    long fallBack = decisions[i].LLFallback;
+   			if ( fallBack>0 ) LL.add(i);
+   			i++;
+   		}
+   		if ( LL.size()>0 ) {
+   			System.out.println("Full LL decisions: "+LL);
+   		}
+   	}
 }
