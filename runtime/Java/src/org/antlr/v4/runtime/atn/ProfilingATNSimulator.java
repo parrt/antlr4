@@ -5,43 +5,16 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
+import org.antlr.v4.runtime.misc.NotNull;
+import org.antlr.v4.runtime.misc.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 
 public class ProfilingATNSimulator extends ParserATNSimulator {
-    public static class DecisionInfo {
-        public int decision;                // which decision number 0..n-1
-        public long invocations;
-       	public long LLFallback;             // how many times SLL failed and we tried LL; always 0 if SLL mode
-//       	public long nonSLL;
-       	public long transitions; // TODO: isn't this just sum of lookahead elements?
-       	public long ATNTransitions;         // ATN (not DFA) transitions
-       	public long LLTransitions;          // LL ATN transitions; always 0 if SLL mode
-       	/** Track every lookahead depth used to make a decision for each decision */
-       	public List<Integer> lookahead = new ArrayList<Integer>();
-
-        public DecisionInfo(int decision) {
-            this.decision = decision;
-        }
-
-        @Override
-        public String toString() {
-            return "{" +
-                   "invocations=" + invocations +
-                   ", LLFallback=" + LLFallback +
-//                   ", nonSLL=" + nonSLL +
-                   ", transitions=" + transitions +
-                   ", ATNTransitions=" + ATNTransitions +
-                   ", LLTransitions=" + LLTransitions +
-                   ", lookahead=" + lookahead +
-                   '}';
-        }
-    }
-
     protected final DecisionInfo[] decisions;
-
     protected int numDecisions;
 
     protected int currentDecision;
@@ -73,34 +46,70 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 		}
 	}
 
-	@Override
-	protected int execATNWithFullContext(DFA dfa, DFAState D, ATNConfigSet s0, TokenStream input, int startIndex, ParserRuleContext outerContext) {
-        decisions[currentDecision].LLFallback++;
-		return super.execATNWithFullContext(dfa, D, s0, input, startIndex, outerContext);
-	}
-
-	@Override
-	protected DFAState getExistingTargetState(DFAState previousD, int t) {
-        decisions[currentDecision].transitions++;
-		return super.getExistingTargetState(previousD, t);
-	}
-
-	@Override
-	protected DFAState computeTargetState(DFA dfa, DFAState previousD, int t) {
-        decisions[currentDecision].ATNTransitions++;
-		return super.computeTargetState(dfa, previousD, t);
+    @Override
+    protected DFAState getExistingTargetState(DFAState previousD, int t) {
+        DFAState existingTargetState = super.getExistingTargetState(previousD, t);
+        if ( existingTargetState!=null ) {
+            decisions[currentDecision].DFATransitions++; // count only if we transition over a DFA state
+            if ( existingTargetState==ERROR ) {
+                decisions[currentDecision].errors.add(
+                        new ErrorInfo(currentDecision, previousD.configs, _input, _startIndex, _stopIndex, false)
+                );
+            }
+        }
+        return existingTargetState;
 	}
 
 	@Override
 	protected ATNConfigSet computeReachSet(ATNConfigSet closure, int t, boolean fullCtx) {
-		if (fullCtx) {
-            decisions[currentDecision].transitions++;
-            decisions[currentDecision].ATNTransitions++;
-            decisions[currentDecision].LLTransitions++;
-		}
-
-		return super.computeReachSet(closure, t, fullCtx);
+        ATNConfigSet reachConfigs = super.computeReachSet(closure, t, fullCtx);
+        if (fullCtx) {
+            decisions[currentDecision].LL_ATNTransitions++; // count computation even if error
+            if ( reachConfigs!=null ) {
+            }
+            else { // no reach on current lookahead symbol. ERROR.
+                // TODO: does not handle delayed errors per getSynValidOrSemInvalidAltThatFinishedDecisionEntryRule()
+                decisions[currentDecision].errors.add(
+                    new ErrorInfo(currentDecision, closure, _input, _startIndex, _stopIndex, true)
+                );
+            }
+        }
+        else {
+            decisions[currentDecision].SLL_ATNTransitions++;
+            if ( reachConfigs!=null ) {
+            }
+            else { // no reach on current lookahead symbol. ERROR.
+                decisions[currentDecision].errors.add(
+                    new ErrorInfo(currentDecision, closure, _input, _startIndex, _stopIndex, false)
+                );
+            }
+        }
+        return reachConfigs;
 	}
+
+    @Override
+    protected void reportContextSensitivity(@NotNull DFA dfa, int prediction, @NotNull ATNConfigSet configs, int startIndex, int stopIndex) {
+        decisions[currentDecision].contextSensitivities.add(
+            new ContextSensitivityInfo(currentDecision, configs, _input, startIndex, stopIndex, false)
+        );
+        super.reportContextSensitivity(dfa, prediction, configs, startIndex, stopIndex);
+    }
+
+    @Override
+    protected void reportAttemptingFullContext(@NotNull DFA dfa, @Nullable BitSet conflictingAlts, @NotNull ATNConfigSet configs, int startIndex, int stopIndex) {
+        decisions[currentDecision].LL_Fallback++;
+        super.reportAttemptingFullContext(dfa, conflictingAlts, configs, startIndex, stopIndex);
+    }
+
+    @Override
+    protected void reportAmbiguity(@NotNull DFA dfa, DFAState D, int startIndex, int stopIndex, boolean exact, @Nullable BitSet ambigAlts, @NotNull ATNConfigSet configs) {
+        decisions[currentDecision].ambiguities.add(
+            new AmbiguityInfo(currentDecision, configs, _input, startIndex, stopIndex, false)
+        );
+        super.reportAmbiguity(dfa, D, startIndex, stopIndex, exact, ambigAlts, configs);
+    }
+
+    // ---------------------------------------------------------------------
 
     public DecisionInfo[] getDecisionInfo() {
         return decisions;
@@ -148,7 +157,7 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
    		}
    		List<Integer> LL = new ArrayList<Integer>();
            for (int i=0; i<decisions.length; i++) {
-   		    long fallBack = decisions[i].LLFallback;
+   		    long fallBack = decisions[i].LL_Fallback;
    			if ( fallBack>0 ) LL.add(i);
    			i++;
    		}
