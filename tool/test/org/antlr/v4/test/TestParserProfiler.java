@@ -67,12 +67,25 @@ public class TestParserProfiler extends BaseTest {
             LexerGrammar lg, Grammar g,
             String startRule, String input)
     {
-        LexerInterpreter lexEngine = lg.createLexerInterpreter(new ANTLRInputStream(input));
-        CommonTokenStream tokens = new CommonTokenStream(lexEngine);
-        ParserInterpreter parser = g.createParserInterpreter(tokens);
-        ProfilingATNSimulator profiler = new ProfilingATNSimulator(parser);
-        parser.setInterpreter(profiler);
-   		ParseTree t = parser.parse(g.rules.get(startRule).index);
-        return profiler.getDecisionInfo();
+        return testInterp(lg, g, startRule, new String[] {input});
+    }
+
+    public DecisionInfo[] testInterp(
+            LexerGrammar lg, Grammar g,
+            String startRule, String[] input)
+    {
+
+        LexerInterpreter lexEngine = lg.createLexerInterpreter(null);
+        ParserInterpreter parser = g.createParserInterpreter(null);
+        parser.setProfile(true);
+        for (String s : input) {
+            lexEngine.reset();
+            parser.reset();
+            lexEngine.setInputStream(new ANTLRInputStream(s));
+            CommonTokenStream tokens = new CommonTokenStream(lexEngine);
+            parser.setInputStream(tokens);
+            ParseTree t = parser.parse(g.rules.get(startRule).index);
+        }
+        return parser.getDecisionInfo();
    	}
 }
