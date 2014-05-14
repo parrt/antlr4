@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.LexerInterpreter;
 import org.antlr.v4.runtime.ParserInterpreter;
+import org.antlr.v4.runtime.atn.DecisionInfo;
 import org.antlr.v4.runtime.atn.ProfilingATNSimulator;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.tool.Grammar;
@@ -36,10 +37,11 @@ public class TestParserProfiler extends BaseTest {
                 "  ;\n",
                 lg);
 
-        ProfilingATNSimulator.DecisionInfo[] info = testInterp(lg, g, "s", ";");
+        DecisionInfo[] info = testInterp(lg, g, "s", ";");
         assertEquals(1, info.length);
         String expecting =
-                "{invocations=1, LLFallback=0, transitions=1, ATNTransitions=1, LLTransitions=0, lookahead=[1]}";
+                "{decision=0, invocations=1, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[1], " +
+                "SLL_ATNTransitions=1, DFATransitions=0, LL_Fallback=0, LL_ATNTransitions=0}";
         assertEquals(expecting, info[0].toString());
         ProfilingATNSimulator.dump(info);
     }
@@ -52,15 +54,16 @@ public class TestParserProfiler extends BaseTest {
                 "  ;\n",
                 lg);
 
-        ProfilingATNSimulator.DecisionInfo[] info = testInterp(lg, g, "s", "xyz;");
+        DecisionInfo[] info = testInterp(lg, g, "s", "xyz;");
         assertEquals(1, info.length);
         String expecting =
-                "{invocations=1, LLFallback=0, transitions=2, ATNTransitions=2, LLTransitions=0, lookahead=[2]}";
+                "{decision=0, invocations=1, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[2], " +
+                "SLL_ATNTransitions=2, DFATransitions=0, LL_Fallback=0, LL_ATNTransitions=0}";
         assertEquals(expecting, info[0].toString());
         ProfilingATNSimulator.dump(info);
     }
 
-    public ProfilingATNSimulator.DecisionInfo[] testInterp(
+    public DecisionInfo[] testInterp(
             LexerGrammar lg, Grammar g,
             String startRule, String input)
     {
