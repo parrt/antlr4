@@ -5,7 +5,6 @@ import java.util.List;
 
 public class DecisionInfo {
     public int decision;                // which decision number 0..n-1
-    public long invocations;
     public List<ContextSensitivityInfo> contextSensitivities = new ArrayList<ContextSensitivityInfo>();
     public List<ErrorInfo>              errors = new ArrayList<ErrorInfo>();
     public List<AmbiguityInfo>          ambiguities = new ArrayList<AmbiguityInfo>();
@@ -13,6 +12,8 @@ public class DecisionInfo {
     /** Track every lookahead depth used to make a decision for each decision */
     // TODO: track for LL/SLL?
     public List<Integer>                lookahead = new ArrayList<Integer>();
+
+    // TODO: PREDICATE EVALS!!!!!!!!!!!!!!!!!
 
     public long SLL_ATNTransitions;     // ATN (not DFA) transitions
     public long DFATransitions;         // DFA (not ATN) transitions
@@ -29,14 +30,13 @@ public class DecisionInfo {
     }
 
     public double cost() {
-        return SLL_ATNTransitions +DFATransitions;
+        return SLL_ATNTransitions+LL_ATNTransitions+DFATransitions;
     }
 
     @Override
     public String toString() {
         return "{" +
                "decision=" + decision +
-               ", invocations=" + invocations +
                ", contextSensitivities=" + contextSensitivities.size() +
                ", errors=" + errors.size() +
                ", ambiguities=" + ambiguities.size() +
