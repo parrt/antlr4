@@ -35,7 +35,6 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 	public int adaptivePredict(TokenStream input, int decision, ParserRuleContext outerContext) {
 		try {
 			this.currentDecision = decision;
-			decisions[decision].invocations++;
 			int alt = super.adaptivePredict(input, decision, outerContext);
 			int k = _stopIndex - _startIndex + 1;
             decisions[decision].lookahead.add(k);
@@ -138,31 +137,58 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
         if ( data.length % 2 == 1 ) { // if odd number, grab middle
             return data[middle];
         }
+        else if ( data.length==0 ) {
+            return 0.0;
+        }
         else {
             return (data[middle-1] + data[middle]) / 2.0; // average of middle pair
         }
     }
 
+    public static int min(int[] data) {
+        int m = Integer.MAX_VALUE;
+        for (int i = 0; i < data.length; i++) {
+            if ( data[i] < m ) m = data[i];
+        }
+        return m==Integer.MAX_VALUE ? 0 : m;
+    }
+
+    public static int max(int[] data) {
+        int m = Integer.MIN_VALUE;
+        for (int i = 0; i < data.length; i++) {
+            if ( data[i] > m ) m = data[i];
+        }
+        return m==Integer.MIN_VALUE ? 0 : m;
+    }
+
     public static void dump(DecisionInfo[] decisions) {
-   		System.out.println("invocations:");
-   		for (int i=0; i<decisions.length; i++) {
-               long count = decisions[i].invocations;
-               System.out.printf("\t[%d]: %d\n", i, count);
-           }
-           System.out.println("depths:");
-           for (int i=0; i<decisions.length; i++) {
-               List<Integer> look = decisions[i].lookahead;
-   			if ( look.size()>0 ) System.out.printf("\t[%d]: %s median=%7.1f\n", i, look.toString(), median(toIntArray(look)));
-   			i++;
-   		}
-   		List<Integer> LL = new ArrayList<Integer>();
-           for (int i=0; i<decisions.length; i++) {
-   		    long fallBack = decisions[i].LL_Fallback;
-   			if ( fallBack>0 ) LL.add(i);
-   			i++;
-   		}
-   		if ( LL.size()>0 ) {
-   			System.out.println("Full LL decisions: "+LL);
-   		}
-   	}
+        System.out.println("decision info:");
+        System.out.printf("\t %3s   %5s %5s %5s %5s  %5s\n", "dec", "invoc", "LL", "min", "max", "median");
+        for (int i=0; i<decisions.length; i++) {
+            DecisionInfo d = decisions[i];
+            List<Integer> look = d.lookahead;
+            long count = look.size();
+            int[] lookAsArray = toIntArray(look);
+            System.out.printf("\t[%3d]: %5d %5d %5d %5d %7.1f \n",
+                    i, count, d.LL_Fallback,
+                    min(lookAsArray),
+                    max(lookAsArray),
+                    median(lookAsArray));
+        }
+        List<Integer> LL = new ArrayList<Integer>();
+        for (int i=0; i<decisions.length; i++) {
+            long fallBack = decisions[i].LL_Fallback;
+            if ( fallBack>0 ) LL.add(i);
+        }
+        if ( LL.size()>0 ) {
+            System.out.println("Full LL decisions: "+LL);
+        }
+        System.out.println("depths:");
+        for (int i=0; i<decisions.length; i++) {
+            List<Integer> look = decisions[i].lookahead;
+            if ( look.size()>0 ) {
+                System.out.printf("\t[%3d]: %7.1f %s\n", i, median(toIntArray(look)), look.toString());
+            }
+        }
+    }
 }
