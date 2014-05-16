@@ -9,7 +9,6 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 
@@ -18,6 +17,8 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
     protected int numDecisions;
 
     protected int currentDecision;
+
+    protected boolean nodfa = false;
 
 	public ProfilingATNSimulator(Parser parser) {
         super(parser,
@@ -36,8 +37,17 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 		try {
 			this.currentDecision = decision;
 			int alt = super.adaptivePredict(input, decision, outerContext);
+
+            if ( nodfa ) {
+                DFA dfa = decisionToDFA[decision];
+                dfa.s0 = null;
+            }
+
 			int k = _stopIndex - _startIndex + 1;
-            decisions[decision].lookahead.add(k);
+            decisions[decision].invocations++;
+            decisions[decision].totalLook += k;
+            decisions[decision].minLook = Math.min(decisions[decision].minLook, k);
+            decisions[decision].maxLook = Math.min(decisions[decision].maxLook, k);
 			return alt;
 		}
 		finally {
@@ -122,71 +132,77 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 		return n;
 	}
 
-    protected static int[] toIntArray(List<Integer> ks) {
-        int[] values = new int[ks.size()];
-        for (int j=0; j<ks.size(); j++) {
-            values[j] = ks.get(j);
-        }
-        return values;
+    public boolean isNoDFA() {
+        return nodfa;
     }
 
-    /** warning: sorts data arg */
-    public static double median(int[] data) {
-        Arrays.sort(data);
-        int middle = data.length/2;
-        if ( data.length % 2 == 1 ) { // if odd number, grab middle
-            return data[middle];
-        }
-        else if ( data.length==0 ) {
-            return 0.0;
-        }
-        else {
-            return (data[middle-1] + data[middle]) / 2.0; // average of middle pair
-        }
+    public void setNoDFA(boolean nodfa) {
+        this.nodfa = nodfa;
     }
 
-    public static int min(int[] data) {
-        int m = Integer.MAX_VALUE;
-        for (int i = 0; i < data.length; i++) {
-            if ( data[i] < m ) m = data[i];
-        }
-        return m==Integer.MAX_VALUE ? 0 : m;
-    }
-
-    public static int max(int[] data) {
-        int m = Integer.MIN_VALUE;
-        for (int i = 0; i < data.length; i++) {
-            if ( data[i] > m ) m = data[i];
-        }
-        return m==Integer.MIN_VALUE ? 0 : m;
-    }
-
-    public static int sum(int[] data) {
-        int s = 0;
-        for (int i = 0; i < data.length; i++) {
-            s += data[i];
-        }
-        return s;
-    }
+    //    protected static int[] toIntArray(List<Integer> ks) {
+//        int[] values = new int[ks.size()];
+//        for (int j=0; j<ks.size(); j++) {
+//            values[j] = ks.get(j);
+//        }
+//        return values;
+//    }
+//
+//    /** warning: sorts data arg */
+//    public static double median(int[] data) {
+//        Arrays.sort(data);
+//        int middle = data.length/2;
+//        if ( data.length % 2 == 1 ) { // if odd number, grab middle
+//            return data[middle];
+//        }
+//        else if ( data.length==0 ) {
+//            return 0.0;
+//        }
+//        else {
+//            return (data[middle-1] + data[middle]) / 2.0; // average of middle pair
+//        }
+//    }
+//
+//    public static int min(int[] data) {
+//        int m = Integer.MAX_VALUE;
+//        for (int i = 0; i < data.length; i++) {
+//            if ( data[i] < m ) m = data[i];
+//        }
+//        return m==Integer.MAX_VALUE ? 0 : m;
+//    }
+//
+//    public static int max(int[] data) {
+//        int m = Integer.MIN_VALUE;
+//        for (int i = 0; i < data.length; i++) {
+//            if ( data[i] > m ) m = data[i];
+//        }
+//        return m==Integer.MIN_VALUE ? 0 : m;
+//    }
+//
+//    public static int sum(int[] data) {
+//        int s = 0;
+//        for (int i = 0; i < data.length; i++) {
+//            s += data[i];
+//        }
+//        return s;
+//    }
 
     public static void dump(DecisionInfo[] decisions) {
         System.out.println("decision info:");
-        System.out.printf("\t %3s,   %5s, %5s, %5s, %5s, %5s, %5s, %5s, %5s, %s\n", "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL", "LL", "cost");
+        System.out.printf("\t %3s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s,     %s\n", "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL", "LL", "cost");
         for (int i=0; i<decisions.length; i++) {
             DecisionInfo d = decisions[i];
-            List<Integer> look = d.lookahead;
-            long count = look.size();
-            int[] lookAsArray = toIntArray(look);
-            System.out.printf("\t%3d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %7.1f \n",
-                    i, count, d.LL_Fallback,
-                    sum(lookAsArray),
-                    min(lookAsArray),
-                    max(lookAsArray),
+            System.out.printf("\t%3d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %9.1f \n",
+                    i, d.invocations, d.LL_Fallback,
+                    d.totalLook,
+                    d.minLook,
+                    d.maxLook,
                     d.DFATransitions,
                     d.SLL_ATNTransitions,
                     d.LL_ATNTransitions,
                     d.cost());
         }
+        // want to go from decision to location in grammar like in plugin for token refs.
         List<Integer> LL = new ArrayList<Integer>();
         for (int i=0; i<decisions.length; i++) {
             long fallBack = decisions[i].LL_Fallback;

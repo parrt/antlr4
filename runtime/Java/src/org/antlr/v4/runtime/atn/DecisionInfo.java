@@ -11,13 +11,15 @@ public class DecisionInfo {
     public static final double ATN_TO_DFA_TRANSITION_COST = 717.6 / 3.73;
 
     public int decision;                // which decision number 0..n-1
+    public long invocations;
+
     public List<ContextSensitivityInfo> contextSensitivities = new ArrayList<ContextSensitivityInfo>();
     public List<ErrorInfo>              errors = new ArrayList<ErrorInfo>();
     public List<AmbiguityInfo>          ambiguities = new ArrayList<AmbiguityInfo>();
 
-    /** Track every lookahead depth used to make a decision for each decision */
-    // TODO: track for LL/SLL?
-    public List<Integer>                lookahead = new ArrayList<Integer>();
+    public long totalLook;
+    public long minLook;
+    public long maxLook;
 
     // TODO: PREDICATE EVALS!!!!!!!!!!!!!!!!!
 
@@ -46,7 +48,7 @@ public class DecisionInfo {
                ", contextSensitivities=" + contextSensitivities.size() +
                ", errors=" + errors.size() +
                ", ambiguities=" + ambiguities.size() +
-               ", lookahead=" + lookahead +
+               ", lookahead=" + totalLook +
                ", SLL_ATNTransitions=" + SLL_ATNTransitions +
                ", DFATransitions=" + DFATransitions +
                ", LL_Fallback=" + LL_Fallback +
