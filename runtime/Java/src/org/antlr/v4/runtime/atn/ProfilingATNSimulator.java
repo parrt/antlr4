@@ -161,19 +161,31 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
         return m==Integer.MIN_VALUE ? 0 : m;
     }
 
+    public static int sum(int[] data) {
+        int s = 0;
+        for (int i = 0; i < data.length; i++) {
+            s += data[i];
+        }
+        return s;
+    }
+
     public static void dump(DecisionInfo[] decisions) {
         System.out.println("decision info:");
-        System.out.printf("\t %3s   %5s %5s %5s %5s  %5s\n", "dec", "invoc", "LL", "min", "max", "median");
+        System.out.printf("\t %3s,   %5s, %5s, %5s, %5s, %5s, %5s, %5s, %5s, %s\n", "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL", "LL", "cost");
         for (int i=0; i<decisions.length; i++) {
             DecisionInfo d = decisions[i];
             List<Integer> look = d.lookahead;
             long count = look.size();
             int[] lookAsArray = toIntArray(look);
-            System.out.printf("\t[%3d]: %5d %5d %5d %5d %7.1f \n",
+            System.out.printf("\t%3d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %5d, %7.1f \n",
                     i, count, d.LL_Fallback,
+                    sum(lookAsArray),
                     min(lookAsArray),
                     max(lookAsArray),
-                    median(lookAsArray));
+                    d.DFATransitions,
+                    d.SLL_ATNTransitions,
+                    d.LL_ATNTransitions,
+                    d.cost());
         }
         List<Integer> LL = new ArrayList<Integer>();
         for (int i=0; i<decisions.length; i++) {
@@ -183,12 +195,12 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
         if ( LL.size()>0 ) {
             System.out.println("Full LL decisions: "+LL);
         }
-        System.out.println("depths:");
-        for (int i=0; i<decisions.length; i++) {
-            List<Integer> look = decisions[i].lookahead;
-            if ( look.size()>0 ) {
-                System.out.printf("\t[%3d]: %7.1f %s\n", i, median(toIntArray(look)), look.toString());
-            }
-        }
+//        System.out.println("depths:");
+//        for (int i=0; i<decisions.length; i++) {
+//            List<Integer> look = decisions[i].lookahead;
+//            if ( look.size()>0 ) {
+//                System.out.printf("\t[%3d]: %7.1f %s\n", i, median(toIntArray(look)), look.toString());
+//            }
+//        }
     }
 }

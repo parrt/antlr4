@@ -4,6 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DecisionInfo {
+    /** ALL(*) paper says: 717.6s to parse Java 1.6 corpus without dfa (no trees).
+     *  Takes 3.73s to reparse (pure DFA, no trees). That ratio 717.6 / 3.73 = 192.3861 means
+     *  ATN transitions are about 192 times more expensive
+     */
+    public static final double ATN_TO_DFA_TRANSITION_COST = 717.6 / 3.73;
+
     public int decision;                // which decision number 0..n-1
     public List<ContextSensitivityInfo> contextSensitivities = new ArrayList<ContextSensitivityInfo>();
     public List<ErrorInfo>              errors = new ArrayList<ErrorInfo>();
@@ -30,7 +36,7 @@ public class DecisionInfo {
     }
 
     public double cost() {
-        return SLL_ATNTransitions+LL_ATNTransitions+DFATransitions;
+        return (SLL_ATNTransitions+LL_ATNTransitions) * ATN_TO_DFA_TRANSITION_COST + DFATransitions;
     }
 
     @Override
