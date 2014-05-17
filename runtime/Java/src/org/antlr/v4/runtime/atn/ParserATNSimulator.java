@@ -276,7 +276,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	@NotNull
 	public final DFA[] decisionToDFA;
 
-    /** Disallow construction of DFA */
+    /** Disallow construction of DFA. No s0 start state and don't add edges to DFA. */
     protected boolean nodfa = false;
 
 	/** SLL, LL, or LL + exact ambig detection? */
@@ -353,7 +353,7 @@ public class ParserATNSimulator extends ATNSimulator {
 				s0 = dfa.s0;
 			}
 
-			if (s0 == null) {
+			if (nodfa || s0 == null) {
 				if ( outerContext ==null ) outerContext = ParserRuleContext.EMPTY;
 				if ( debug || debug_list_atn_decisions )  {
 					System.out.println("predictATN decision "+ dfa.decision+
