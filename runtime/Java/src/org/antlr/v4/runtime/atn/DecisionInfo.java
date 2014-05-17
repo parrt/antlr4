@@ -44,20 +44,20 @@ public class DecisionInfo {
         this.decision = decision;
     }
 
-    public double cost() {
-        return (SLL_ATNTransitions+LL_ATNTransitions) * ATN_TO_DFA_TRANSITION_COST + DFATransitions;
-    }
-
+//    public double cost() {
+//        return (SLL_ATNTransitions+LL_ATNTransitions) * ATN_TO_DFA_TRANSITION_COST + DFATransitions;
+//    }
+//
     public static String getCSV(DecisionInfo[] decisions) {
         StringBuilder buf = new StringBuilder();
         buf.append(
-            String.format("\t %3s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s,    %s\n",
-                    "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL-ATN", "LL-ATN", "preds", "cost")
+            String.format("\t %3s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s\n",
+                    "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL-ATN", "LL-ATN", "preds")
         );
         for (int i=0; i<decisions.length; i++) {
             DecisionInfo d = decisions[i];
             buf.append(
-                    String.format("\t%3d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %9.1f \n",
+                    String.format("\t%3d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d\n",
                             i, d.invocations, d.LL_Fallback,
                             d.totalLook,
                             d.minLook,
@@ -65,8 +65,7 @@ public class DecisionInfo {
                             d.DFATransitions,
                             d.SLL_ATNTransitions,
                             d.LL_ATNTransitions,
-                            d.predicateEvals.size(),
-                            d.cost())
+                            d.predicateEvals.size())
             );
         }
         return buf.toString();
