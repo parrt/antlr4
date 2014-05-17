@@ -164,6 +164,8 @@ public class Grammar implements AttributeResolver {
 	 */
 	public ATN atn;
 
+    public Map<Integer, Interval> stateToGrammarRegionMap;
+
 	public Map<Integer, DFA> decisionDFAs = new HashMap<Integer, DFA>();
 
 	public List<IntervalSet[]> decisionLOOK;
@@ -987,6 +989,30 @@ public class Grammar implements AttributeResolver {
 	public void setLookaheadDFA(int decision, DFA lookaheadDFA) {
 		decisionDFAs.put(decision, lookaheadDFA);
 	}
+
+    public static Map<Integer, Interval> getStateToGrammarRegionMap(GrammarRootAST ast, IntervalSet grammarTokenTypes) {
+        Map<Integer, Interval> stateToGrammarRegionMap = new HashMap<Integer, Interval>();
+   		if ( ast==null ) return stateToGrammarRegionMap;
+
+   		List<GrammarAST> terminalNodes = ast.getNodesWithType(grammarTokenTypes);
+   		for (GrammarAST n : terminalNodes) {
+   			org.antlr.runtime.CommonToken t = (org.antlr.runtime.CommonToken)n.getToken();
+   			if (n.atnState != null) {
+   				stateToGrammarRegionMap.put(n.atnState.stateNumber, Interval.of(t.getStartIndex(), t.getStopIndex()));
+   			}
+   		}
+   		return stateToGrammarRegionMap;
+   	}
+
+    /** Given an ATN state number, return the region within the grammar from which that ATN state was derived. */
+    public Interval getStateToGrammarRegion(int atnStateNumber) {
+        if ( stateToGrammarRegionMap==null ) {
+            stateToGrammarRegionMap = getStateToGrammarRegionMap(ast, null); // map all nodes with non-null atn state ptr
+        }
+   		if ( stateToGrammarRegionMap==null ) return Interval.INVALID;
+
+        return stateToGrammarRegionMap.get(atnStateNumber);
+   	}
 
 	public LexerInterpreter createLexerInterpreter(CharStream input) {
 		if (this.isParser()) {
