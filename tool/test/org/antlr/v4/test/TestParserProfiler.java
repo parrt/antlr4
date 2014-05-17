@@ -2,7 +2,6 @@ package org.antlr.v4.test;
 
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.DecisionInfo;
-import org.antlr.v4.runtime.atn.ProfilingATNSimulator;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.LexerGrammar;
 import org.antlr.v4.tool.Rule;
@@ -43,7 +42,6 @@ public class TestParserProfiler extends BaseTest {
                 "{decision=0, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[1], " +
                 "SLL_ATNTransitions=1, DFATransitions=0, LL_Fallback=0, LL_ATNTransitions=0}";
         assertEquals(expecting, info[0].toString());
-        ProfilingATNSimulator.dump(info);
     }
 
     @Test public void testLL2() throws Exception {
@@ -60,7 +58,6 @@ public class TestParserProfiler extends BaseTest {
                 "{decision=0, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[2], " +
                 "SLL_ATNTransitions=2, DFATransitions=0, LL_Fallback=0, LL_ATNTransitions=0}";
         assertEquals(expecting, info[0].toString());
-        ProfilingATNSimulator.dump(info);
     }
 
     @Test public void testRepeatedLL2() throws Exception {
@@ -77,7 +74,6 @@ public class TestParserProfiler extends BaseTest {
                 "{decision=0, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[2, 2], " +
                 "SLL_ATNTransitions=2, DFATransitions=2, LL_Fallback=0, LL_ATNTransitions=0}";
         assertEquals(expecting, info[0].toString());
-        ProfilingATNSimulator.dump(info);
     }
 
     @Test public void test3xLL2() throws Exception {
@@ -95,7 +91,6 @@ public class TestParserProfiler extends BaseTest {
                 "{decision=0, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[2, 2, 2], " +
                 "SLL_ATNTransitions=3, DFATransitions=3, LL_Fallback=0, LL_ATNTransitions=0}";
         assertEquals(expecting, info[0].toString());
-        ProfilingATNSimulator.dump(info);
     }
 
     @Test public void testOptional() throws Exception {
@@ -114,7 +109,6 @@ public class TestParserProfiler extends BaseTest {
              "{decision=1, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[2], " +
               "SLL_ATNTransitions=2, DFATransitions=0, LL_Fallback=0, LL_ATNTransitions=0}]";
         assertEquals(expecting, Arrays.toString(info));
-        ProfilingATNSimulator.dump(info);
     }
 
     @Test public void test2xOptional() throws Exception {
@@ -133,7 +127,6 @@ public class TestParserProfiler extends BaseTest {
              "{decision=1, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[2, 2], " +
               "SLL_ATNTransitions=2, DFATransitions=2, LL_Fallback=0, LL_ATNTransitions=0}]";
         assertEquals(expecting, Arrays.toString(info));
-        ProfilingATNSimulator.dump(info);
     }
 
     @Test public void testContextSensitivity() throws Exception {
@@ -149,7 +142,6 @@ public class TestParserProfiler extends BaseTest {
             "[{decision=0, contextSensitivities=1, errors=0, ambiguities=0, lookahead=[3], " +
             "SLL_ATNTransitions=2, DFATransitions=0, LL_Fallback=1, LL_ATNTransitions=1}]";
         assertEquals(expecting, Arrays.toString(info));
-        ProfilingATNSimulator.dump(info);
     }
 
     @Test public void testSimpleLanguage() throws Exception {
@@ -159,7 +151,6 @@ public class TestParserProfiler extends BaseTest {
             "def g(x,a,b,c,d,e) { return 1+2*x; }\n"+
             "def h(x) { a=3; x=0+1; return a*x; }\n";
         DecisionInfo[] info = interpAndGetDecisionInfo(g.getImplicitLexer(), g, "prog", input);
-        ProfilingATNSimulator.dump(info);
         String expecting =
             "[{decision=0, contextSensitivities=1, errors=0, ambiguities=0, lookahead=[3], " +
             "SLL_ATNTransitions=2, DFATransitions=0, LL_Fallback=1, LL_ATNTransitions=1}]";
@@ -191,7 +182,6 @@ public class TestParserProfiler extends BaseTest {
              "{decision=1, contextSensitivities=0, errors=0, ambiguities=0, lookahead=[1, 3], " +
               "SLL_ATNTransitions=2, DFATransitions=2, LL_Fallback=0, LL_ATNTransitions=0}]";
         assertEquals(expecting, Arrays.toString(info));
-        ProfilingATNSimulator.dump(info);
     }
 
     public DecisionInfo[] interpAndGetDecisionInfo(

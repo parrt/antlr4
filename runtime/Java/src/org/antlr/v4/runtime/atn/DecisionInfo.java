@@ -48,6 +48,39 @@ public class DecisionInfo {
         return (SLL_ATNTransitions+LL_ATNTransitions) * ATN_TO_DFA_TRANSITION_COST + DFATransitions;
     }
 
+    public static String getCSV(DecisionInfo[] decisions) {
+        StringBuilder buf = new StringBuilder();
+        buf.append(
+            String.format("\t %3s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s,    %s\n",
+                    "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL-ATN", "LL-ATN", "preds", "cost")
+        );
+        for (int i=0; i<decisions.length; i++) {
+            DecisionInfo d = decisions[i];
+            buf.append(
+                    String.format("\t%3d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %9.1f \n",
+                            i, d.invocations, d.LL_Fallback,
+                            d.totalLook,
+                            d.minLook,
+                            d.maxLook,
+                            d.DFATransitions,
+                            d.SLL_ATNTransitions,
+                            d.LL_ATNTransitions,
+                            d.predicateEvals.size(),
+                            d.cost())
+            );
+        }
+        return buf.toString();
+    }
+
+    public static List<Integer> getLLDecisions(DecisionInfo[] decisions) {
+        List<Integer> LL = new ArrayList<Integer>();
+        for (int i=0; i<decisions.length; i++) {
+            long fallBack = decisions[i].LL_Fallback;
+            if ( fallBack>0 ) LL.add(i);
+        }
+        return LL;
+    }
+
     @Override
     public String toString() {
         return "{" +

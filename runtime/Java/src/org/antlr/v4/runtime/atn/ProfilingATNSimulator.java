@@ -8,9 +8,7 @@ import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.List;
 
 public class ProfilingATNSimulator extends ParserATNSimulator {
     protected final DecisionInfo[] decisions;
@@ -210,32 +208,4 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 //        }
 //        return s;
 //    }
-
-    public static void dump(DecisionInfo[] decisions) {
-        System.out.println("decision info:");
-        System.out.printf("\t %3s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s,    %s\n",
-                "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL-ATN", "LL-ATN", "preds", "cost");
-        for (int i=0; i<decisions.length; i++) {
-            DecisionInfo d = decisions[i];
-            System.out.printf("\t%3d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %9.1f \n",
-                    i, d.invocations, d.LL_Fallback,
-                    d.totalLook,
-                    d.minLook,
-                    d.maxLook,
-                    d.DFATransitions,
-                    d.SLL_ATNTransitions,
-                    d.LL_ATNTransitions,
-                    d.predicateEvals.size(),
-                    d.cost());
-        }
-        // want to go from decision to location in grammar like in plugin for token refs.
-        List<Integer> LL = new ArrayList<Integer>();
-        for (int i=0; i<decisions.length; i++) {
-            long fallBack = decisions[i].LL_Fallback;
-            if ( fallBack>0 ) LL.add(i);
-        }
-        if ( LL.size()>0 ) {
-            System.out.println("Full LL decisions: "+LL);
-        }
-    }
 }
