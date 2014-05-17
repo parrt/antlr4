@@ -30,33 +30,12 @@
 
 package org.antlr.v4.runtime.atn;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.IntStream;
-import org.antlr.v4.runtime.NoViableAltException;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
-import org.antlr.v4.runtime.misc.DoubleKeyMap;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.IntervalSet;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
-import org.antlr.v4.runtime.misc.Pair;
+import org.antlr.v4.runtime.misc.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The embodiment of the adaptive LL(*), ALL(*), parsing strategy.
@@ -361,7 +340,7 @@ public class ParserATNSimulator extends ATNSimulator {
 		// But, do we still need an initial state?
 		try {
 			DFAState s0;
-			if (dfa.isPrecedenceDfa()) {
+			if ( dfa.isPrecedenceDfa() && dfa.s0!=null ) {
 				// the start state for a precedence DFA depends on the current
 				// parser precedence, and is provided by a DFA method.
 				s0 = dfa.getPrecedenceStartState(parser.getPrecedence());
@@ -396,7 +375,7 @@ public class ParserATNSimulator extends ATNSimulator {
 									  ParserRuleContext.EMPTY,
 									  fullCtx);
 
-				if (dfa.isPrecedenceDfa()) {
+				if ( dfa.isPrecedenceDfa() && dfa.s0!=null ) {
 					/* If this is a precedence DFA, we use applyPrecedenceFilter
 					 * to convert the computed start state to a precedence start
 					 * state. We then use DFA.setPrecedenceStartState to set the
@@ -505,7 +484,7 @@ public class ParserATNSimulator extends ATNSimulator {
 						input.seek(startIndex);
 					}
 
-					conflictingAlts = evalSemanticContext(D.predicates, outerContext, true);
+					conflictingAlts = evalSemanticContext(dfa.decision, D, outerContext);
 					if ( conflictingAlts.cardinality()==1 ) {
 						if ( debug ) System.out.println("Full LL avoided");
 						return conflictingAlts.nextSetBit(0);
@@ -537,7 +516,7 @@ public class ParserATNSimulator extends ATNSimulator {
 
 				int stopIndex = input.index();
 				input.seek(startIndex);
-				BitSet alts = evalSemanticContext(D.predicates, outerContext, true);
+				BitSet alts = evalSemanticContext(dfa.decision, D, outerContext);
 				switch (alts.cardinality()) {
 				case 0:
 					throw noViableAlt(input, outerContext, D.configs, startIndex);
@@ -1278,21 +1257,18 @@ public class ParserATNSimulator extends ATNSimulator {
 	/** Look through a list of predicate/alt pairs, returning alts for the
 	 *  pairs that win. A {@code NONE} predicate indicates an alt containing an
 	 *  unpredicated config which behaves as "always true." If !complete
-	 *  then we stop at the first predicate that evaluates to true. This
-	 *  includes pairs with null predicates.
-	 */
-	protected BitSet evalSemanticContext(@NotNull DFAState.PredPrediction[] predPredictions,
-									  ParserRuleContext outerContext,
-									  boolean complete)
-	{
-		BitSet predictions = new BitSet();
-		for (DFAState.PredPrediction pair : predPredictions) {
-			if ( pair.pred==SemanticContext.NONE ) {
-				predictions.set(pair.alt);
-				if (!complete) {
-					break;
-				}
-				continue;
+     *  then we stop at the first predicate that evaluates to true. This
+     *  includes pairs with null predicates.
+     */
+    protected BitSet evalSemanticContext(int decision,
+                                         @NotNull DFAState D,
+                                         ParserRuleContext outerContext)
+    {
+        BitSet predictions = new BitSet();
+        for (DFAState.PredPrediction pair : D.predicates) {
+            if ( pair.pred==SemanticContext.NONE ) {
+                predictions.set(pair.alt);
+                continue;
 			}
 
 			boolean predicateEvaluationResult = pair.pred.eval(parser, outerContext);
@@ -1303,9 +1279,6 @@ public class ParserATNSimulator extends ATNSimulator {
 			if ( predicateEvaluationResult ) {
 				if ( debug || dfa_debug ) System.out.println("PREDICT "+pair.alt);
 				predictions.set(pair.alt);
-				if (!complete) {
-					break;
-				}
 			}
 		}
 

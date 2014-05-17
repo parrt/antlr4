@@ -94,7 +94,31 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
             }
         }
         return reachConfigs;
-	}
+    }
+
+    @Override
+    protected BitSet evalSemanticContext(int decision,
+                                         @NotNull DFAState D,
+                                         ParserRuleContext outerContext)
+    {
+        BitSet predictions = super.evalSemanticContext(decision, D, outerContext);
+        // must re-evaluate all preds as predictions can't map back to pred eval uniquely
+        int n = D.predicates.length;
+        boolean[] results = new boolean[n];
+        int i = 0;
+        for (DFAState.PredPrediction pair : D.predicates) {
+            if ( pair.pred!=SemanticContext.NONE ) {
+                boolean predicateEvaluationResult = pair.pred.eval(parser, outerContext);
+                results[i] = predicateEvaluationResult;
+            }
+            i++;
+        }
+
+        decisions[currentDecision].predicateEvals.add(
+            new PredicateContextEvalInfo(D, decision, _input, _startIndex, _stopIndex, results, predictions)
+        );
+        return predictions;
+    }
 
     @Override
     protected void reportContextSensitivity(@NotNull DFA dfa, int prediction, @NotNull ATNConfigSet configs, int startIndex, int stopIndex) {

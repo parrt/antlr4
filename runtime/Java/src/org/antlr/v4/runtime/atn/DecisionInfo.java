@@ -6,7 +6,17 @@ import java.util.List;
 public class DecisionInfo {
     /** ALL(*) paper says: 717.6s to parse Java 1.6 corpus without dfa (no trees).
      *  Takes 3.73s to reparse (pure DFA, no trees). That ratio 717.6 / 3.73 = 192.3861 means
-     *  ATN transitions are about 192 times more expensive
+     *  ATN transitions are about 192 times more expensive.  Max lookahead very shallow.
+     *
+     *  Hmm... C grammar that has some deep lookahead shows much lower ratio. (albeit with atn profiling on)
+     *
+     *      C SLL grammar with dfa and SLL 6295ms  (3rd run)
+     *      C SLL grammar NO   dfa and SLL 26776ms (3rd run)
+     *      ratio = 4.25x
+     *
+     *      C LL  grammar with dfa 2-stage 10895ms (3rd run)
+     *      C LL  grammar NO   dfa 2-stage 32867ms (3rd run)
+     *      ratio = 3x
      */
     public static final double ATN_TO_DFA_TRANSITION_COST = 717.6 / 3.73;
 
@@ -17,21 +27,18 @@ public class DecisionInfo {
     public List<ErrorInfo>              errors = new ArrayList<ErrorInfo>();
     public List<AmbiguityInfo>          ambiguities = new ArrayList<AmbiguityInfo>();
 
-    public long totalLook;
-    public long minLook;
+    // these depths are max of SLL and LL fallback lookahead depth (normally same but SLL could look deeper)
+    public long totalLook;              // sum of all lookahead depths for all decision events
+    public long minLook;                // min for any single event
     public long maxLook;
 
-    // TODO: PREDICATE EVALS!!!!!!!!!!!!!!!!!
+    public List<PredicateContextEvalInfo>      predicateEvals = new ArrayList<PredicateContextEvalInfo>();
 
     public long SLL_ATNTransitions;     // ATN (not DFA) transitions
     public long DFATransitions;         // DFA (not ATN) transitions
 
     public long LL_Fallback;            // how many times SLL failed and we tried LL; always 0 if SLL mode
     public long LL_ATNTransitions;      // ATN (not DFA) transitions
-//    public long LL_Transitions;         // LL ATN transitions; always 0 if SLL mode
-
-        //       	public long nonSLL;
-//    public long transitions; // TODO: isn't this just sum of lookahead elements?
 
     public DecisionInfo(int decision) {
         this.decision = decision;
