@@ -276,6 +276,9 @@ public class ParserATNSimulator extends ATNSimulator {
 	@NotNull
 	public final DFA[] decisionToDFA;
 
+    /** Disallow construction of DFA */
+    protected boolean nodfa = false;
+
 	/** SLL, LL, or LL + exact ambig detection? */
 	@NotNull
 	private PredictionMode mode = PredictionMode.LL;
@@ -1755,6 +1758,10 @@ public class ParserATNSimulator extends ATNSimulator {
 			System.out.println("EDGE "+from+" -> "+to+" upon "+getTokenName(t));
 		}
 
+        if ( nodfa ) {
+            return to;
+        }
+
 		if (to == null) {
 			return null;
 		}
@@ -1873,4 +1880,12 @@ public class ParserATNSimulator extends ATNSimulator {
 	public final PredictionMode getPredictionMode() {
 		return mode;
 	}
+
+    public boolean getNoDFA() {
+        return nodfa;
+    }
+
+    public void setNoDFA(boolean nodfa) {
+        this.nodfa = nodfa;
+    }
 }

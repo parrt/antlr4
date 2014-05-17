@@ -898,27 +898,8 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator> {
 
     public void setNoDFA(boolean nodfa) {
         ParserATNSimulator previous = getInterpreter();
-        if ( previous instanceof ProfilingATNSimulator ) {
-            ((ProfilingATNSimulator) previous).setNoDFA(nodfa);
-        }
-        else {
-            if ( previous!=null ) {
-                ParserATNSimulator interp =
-                    new ParserATNSimulator(this, getATN(), previous.decisionToDFA, previous.getSharedContextCache()) {
-                        @Override
-                        public int adaptivePredict(@NotNull TokenStream input, int decision, @Nullable ParserRuleContext outerContext) {
-                            int alt = super.adaptivePredict(input, decision, outerContext);
-                            DFA dfa = decisionToDFA[decision];
-                            dfa.s0 = null;
-                            return alt;
-                        }
-
-                    };
-                setInterpreter(interp);
-            }
-        }
+        previous.setNoDFA(nodfa);
     }
-
 
 	/** During a parse is sometimes useful to listen in on the rule entry and exit
 	 *  events as well as token matches. This is for quick and dirty debugging.

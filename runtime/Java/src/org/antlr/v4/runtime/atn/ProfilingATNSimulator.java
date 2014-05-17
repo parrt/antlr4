@@ -18,8 +18,6 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 
     protected int currentDecision;
 
-    protected boolean nodfa = false;
-
 	public ProfilingATNSimulator(Parser parser) {
         super(parser,
                 parser.getInterpreter().atn,
@@ -38,10 +36,10 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 			this.currentDecision = decision;
 			int alt = super.adaptivePredict(input, decision, outerContext);
 
-            if ( nodfa ) {
-                DFA dfa = decisionToDFA[decision];
-                dfa.s0 = null;
-            }
+//            if ( nodfa ) {
+//                DFA dfa = decisionToDFA[decision];
+//                dfa.s0 = null;
+//            }
 
 			int k = _stopIndex - _startIndex + 1;
             decisions[decision].invocations++;
@@ -59,7 +57,9 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
     protected DFAState getExistingTargetState(DFAState previousD, int t) {
         DFAState existingTargetState = super.getExistingTargetState(previousD, t);
         if ( existingTargetState!=null ) {
-            decisions[currentDecision].DFATransitions++; // count only if we transition over a DFA state
+//            if ( !nodfa ) { // don't count; we'll blast these later
+                decisions[currentDecision].DFATransitions++; // count only if we transition over a DFA state
+//            }
             if ( existingTargetState==ERROR ) {
                 decisions[currentDecision].errors.add(
                         new ErrorInfo(currentDecision, previousD.configs, _input, _startIndex, _stopIndex, false)
@@ -156,7 +156,7 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 		return n;
 	}
 
-    public boolean isNoDFA() {
+    public boolean getNoDFA() {
         return nodfa;
     }
 
@@ -213,10 +213,11 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 
     public static void dump(DecisionInfo[] decisions) {
         System.out.println("decision info:");
-        System.out.printf("\t %3s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s,     %s\n", "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL", "LL", "cost");
+        System.out.printf("\t %3s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s, %8s,    %s\n",
+                "dec", "invoc", "fullctx", "total", "min", "max", "DFA", "SLL-ATN", "LL-ATN", "preds", "cost");
         for (int i=0; i<decisions.length; i++) {
             DecisionInfo d = decisions[i];
-            System.out.printf("\t%3d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %9.1f \n",
+            System.out.printf("\t%3d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %8d, %9.1f \n",
                     i, d.invocations, d.LL_Fallback,
                     d.totalLook,
                     d.minLook,
@@ -224,6 +225,7 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
                     d.DFATransitions,
                     d.SLL_ATNTransitions,
                     d.LL_ATNTransitions,
+                    d.predicateEvals.size(),
                     d.cost());
         }
         // want to go from decision to location in grammar like in plugin for token refs.
@@ -235,12 +237,5 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
         if ( LL.size()>0 ) {
             System.out.println("Full LL decisions: "+LL);
         }
-//        System.out.println("depths:");
-//        for (int i=0; i<decisions.length; i++) {
-//            List<Integer> look = decisions[i].lookahead;
-//            if ( look.size()>0 ) {
-//                System.out.printf("\t[%3d]: %7.1f %s\n", i, median(toIntArray(look)), look.toString());
-//            }
-//        }
     }
 }
