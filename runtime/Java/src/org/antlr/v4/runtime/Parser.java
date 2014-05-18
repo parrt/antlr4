@@ -871,14 +871,13 @@ public abstract class Parser extends Recognizer<Token, ParserATNSimulator> {
 		return _input.getSourceName();
 	}
 
-    @NotNull
     @Override
-    public DecisionInfo[] getDecisionInfo() {
-        ParserATNSimulator interpreter = getInterpreter();
-        if ( interpreter instanceof ProfilingATNSimulator ) {
-            return ((ProfilingATNSimulator) interpreter).getDecisionInfo();
+    public ParseInfo getParseInfo() {
+        ParserATNSimulator interp = getInterpreter();
+        if (interp instanceof ProfilingATNSimulator) {
+            return new ParseInfo((ProfilingATNSimulator)interp);
         }
-        return new DecisionInfo[0];
+        return null;
     }
 
     public ATNSimulator setProfile(boolean profile) {

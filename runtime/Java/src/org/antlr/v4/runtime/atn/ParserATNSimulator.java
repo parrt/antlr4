@@ -271,7 +271,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	public static final boolean retry_debug = false;
 
 	@Nullable
-	protected final Parser parser;
+	protected Parser parser;
 
 	@NotNull
 	public final DFA[] decisionToDFA;
@@ -318,8 +318,12 @@ public class ParserATNSimulator extends ATNSimulator {
 		//		System.out.println(dot.getDOT(atn.rules.get(1), parser.getRuleNames()));
 	}
 
+    /** Wipe out the DFA cache */
 	@Override
 	public void reset() {
+        for (int d = 0; d < decisionToDFA.length; d++) {
+            decisionToDFA[d] = new DFA(atn.getDecisionState(d), d);
+        }
 	}
 
 	public int adaptivePredict(@NotNull TokenStream input, int decision,
@@ -1887,5 +1891,13 @@ public class ParserATNSimulator extends ATNSimulator {
 
     public void setNoDFA(boolean nodfa) {
         this.nodfa = nodfa;
+    }
+
+    public Parser getParser() {
+        return parser;
+    }
+
+    public void setParser(Parser parser) {
+        this.parser = parser;
     }
 }

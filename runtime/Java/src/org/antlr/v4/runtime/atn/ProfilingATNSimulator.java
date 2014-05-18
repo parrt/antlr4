@@ -32,18 +32,15 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 	public int adaptivePredict(TokenStream input, int decision, ParserRuleContext outerContext) {
 		try {
 			this.currentDecision = decision;
+            long start = System.nanoTime(); // expensive but useful info
 			int alt = super.adaptivePredict(input, decision, outerContext);
-
-//            if ( nodfa ) {
-//                DFA dfa = decisionToDFA[decision];
-//                dfa.s0 = null;
-//            }
-
+            long stop = System.nanoTime();
+            decisions[decision].timeInPrediction += (stop-start);
 			int k = _stopIndex - _startIndex + 1;
             decisions[decision].invocations++;
             decisions[decision].totalLook += k;
-            decisions[decision].minLook = Math.min(decisions[decision].minLook, k);
-            decisions[decision].maxLook = Math.min(decisions[decision].maxLook, k);
+            decisions[decision].minLook = decisions[decision].minLook==0 ? k : Math.min(decisions[decision].minLook, k);
+            decisions[decision].maxLook = Math.max(decisions[decision].maxLook, k);
 			return alt;
 		}
 		finally {
@@ -55,9 +52,7 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
     protected DFAState getExistingTargetState(DFAState previousD, int t) {
         DFAState existingTargetState = super.getExistingTargetState(previousD, t);
         if ( existingTargetState!=null ) {
-//            if ( !nodfa ) { // don't count; we'll blast these later
-                decisions[currentDecision].DFATransitions++; // count only if we transition over a DFA state
-//            }
+            decisions[currentDecision].DFATransitions++; // count only if we transition over a DFA state
             if ( existingTargetState==ERROR ) {
                 decisions[currentDecision].errors.add(
                         new ErrorInfo(currentDecision, previousD.configs, _input, _startIndex, _stopIndex, false)
@@ -145,14 +140,6 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
     public DecisionInfo[] getDecisionInfo() {
         return decisions;
     }
-
-	public int getDFASize() {
-		int n = 0;
-		for (int i = 0; i < decisionToDFA.length; i++) {
-			n += decisionToDFA[i].states.size();
-		}
-		return n;
-	}
 
     public boolean getNoDFA() {
         return nodfa;

@@ -200,7 +200,7 @@ public class TestParserProfiler extends BaseTest {
             parser.setInputStream(tokens);
             Rule r = g.rules.get(startRule);
             if ( r==null ) {
-                return parser.getDecisionInfo();
+                return parser.getParseInfo().getDecisionInfo();
             }
             ParserRuleContext t = parser.parse(r.index);
 //            try {
@@ -212,6 +212,6 @@ public class TestParserProfiler extends BaseTest {
 //
 //            System.out.println(t.toStringTree(parser));
         }
-        return parser.getDecisionInfo();
+        return parser.getParseInfo().getDecisionInfo();
    	}
 }
