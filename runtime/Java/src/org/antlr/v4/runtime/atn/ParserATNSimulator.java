@@ -321,12 +321,16 @@ public class ParserATNSimulator extends ATNSimulator {
     /** Wipe out the DFA cache */
 	@Override
 	public void reset() {
+    }
+
+    @Override
+    public void clearDFA() {
         for (int d = 0; d < decisionToDFA.length; d++) {
             decisionToDFA[d] = new DFA(atn.getDecisionState(d), d);
         }
-	}
+    }
 
-	public int adaptivePredict(@NotNull TokenStream input, int decision,
+    public int adaptivePredict(@NotNull TokenStream input, int decision,
 							   @Nullable ParserRuleContext outerContext)
 	{
 		if ( debug || debug_list_atn_decisions )  {

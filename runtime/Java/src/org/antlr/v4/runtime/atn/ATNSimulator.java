@@ -100,6 +100,9 @@ public abstract class ATNSimulator {
 
 	public abstract void reset();
 
+    public void clearDFA() {
+    }
+
 	public PredictionContextCache getSharedContextCache() {
 		return sharedContextCache;
 	}
