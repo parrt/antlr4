@@ -994,17 +994,28 @@ public class Grammar implements AttributeResolver {
         Map<Integer, Interval> stateToGrammarRegionMap = new HashMap<Integer, Interval>();
    		if ( ast==null ) return stateToGrammarRegionMap;
 
+//        final IntervalSet terminalTokenTypes = new IntervalSet();
+//        terminalTokenTypes.add(ANTLRParser.STRING_LITERAL);
+//        terminalTokenTypes.add(ANTLRParser.TOKEN_REF);
+//        terminalTokenTypes.add(ANTLRParser.SET);
+//
    		List<GrammarAST> terminalNodes = ast.getNodesWithType(grammarTokenTypes);
    		for (GrammarAST n : terminalNodes) {
    			org.antlr.runtime.CommonToken t = (org.antlr.runtime.CommonToken)n.getToken();
    			if (n.atnState != null) {
-   				stateToGrammarRegionMap.put(n.atnState.stateNumber, Interval.of(t.getStartIndex(), t.getStopIndex()));
+                stateToGrammarRegionMap.put(n.atnState.stateNumber,
+                        Interval.of(n.getTokenStartIndex(),n.getTokenStopIndex()));
+//                if ( terminalTokenTypes.contains(t.getType()) ) {
+//                    stateToGrammarRegionMap.put(n.atnState.stateNumber, Interval.of(t.getTokenIndex(),t.getTokenIndex()));
+//                }
+//                else if ( n.atnState instanceof BlockStartState ) {
+//                }
    			}
    		}
    		return stateToGrammarRegionMap;
    	}
 
-    /** Given an ATN state number, return the region within the grammar from which that ATN state was derived. */
+    /** Given an ATN state number, return the token index range within the grammar from which that ATN state was derived. */
     public Interval getStateToGrammarRegion(int atnStateNumber) {
         if ( stateToGrammarRegionMap==null ) {
             stateToGrammarRegionMap = getStateToGrammarRegionMap(ast, null); // map all nodes with non-null atn state ptr
