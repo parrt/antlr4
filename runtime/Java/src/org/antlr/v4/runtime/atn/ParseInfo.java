@@ -84,6 +84,34 @@ public class ParseInfo {
         return t;
     }
 
+    public long getTotalLookaheadOps() {
+        DecisionInfo[] decisions = atnSimulator.getDecisionInfo();
+   		long k = 0;
+   		for (int i = 0; i < decisions.length; i++) {
+   			k += decisions[i].totalLook;
+   		}
+   		return k;
+   	}
+
+    public long getTotalATNLookaheadOps() {
+        DecisionInfo[] decisions = atnSimulator.getDecisionInfo();
+   		long k = 0;
+   		for (int i = 0; i < decisions.length; i++) {
+   			k += decisions[i].SLL_ATNTransitions;
+   			k += decisions[i].LL_ATNTransitions;
+   		}
+   		return k;
+   	}
+
+    public long getTotalLLATNLookaheadOps() {
+        DecisionInfo[] decisions = atnSimulator.getDecisionInfo();
+   		long k = 0;
+   		for (int i = 0; i < decisions.length; i++) {
+   			k += decisions[i].LL_ATNTransitions;
+   		}
+   		return k;
+   	}
+
     public int getDFASize() {
         int n = 0;
         DFA[] decisionToDFA = atnSimulator.decisionToDFA;
