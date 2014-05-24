@@ -993,47 +993,35 @@ public class Grammar implements AttributeResolver {
 		decisionDFAs.put(decision, lookaheadDFA);
 	}
 
-    /** Doesn't handle RULE roots which are at char offset 0 as we reparse to create. boooo
-     *
-     *  Also how do we handle new subrules created during translation? Here's a sample expr rule. Both subrules
-     *  are synthetic.
-     *
-       e :   ( ID<tokenIndex=35,charIndex=53,line=7,charPos=4>
-             | INT<tokenIndex=39,charIndex=60,line=8,charPos=4>
-             )
-             (
-               {precpred(_ctx, 4)}?<p=4> '*'<tokenIndex=21,charIndex=31,line=5,charPos=6> e<tokenIndex=23,charIndex=35,line=5,charPos=10,p=5>
-                       | {precpred(_ctx, 3)}?<p=3> '+'<tokenIndex=29,charIndex=43,line=6,charPos=6> e<tokenIndex=31,charIndex=47,line=6,charPos=10,p=4>
-             )*
-         ;
-     */
     public static Map<Integer, Interval> getStateToGrammarRegionMap(GrammarRootAST ast, IntervalSet grammarTokenTypes) {
         Map<Integer, Interval> stateToGrammarRegionMap = new HashMap<Integer, Interval>();
-   		if ( ast==null ) return stateToGrammarRegionMap;
+        if ( ast==null ) return stateToGrammarRegionMap;
 
-   		List<GrammarAST> terminalNodes = ast.getNodesWithType(grammarTokenTypes);
-   		for (GrammarAST n : terminalNodes) {
-   			org.antlr.runtime.CommonToken t = (org.antlr.runtime.CommonToken)n.getToken();
-   			if (n.atnState != null) {
+        List<GrammarAST> terminalNodes = ast.getNodesWithType(grammarTokenTypes);
+        for (GrammarAST n : terminalNodes) {
+            if (n.atnState != null) {
                 Interval tokenRegion = Interval.of(n.getTokenStartIndex(), n.getTokenStopIndex());
-                if ( n.getType()==ANTLRParser.BLOCK ) {
-                    Tree ruleNode = n.getAncestor(ANTLRParser.RULE);
-                    if ( ruleNode instanceof RuleAST ) {
-                        String ruleName = ((RuleAST) ruleNode).getRuleName();
-                        Rule r = ast.g.getRule(ruleName);
-                        if ( r instanceof LeftRecursiveRule ) {
-                            RuleAST originalAST = ((LeftRecursiveRule) r).getOriginalAST();
-                            tokenRegion = Interval.of(originalAST.getTokenStartIndex(), originalAST.getTokenStopIndex());
-                            stateToGrammarRegionMap.put(n.atnState.stateNumber, tokenRegion);
-                            continue;
-                        }
+                Tree ruleNode = null;
+                // RULEs and BLOCKs of transformed recursive rules point to original token interval
+                if ( n.getType()==ANTLRParser.RULE ) {
+                    ruleNode = n;
+                }
+                else if ( n.getType()==ANTLRParser.BLOCK ) {
+                    ruleNode = n.getAncestor(ANTLRParser.RULE);
+                }
+                if ( ruleNode instanceof RuleAST ) {
+                    String ruleName = ((RuleAST) ruleNode).getRuleName();
+                    Rule r = ast.g.getRule(ruleName);
+                    if ( r instanceof LeftRecursiveRule ) {
+                        RuleAST originalAST = ((LeftRecursiveRule) r).getOriginalAST();
+                        tokenRegion = Interval.of(originalAST.getTokenStartIndex(), originalAST.getTokenStopIndex());
                     }
                 }
-				stateToGrammarRegionMap.put(n.atnState.stateNumber, tokenRegion);
-   			}
-   		}
-   		return stateToGrammarRegionMap;
-   	}
+                stateToGrammarRegionMap.put(n.atnState.stateNumber, tokenRegion);
+            }
+        }
+        return stateToGrammarRegionMap;
+    }
 
     /** Given an ATN state number, return the token index range within the grammar from which that ATN state was derived. */
     public Interval getStateToGrammarRegion(int atnStateNumber) {
