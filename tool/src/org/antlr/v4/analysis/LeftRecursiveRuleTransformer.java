@@ -57,6 +57,7 @@ public class LeftRecursiveRuleTransformer {
     public static final String CHARINDEX_OPTION_NAME = "charIndex";
     public static final String LINE_OPTION_NAME = "line";
     public static final String CHARPOS_OPTION_NAME = "charPos";
+    public static final String TOKENINDEX_OPTION_NAME = "tokenIndex";
 
 	public GrammarRootAST ast;
 	public Collection<Rule> rules;
