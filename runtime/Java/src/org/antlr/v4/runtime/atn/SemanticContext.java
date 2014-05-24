@@ -36,14 +36,7 @@ import org.antlr.v4.runtime.misc.MurmurHash;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Utils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /** A tree structure used to record the semantic context in which
  *  an ATN configuration is valid.  It's either a single predicate,
@@ -197,10 +190,11 @@ public abstract class SemanticContext {
 			return this.precedence == other.precedence;
 		}
 
-		@Override
-		public String toString() {
-			return super.toString();
-		}
+        @Override
+        // precedence >= _precedenceStack.peek()
+        public String toString() {
+            return "{"+precedence+">=prec}?";
+        }
 	}
 
 	/**
