@@ -1002,13 +1002,16 @@ public class Grammar implements AttributeResolver {
             if (n.atnState != null) {
                 Interval tokenRegion = Interval.of(n.getTokenStartIndex(), n.getTokenStopIndex());
                 Tree ruleNode = null;
-                // RULEs and BLOCKs of transformed recursive rules point to original token interval
-                if ( n.getType()==ANTLRParser.RULE ) {
-                    ruleNode = n;
-                }
-                else if ( n.getType()==ANTLRParser.BLOCK ) {
-                    ruleNode = n.getAncestor(ANTLRParser.RULE);
-                }
+				// RULEs, BLOCKs of transformed recursive rules point to original token interval
+				switch ( n.getType() ) {
+					case ANTLRParser.RULE :
+						ruleNode = n;
+						break;
+					case ANTLRParser.BLOCK :
+					case ANTLRParser.STAR :
+						ruleNode = n.getAncestor(ANTLRParser.RULE);
+						break;
+				}
                 if ( ruleNode instanceof RuleAST ) {
                     String ruleName = ((RuleAST) ruleNode).getRuleName();
                     Rule r = ast.g.getRule(ruleName);
