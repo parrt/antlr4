@@ -1008,7 +1008,7 @@ public class Grammar implements AttributeResolver {
 						ruleNode = n;
 						break;
 					case ANTLRParser.BLOCK :
-					case ANTLRParser.STAR :
+					case ANTLRParser.CLOSURE :
 						ruleNode = n.getAncestor(ANTLRParser.RULE);
 						break;
 				}
