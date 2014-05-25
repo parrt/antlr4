@@ -40,52 +40,14 @@ import org.antlr.v4.misc.CharSupport;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.parse.ATNBuilder;
 import org.antlr.v4.parse.GrammarASTAdaptor;
-import org.antlr.v4.runtime.atn.ATN;
-import org.antlr.v4.runtime.atn.ATNState;
-import org.antlr.v4.runtime.atn.ATNType;
-import org.antlr.v4.runtime.atn.AbstractPredicateTransition;
-import org.antlr.v4.runtime.atn.ActionTransition;
-import org.antlr.v4.runtime.atn.AtomTransition;
-import org.antlr.v4.runtime.atn.BasicBlockStartState;
-import org.antlr.v4.runtime.atn.BasicState;
-import org.antlr.v4.runtime.atn.BlockEndState;
-import org.antlr.v4.runtime.atn.BlockStartState;
-import org.antlr.v4.runtime.atn.EpsilonTransition;
-import org.antlr.v4.runtime.atn.LL1Analyzer;
-import org.antlr.v4.runtime.atn.LoopEndState;
-import org.antlr.v4.runtime.atn.NotSetTransition;
-import org.antlr.v4.runtime.atn.PlusBlockStartState;
-import org.antlr.v4.runtime.atn.PlusLoopbackState;
-import org.antlr.v4.runtime.atn.PrecedencePredicateTransition;
-import org.antlr.v4.runtime.atn.PredicateTransition;
-import org.antlr.v4.runtime.atn.RuleStartState;
-import org.antlr.v4.runtime.atn.RuleStopState;
-import org.antlr.v4.runtime.atn.RuleTransition;
-import org.antlr.v4.runtime.atn.SetTransition;
-import org.antlr.v4.runtime.atn.StarBlockStartState;
-import org.antlr.v4.runtime.atn.StarLoopEntryState;
-import org.antlr.v4.runtime.atn.StarLoopbackState;
-import org.antlr.v4.runtime.atn.Transition;
-import org.antlr.v4.runtime.atn.WildcardTransition;
+import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
 import org.antlr.v4.runtime.misc.Triple;
 import org.antlr.v4.semantics.UseDefAnalyzer;
-import org.antlr.v4.tool.ErrorManager;
-import org.antlr.v4.tool.ErrorType;
-import org.antlr.v4.tool.Grammar;
-import org.antlr.v4.tool.LeftRecursiveRule;
-import org.antlr.v4.tool.LexerGrammar;
-import org.antlr.v4.tool.Rule;
-import org.antlr.v4.tool.ast.ActionAST;
-import org.antlr.v4.tool.ast.AltAST;
-import org.antlr.v4.tool.ast.BlockAST;
-import org.antlr.v4.tool.ast.GrammarAST;
-import org.antlr.v4.tool.ast.GrammarASTWithOptions;
-import org.antlr.v4.tool.ast.PredAST;
-import org.antlr.v4.tool.ast.QuantifierAST;
-import org.antlr.v4.tool.ast.TerminalAST;
+import org.antlr.v4.tool.*;
+import org.antlr.v4.tool.ast.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -557,7 +519,9 @@ public class ParserATNFactory implements ATNFactory {
 		blkStart.loopBackState = loop;
 		end.loopBackState = loop;
 
-		plusAST.atnState = blkStart;
+        // Per PlusBlockStartState doc, the PlusLoopbackState node is the
+        // real decision-making note for A+
+		plusAST.atnState = loop;
 		epsilon(blkEnd, loop);		// blk can see loop back
 
 		BlockAST blkAST = (BlockAST)plusAST.getChild(0);

@@ -997,8 +997,8 @@ public class Grammar implements AttributeResolver {
         Map<Integer, Interval> stateToGrammarRegionMap = new HashMap<Integer, Interval>();
         if ( ast==null ) return stateToGrammarRegionMap;
 
-        List<GrammarAST> terminalNodes = ast.getNodesWithType(grammarTokenTypes);
-        for (GrammarAST n : terminalNodes) {
+        List<GrammarAST> nodes = ast.getNodesWithType(grammarTokenTypes);
+        for (GrammarAST n : nodes) {
             if (n.atnState != null) {
                 Interval tokenRegion = Interval.of(n.getTokenStartIndex(), n.getTokenStopIndex());
                 Tree ruleNode = null;
