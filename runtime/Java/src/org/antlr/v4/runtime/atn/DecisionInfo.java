@@ -19,8 +19,9 @@ public class DecisionInfo {
     public long totalLook;              // sum of all lookahead depths for all decision events
     public long minLook;                // min for any single event
     public long maxLook;
+    public LookaheadEventInfo maxLookEvent; // track info for only deepest lookahead event per decision
 
-    public List<PredicateContextEvalInfo>      predicateEvals = new ArrayList<PredicateContextEvalInfo>();
+    public List<PredicateEvalInfo>      predicateEvals = new ArrayList<PredicateEvalInfo>();
 
     public long SLL_ATNTransitions;     // ATN (not DFA) transitions
     public long DFATransitions;         // DFA (not ATN) transitions

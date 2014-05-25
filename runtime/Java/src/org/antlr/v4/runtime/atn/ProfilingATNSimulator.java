@@ -33,14 +33,21 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
 		try {
 			this.currentDecision = decision;
             long start = System.nanoTime(); // expensive but useful info
+            long startingLL_ATNTransitions = decisions[decision].LL_ATNTransitions;
 			int alt = super.adaptivePredict(input, decision, outerContext);
+            long stoppingLL_ATNTransitions = decisions[decision].LL_ATNTransitions;
             long stop = System.nanoTime();
             decisions[decision].timeInPrediction += (stop-start);
 			int k = _stopIndex - _startIndex + 1;
             decisions[decision].invocations++;
             decisions[decision].totalLook += k;
             decisions[decision].minLook = decisions[decision].minLook==0 ? k : Math.min(decisions[decision].minLook, k);
-            decisions[decision].maxLook = Math.max(decisions[decision].maxLook, k);
+            if ( k > decisions[decision].maxLook ) {
+                decisions[decision].maxLook = k;
+                boolean fullCtx = startingLL_ATNTransitions != stoppingLL_ATNTransitions;
+                decisions[decision].maxLookEvent =
+                        new LookaheadEventInfo(decision, null, input, _startIndex, _stopIndex, fullCtx);
+            }
 			return alt;
 		}
 		finally {
@@ -108,7 +115,7 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
         }
 
         decisions[currentDecision].predicateEvals.add(
-            new PredicateContextEvalInfo(D, decision, _input, _startIndex, _stopIndex, results, predictions)
+            new PredicateEvalInfo(D, decision, _input, _startIndex, _stopIndex, results, predictions)
         );
         return predictions;
     }
