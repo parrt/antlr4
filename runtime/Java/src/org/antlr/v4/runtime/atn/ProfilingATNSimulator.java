@@ -108,8 +108,7 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
         int i = 0;
         for (DFAState.PredPrediction pair : D.predicates) {
             if ( pair.pred!=SemanticContext.NONE ) {
-                boolean predicateEvaluationResult = pair.pred.eval(parser, outerContext);
-                results[i] = predicateEvaluationResult;
+                results[i] = pair.pred.eval(parser, outerContext);
             }
             i++;
         }
