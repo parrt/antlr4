@@ -228,6 +228,8 @@ public class Grammar implements AttributeResolver {
 	 *  sempred index is 0..n-1
 	 */
 	public LinkedHashMap<PredAST, Integer> sempreds = new LinkedHashMap<PredAST, Integer>();
+    /** Map the other direction upon demand */
+    public LinkedHashMap<Integer, PredAST> indexToPredMap = new LinkedHashMap<Integer, PredAST>();
 
 	public static final String AUTO_GENERATED_TOKEN_NAME_PREFIX = "T__";
 
@@ -723,9 +725,24 @@ public class Grammar implements AttributeResolver {
         return buf.toString();
     }
 
+    public LinkedHashMap<Integer, PredAST> getIndexToPredicateMap() {
+        LinkedHashMap<Integer, PredAST> indexToPredMap = new LinkedHashMap<Integer, PredAST>();
+        for (Rule r : rules.values()) {
+            for (ActionAST a : r.actions) {
+                if (a instanceof PredAST) {
+                    PredAST p = (PredAST) a;
+                    indexToPredMap.put(sempreds.get(p), p);
+                }
+            }
+        }
+        return indexToPredMap;
+    }
+
     public String getPredicateDisplayString(SemanticContext.Predicate pred) {
-        Rule rule = getRule(pred.ruleIndex);
-        ActionAST actionAST = rule.actions.get(pred.predIndex);
+        if ( indexToPredMap==null ) {
+            indexToPredMap = getIndexToPredicateMap();
+        }
+        ActionAST actionAST = indexToPredMap.get(pred.predIndex);
         return actionAST.getText();
     }
 

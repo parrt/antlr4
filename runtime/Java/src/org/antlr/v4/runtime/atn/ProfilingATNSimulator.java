@@ -106,6 +106,7 @@ public class ProfilingATNSimulator extends ParserATNSimulator {
         int n = D.predicates.length;
         boolean[] results = new boolean[n];
         int i = 0;
+		// FOR INTERPRETER, these are all true unless precedence preds!
         for (DFAState.PredPrediction pair : D.predicates) {
             if ( pair.pred!=SemanticContext.NONE ) {
                 results[i] = pair.pred.eval(parser, outerContext);
