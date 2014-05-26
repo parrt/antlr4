@@ -229,7 +229,7 @@ public class Grammar implements AttributeResolver {
 	 */
 	public LinkedHashMap<PredAST, Integer> sempreds = new LinkedHashMap<PredAST, Integer>();
     /** Map the other direction upon demand */
-    public LinkedHashMap<Integer, PredAST> indexToPredMap = new LinkedHashMap<Integer, PredAST>();
+    public LinkedHashMap<Integer, PredAST> indexToPredMap;
 
 	public static final String AUTO_GENERATED_TOKEN_NAME_PREFIX = "T__";
 
