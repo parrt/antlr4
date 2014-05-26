@@ -60,7 +60,7 @@ public final class PrecedencePredicateTransition extends AbstractPredicateTransi
 	}
 
 	public SemanticContext.PrecedencePredicate getPredicate() {
-		return new SemanticContext.PrecedencePredicate(precedence);
+		return new SemanticContext.PrecedencePredicate(target.ruleIndex, precedence);
 	}
 
 	@Override

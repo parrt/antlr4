@@ -139,13 +139,16 @@ public abstract class SemanticContext {
     }
 
 	public static class PrecedencePredicate extends SemanticContext implements Comparable<PrecedencePredicate> {
+        public final int ruleIndex;
 		public final int precedence;
 
 		protected PrecedencePredicate() {
+            this.ruleIndex = -1;
 			this.precedence = 0;
 		}
 
-		public PrecedencePredicate(int precedence) {
+		public PrecedencePredicate(int ruleIndex, int precedence) {
+            this.ruleIndex = ruleIndex;
 			this.precedence = precedence;
 		}
 
