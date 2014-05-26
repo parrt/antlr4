@@ -30,19 +30,9 @@
 
 package org.antlr.v4.runtime.atn;
 
-import org.antlr.v4.runtime.misc.AbstractEqualityComparator;
-import org.antlr.v4.runtime.misc.Array2DHashSet;
-import org.antlr.v4.runtime.misc.DoubleKeyMap;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.misc.Nullable;
+import org.antlr.v4.runtime.misc.*;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Specialized {@link Set}{@code <}{@link ATNConfig}{@code >} that can track
@@ -186,13 +176,21 @@ public class ATNConfigSet implements Set<ATNConfig> {
 	/** Return a List holding list of configs */
     public List<ATNConfig> elements() { return configs; }
 
-	public Set<ATNState> getStates() {
-		Set<ATNState> states = new HashSet<ATNState>();
-		for (ATNConfig c : configs) {
-			states.add(c.state);
-		}
-		return states;
-	}
+    public Set<ATNState> getStates() {
+   		Set<ATNState> states = new HashSet<ATNState>();
+   		for (ATNConfig c : configs) {
+   			states.add(c.state);
+   		}
+   		return states;
+   	}
+
+    public Set<Integer> getAlts() {
+   		Set<Integer> states = new HashSet<Integer>();
+   		for (ATNConfig c : configs) {
+   			states.add(c.alt);
+   		}
+   		return states;
+   	}
 
 	public List<SemanticContext> getPredicates() {
 		List<SemanticContext> preds = new ArrayList<SemanticContext>();
