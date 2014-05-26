@@ -197,14 +197,17 @@ public abstract class SemanticContext {
         }
 	}
 
+    public static abstract class Operator extends SemanticContext {
+        @NotNull
+        public SemanticContext[] opnds;
+    }
+
 	/**
 	 * A semantic context which is true whenever none of the contained contexts
 	 * is false.
 	 */
-    public static class AND extends SemanticContext {
-		@NotNull public final SemanticContext[] opnds;
-
-		public AND(@NotNull SemanticContext a, @NotNull SemanticContext b) {
+    public static class AND extends Operator {
+        public AND(@NotNull SemanticContext a, @NotNull SemanticContext b) {
 			Set<SemanticContext> operands = new HashSet<SemanticContext>();
 			if ( a instanceof AND ) operands.addAll(Arrays.asList(((AND)a).opnds));
 			else operands.add(a);
@@ -293,9 +296,7 @@ public abstract class SemanticContext {
 	 * A semantic context which is true whenever at least one of the contained
 	 * contexts is true.
 	 */
-    public static class OR extends SemanticContext {
-		@NotNull public final SemanticContext[] opnds;
-
+    public static class OR extends Operator {
 		public OR(@NotNull SemanticContext a, @NotNull SemanticContext b) {
 			Set<SemanticContext> operands = new HashSet<SemanticContext>();
 			if ( a instanceof OR ) operands.addAll(Arrays.asList(((OR)a).opnds));

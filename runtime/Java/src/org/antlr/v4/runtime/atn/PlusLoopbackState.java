@@ -34,6 +34,8 @@ package org.antlr.v4.runtime.atn;
  *  one to the loop back to start of the block and one to exit.
  */
 public final class PlusLoopbackState extends DecisionState {
+    public PlusBlockStartState loopStartState;
+
 
 	@Override
 	public int getStateType() {

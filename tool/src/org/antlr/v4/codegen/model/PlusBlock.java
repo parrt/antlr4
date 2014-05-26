@@ -46,12 +46,13 @@ public class PlusBlock extends Loop {
 	{
 		super(factory, plusRoot, alts);
 
-		PlusBlockStartState blkStart = (PlusBlockStartState)plusRoot.atnState;
-		PlusLoopbackState loop = ((PlusBlockStartState)plusRoot.atnState).loopBackState;
+        PlusLoopbackState loopBack = (PlusLoopbackState)plusRoot.atnState;
+        this.decision = loopBack.decision;
+        PlusBlockStartState blkStart = loopBack.loopStartState;
 		stateNumber = blkStart.loopBackState.stateNumber;
 		blockStartStateNumber = blkStart.stateNumber;
-		loopBackStateNumber = loop.stateNumber;
+		loopBackStateNumber = loopBack.stateNumber;
 		this.error = getThrowNoViableAlt(factory, plusRoot, null);
-		decision = loop.decision;
+		decision = loopBack.decision;
 	}
 }

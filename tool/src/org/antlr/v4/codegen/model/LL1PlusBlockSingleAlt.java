@@ -32,6 +32,7 @@ package org.antlr.v4.codegen.model;
 
 import org.antlr.v4.codegen.OutputModelFactory;
 import org.antlr.v4.runtime.atn.PlusBlockStartState;
+import org.antlr.v4.runtime.atn.PlusLoopbackState;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.tool.ast.GrammarAST;
 
@@ -42,11 +43,11 @@ public class LL1PlusBlockSingleAlt extends LL1Loop {
 	public LL1PlusBlockSingleAlt(OutputModelFactory factory, GrammarAST blkAST, List<CodeBlockForAlt> alts) {
 		super(factory, blkAST, alts);
 
-		PlusBlockStartState blkStart = (PlusBlockStartState)blkAST.atnState;
+        PlusLoopbackState loopBack = (PlusLoopbackState)blkAST.atnState;
+        this.decision = loopBack.decision;
+        PlusBlockStartState blkStart = loopBack.loopStartState;
 		stateNumber = blkStart.loopBackState.stateNumber;
 		blockStartStateNumber = blkStart.stateNumber;
-		PlusBlockStartState plus = (PlusBlockStartState)blkAST.atnState;
-		this.decision = plus.loopBackState.decision;
 		IntervalSet[] altLookSets = factory.getGrammar().decisionLOOK.get(decision);
 
 		IntervalSet loopBackLook = altLookSets[0];

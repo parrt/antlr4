@@ -513,6 +513,7 @@ public class ParserATNFactory implements ATNFactory {
 		preventEpsilonClosureBlocks.add(new Triple<Rule, ATNState, ATNState>(currentRule, blkStart, blkEnd));
 
 		PlusLoopbackState loop = newState(PlusLoopbackState.class, plusAST);
+        loop.loopStartState = blkStart;
 		loop.nonGreedy = !((QuantifierAST)plusAST).isGreedy();
 		atn.defineDecisionState(loop);
 		LoopEndState end = newState(LoopEndState.class, plusAST);

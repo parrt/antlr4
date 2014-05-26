@@ -44,6 +44,7 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNDeserializer;
 import org.antlr.v4.runtime.atn.ATNSerializer;
+import org.antlr.v4.runtime.atn.SemanticContext;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.*;
 import org.antlr.v4.tool.ast.*;
@@ -692,10 +693,43 @@ public class Grammar implements AttributeResolver {
 			tokenNames[i] = getTokenDisplayName(i);
 		}
 
-		return tokenNames;
-	}
+        return tokenNames;
+    }
 
-	/** What is the max char value possible for this grammar's target?  Use
+    /** Given an arbitrarily complex SemanticContext, walk the "tree" and get display string.
+     *  Pull predicates from grammar text.
+     */
+    public String getSemanticContextDisplayString(SemanticContext semctx) {
+        if ( semctx instanceof SemanticContext.Predicate ) {
+            return getPredicateDisplayString((SemanticContext.Predicate)semctx);
+        }
+        if ( semctx instanceof SemanticContext.AND ) {
+            SemanticContext.AND and = (SemanticContext.AND)semctx;
+            return joinPredicateOperands(and, " and ");
+        }
+        if ( semctx instanceof SemanticContext.OR ) {
+            SemanticContext.OR or = (SemanticContext.OR)semctx;
+            return joinPredicateOperands(or, " or ");
+        }
+        return semctx.toString();
+    }
+
+    public String joinPredicateOperands(SemanticContext.Operator op, String separator) {
+        StringBuilder buf = new StringBuilder();
+        for (int i = 0; i<op.opnds.length; i++) {
+            if ( i>0 ) buf.append(separator);
+            buf.append(getSemanticContextDisplayString(op.opnds[i]));
+        }
+        return buf.toString();
+    }
+
+    public String getPredicateDisplayString(SemanticContext.Predicate pred) {
+        Rule rule = getRule(pred.ruleIndex);
+        ActionAST actionAST = rule.actions.get(pred.predIndex);
+        return actionAST.getText();
+    }
+
+    /** What is the max char value possible for this grammar's target?  Use
 	 *  unicode max if no target defined.
 	 */
 	public int getMaxCharValue() {
