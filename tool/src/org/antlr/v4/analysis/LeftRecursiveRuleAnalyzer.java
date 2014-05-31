@@ -51,7 +51,11 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /** Using a tree walker on the rules, determine if a rule is directly left-recursive and if it follows
  *  our pattern.
@@ -398,11 +402,8 @@ public class LeftRecursiveRuleAnalyzer extends LeftRecursiveRuleWalker {
                   tok.getType()==STRING_LITERAL ||
                   tok.getType()==RULE_REF) )
             {
-                options = String.format("<tokenIndex=%d,charIndex=%d,line=%d,charPos=%d%s>",
+                options = String.format("<tokenIndex=%d%s>",
                         tok.getTokenIndex(),
-                        ((CommonToken) tok).getStartIndex(),
-                        tok.getLine(),
-                        tok.getCharPositionInLine(),
                         existingOptions.toString());
             }
             buf.append(tok.getText());
