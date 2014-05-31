@@ -52,6 +52,7 @@ import org.antlr.v4.runtime.atn.ATNSerializer;
 import org.antlr.v4.runtime.atn.SemanticContext;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.IntSet;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
@@ -61,6 +62,7 @@ import org.antlr.v4.tool.ast.GrammarAST;
 import org.antlr.v4.tool.ast.GrammarASTWithOptions;
 import org.antlr.v4.tool.ast.GrammarRootAST;
 import org.antlr.v4.tool.ast.PredAST;
+import org.antlr.v4.tool.ast.RuleAST;
 import org.antlr.v4.tool.ast.TerminalAST;
 
 import java.io.IOException;
@@ -1081,7 +1083,7 @@ public class Grammar implements AttributeResolver {
 						ruleNode = n.getAncestor(ANTLRParser.RULE);
 						break;
 				}
-                if ( ruleNode instanceof RuleAST ) {
+                if ( ruleNode instanceof RuleAST) {
                     String ruleName = ((RuleAST) ruleNode).getRuleName();
                     Rule r = ast.g.getRule(ruleName);
                     if ( r instanceof LeftRecursiveRule ) {
