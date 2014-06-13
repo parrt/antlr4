@@ -49,7 +49,6 @@ import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNDeserializer;
 import org.antlr.v4.runtime.atn.ATNSerializer;
 import org.antlr.v4.runtime.atn.SemanticContext;
-import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.misc.IntSet;
 import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.IntervalSet;
@@ -107,8 +106,14 @@ public class Grammar implements AttributeResolver {
 	public static final Set<String> lexerOptions = parserOptions;
 
 	public static final Set<String> ruleOptions = new HashSet<String>();
+	static {
+		ruleOptions.add("k");
+	}
 
-	public static final Set<String> ParserBlockOptions = new HashSet<String>();
+	public static final Set<String> parserBlockOptions = new HashSet<String>();
+	static {
+		parserBlockOptions.add("k");
+	}
 
 	public static final Set<String> LexerBlockOptions = new HashSet<String>();
 
@@ -188,8 +193,6 @@ public class Grammar implements AttributeResolver {
 	public ATN atn;
 
 	public Map<Integer, Interval> stateToGrammarRegionMap;
-
-	public Map<Integer, DFA> decisionDFAs = new HashMap<Integer, DFA>();
 
 	public List<IntervalSet[]> decisionLOOK;
 
@@ -1061,10 +1064,6 @@ public class Grammar implements AttributeResolver {
 		};
 		collector.visitGrammar(ast);
 		return strings;
-	}
-
-	public void setLookaheadDFA(int decision, DFA lookaheadDFA) {
-		decisionDFAs.put(decision, lookaheadDFA);
 	}
 
 	public static Map<Integer, Interval> getStateToGrammarRegionMap(GrammarRootAST ast, IntervalSet grammarTokenTypes) {
