@@ -63,6 +63,7 @@ import org.antlr.v4.codegen.model.decl.TokenDecl;
 import org.antlr.v4.codegen.model.decl.TokenListDecl;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.runtime.atn.DecisionState;
+import org.antlr.v4.runtime.atn.LL1Analyzer;
 import org.antlr.v4.runtime.atn.PlusBlockStartState;
 import org.antlr.v4.runtime.atn.StarLoopEntryState;
 import org.antlr.v4.runtime.misc.IntervalSet;
@@ -219,7 +220,13 @@ public class ParserFactory extends DefaultOutputModelFactory {
 	public Choice getChoiceBlock(BlockAST blkAST, List<CodeBlockForAlt> alts, GrammarAST labelAST) {
 		int decision = ((DecisionState)blkAST.atnState).decision;
 		Choice c;
-		if ( !g.tool.force_atn && AnalysisPipeline.disjoint(g.decisionLOOK.get(decision)) ) {
+		boolean forceLL1 = isForceLL1(decision);
+		IntervalSet[] altLook = g.decisionLOOK.get(decision);
+		boolean disjoint = AnalysisPipeline.disjoint(altLook);
+		if ( !g.tool.force_atn && (disjoint||forceLL1) ) {
+			if ( !disjoint ) {
+				LL1Analyzer.resolveLL1Conflict(altLook);
+			}
 			c = getLL1ChoiceBlock(blkAST, alts);
 		}
 		else {
@@ -254,8 +261,12 @@ public class ParserFactory extends DefaultOutputModelFactory {
 			else {
 				decision = ((DecisionState)ebnfRoot.atnState).decision;
 			}
-
-			if ( AnalysisPipeline.disjoint(g.decisionLOOK.get(decision)) ) {
+			IntervalSet[] altLook = g.decisionLOOK.get(decision);
+			boolean disjoint = AnalysisPipeline.disjoint(altLook);
+			if ( disjoint || isForceLL1(decision) ) {
+				if ( !disjoint ) {
+					LL1Analyzer.resolveLL1Conflict(altLook);
+				}
 				return getLL1EBNFBlock(ebnfRoot, alts);
 			}
 		}
@@ -317,6 +328,15 @@ public class ParserFactory extends DefaultOutputModelFactory {
 	@Override
 	public List<SrcOp> getLL1Test(IntervalSet look, GrammarAST blkAST) {
 		return list(new TestSetInline(this, blkAST, look));
+	}
+
+	public boolean isForceLL1(int decision) {
+		String kS = g.decisionToOptions.get(decision).getOptionString("k");
+		boolean forceLL1 = false;
+		if ( kS!=null && kS.equals("1") ) {
+			forceLL1 = true;
+		}
+		return forceLL1;
 	}
 
 	@Override
