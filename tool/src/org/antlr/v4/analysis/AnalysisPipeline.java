@@ -94,10 +94,14 @@ public class AnalysisPipeline {
 			}
 
 			assert s.decision + 1 >= g.decisionLOOK.size();
-			Utils.setSize(g.decisionLOOK, s.decision+1);
-			g.decisionLOOK.set(s.decision, look);
+			setDecisionLL1Lookahead(g, s, look);
 			g.tool.log("LL1", "LL(1)? " + disjoint(look));
 		}
+	}
+
+	public static void setDecisionLL1Lookahead(Grammar g, DecisionState s, IntervalSet[] look) {
+		Utils.setSize(g.decisionLOOK, s.decision + 1);
+		g.decisionLOOK.set(s.decision, look);
 	}
 
 	/** Return whether lookahead sets are disjoint; no lookahead => not disjoint */

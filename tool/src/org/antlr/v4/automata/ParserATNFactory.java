@@ -40,33 +40,7 @@ import org.antlr.v4.misc.CharSupport;
 import org.antlr.v4.parse.ANTLRParser;
 import org.antlr.v4.parse.ATNBuilder;
 import org.antlr.v4.parse.GrammarASTAdaptor;
-import org.antlr.v4.runtime.atn.ATN;
-import org.antlr.v4.runtime.atn.ATNState;
-import org.antlr.v4.runtime.atn.ATNType;
-import org.antlr.v4.runtime.atn.AbstractPredicateTransition;
-import org.antlr.v4.runtime.atn.ActionTransition;
-import org.antlr.v4.runtime.atn.AtomTransition;
-import org.antlr.v4.runtime.atn.BasicBlockStartState;
-import org.antlr.v4.runtime.atn.BasicState;
-import org.antlr.v4.runtime.atn.BlockEndState;
-import org.antlr.v4.runtime.atn.BlockStartState;
-import org.antlr.v4.runtime.atn.EpsilonTransition;
-import org.antlr.v4.runtime.atn.LL1Analyzer;
-import org.antlr.v4.runtime.atn.LoopEndState;
-import org.antlr.v4.runtime.atn.NotSetTransition;
-import org.antlr.v4.runtime.atn.PlusBlockStartState;
-import org.antlr.v4.runtime.atn.PlusLoopbackState;
-import org.antlr.v4.runtime.atn.PrecedencePredicateTransition;
-import org.antlr.v4.runtime.atn.PredicateTransition;
-import org.antlr.v4.runtime.atn.RuleStartState;
-import org.antlr.v4.runtime.atn.RuleStopState;
-import org.antlr.v4.runtime.atn.RuleTransition;
-import org.antlr.v4.runtime.atn.SetTransition;
-import org.antlr.v4.runtime.atn.StarBlockStartState;
-import org.antlr.v4.runtime.atn.StarLoopEntryState;
-import org.antlr.v4.runtime.atn.StarLoopbackState;
-import org.antlr.v4.runtime.atn.Transition;
-import org.antlr.v4.runtime.atn.WildcardTransition;
+import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.misc.Nullable;
@@ -424,22 +398,26 @@ public class ParserATNFactory implements ATNFactory {
 			}
 			BlockStartState start = newState(BasicBlockStartState.class, blkAST);
 			if ( alts.size()>1 ) atn.defineDecisionState(start);
+			g.decisionToOptions.put(start.decision, blkAST);
 			return makeBlock(start, blkAST, alts);
 		}
 		switch ( ebnfRoot.getType() ) {
 			case ANTLRParser.OPTIONAL :
 				BlockStartState start = newState(BasicBlockStartState.class, blkAST);
 				atn.defineDecisionState(start);
+				g.decisionToOptions.put(start.decision, blkAST);
 				Handle h = makeBlock(start, blkAST, alts);
 				return optional(ebnfRoot, h);
 			case ANTLRParser.CLOSURE :
 				BlockStartState star = newState(StarBlockStartState.class, ebnfRoot);
 				if ( alts.size()>1 ) atn.defineDecisionState(star);
+				g.decisionToOptions.put(star.decision, blkAST);
 				h = makeBlock(star, blkAST, alts);
 				return star(ebnfRoot, h);
 			case ANTLRParser.POSITIVE_CLOSURE :
 				PlusBlockStartState plus = newState(PlusBlockStartState.class, ebnfRoot);
 				if ( alts.size()>1 ) atn.defineDecisionState(plus);
+				g.decisionToOptions.put(plus.decision, blkAST);
 				h = makeBlock(plus, blkAST, alts);
 				return plus(ebnfRoot, h);
 		}
@@ -550,9 +528,11 @@ public class ParserATNFactory implements ATNFactory {
 		BlockEndState blkEnd = (BlockEndState)blk.right;
 		preventEpsilonClosureBlocks.add(new Triple<Rule, ATNState, ATNState>(currentRule, blkStart, blkEnd));
 
+		BlockAST blkAST = (BlockAST)plusAST.getChild(0);
 		PlusLoopbackState loop = newState(PlusLoopbackState.class, plusAST);
 		loop.nonGreedy = !((QuantifierAST)plusAST).isGreedy();
 		atn.defineDecisionState(loop);
+		g.decisionToOptions.put(loop.decision, blkAST);
 		LoopEndState end = newState(LoopEndState.class, plusAST);
 		blkStart.loopBackState = loop;
 		end.loopBackState = loop;
@@ -560,7 +540,6 @@ public class ParserATNFactory implements ATNFactory {
 		plusAST.atnState = blkStart;
 		epsilon(blkEnd, loop);		// blk can see loop back
 
-		BlockAST blkAST = (BlockAST)plusAST.getChild(0);
 		if ( ((QuantifierAST)plusAST).isGreedy() ) {
 			if (expectNonGreedy(blkAST)) {
 				g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, plusAST.getToken(), plusAST.getToken().getText());
@@ -600,15 +579,16 @@ public class ParserATNFactory implements ATNFactory {
 		BlockEndState blkEnd = (BlockEndState)elem.right;
 		preventEpsilonClosureBlocks.add(new Triple<Rule, ATNState, ATNState>(currentRule, blkStart, blkEnd));
 
+		BlockAST blkAST = (BlockAST)starAST.getChild(0);
 		StarLoopEntryState entry = newState(StarLoopEntryState.class, starAST);
 		entry.nonGreedy = !((QuantifierAST)starAST).isGreedy();
 		atn.defineDecisionState(entry);
+		g.decisionToOptions.put(entry.decision, blkAST);
 		LoopEndState end = newState(LoopEndState.class, starAST);
 		StarLoopbackState loop = newState(StarLoopbackState.class, starAST);
 		entry.loopBackState = loop;
 		end.loopBackState = loop;
 
-		BlockAST blkAST = (BlockAST)starAST.getChild(0);
 		if ( ((QuantifierAST)starAST).isGreedy() ) {
 			if (expectNonGreedy(blkAST)) {
 				g.tool.errMgr.grammarError(ErrorType.EXPECTED_NON_GREEDY_WILDCARD_BLOCK, g.fileName, starAST.getToken(), starAST.getToken().getText());

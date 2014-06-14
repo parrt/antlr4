@@ -72,6 +72,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class Grammar implements AttributeResolver {
 	public static final String GRAMMAR_FROM_STRING_NAME = "<string>";
@@ -115,7 +116,7 @@ public class Grammar implements AttributeResolver {
 		parserBlockOptions.add("k");
 	}
 
-	public static final Set<String> LexerBlockOptions = new HashSet<String>();
+	public static final Set<String> lexerBlockOptions = new HashSet<String>();
 
 	/** Legal options for rule refs like id<key=value> */
 	public static final Set<String> ruleRefOptions = new HashSet<String>();
@@ -193,6 +194,10 @@ public class Grammar implements AttributeResolver {
 	public ATN atn;
 
 	public Map<Integer, Interval> stateToGrammarRegionMap;
+
+	/** Track any options per decision */
+	public final Map<Integer, GrammarASTWithOptions> decisionToOptions =
+			new TreeMap<Integer, GrammarASTWithOptions>(); // less space than map for small table
 
 	public List<IntervalSet[]> decisionLOOK;
 

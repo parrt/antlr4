@@ -477,7 +477,7 @@ public class BasicSemanticChecks extends GrammarTreeVisitor {
 	{
 		boolean ok = true;
 		if ( parent.getType()==ANTLRParser.BLOCK ) {
-			if ( g.isLexer() && !Grammar.LexerBlockOptions.contains(optionID.getText()) ) { // block
+			if ( g.isLexer() && !Grammar.lexerBlockOptions.contains(optionID.getText()) ) { // block
 				g.tool.errMgr.grammarError(ErrorType.ILLEGAL_OPTION,
 										   g.fileName,
 										   optionID,
