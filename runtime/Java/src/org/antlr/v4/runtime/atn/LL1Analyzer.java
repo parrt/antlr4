@@ -84,6 +84,18 @@ public class LL1Analyzer {
 		return look;
 	}
 
+	/** Given the array of looking headsets for a block, make the lookahead set
+	 *  for each alternative disjoint from the others. Alter the elements
+	 *  of the incoming array. Wipe look[i] from look[i+1..n-1].
+	 */
+	public static void resolveLL1Conflict(IntervalSet[] altLookSets) {
+		for (int i = 0; i < altLookSets.length; i++) {
+			for (int j = i+1; j < altLookSets.length; j++) {
+				altLookSets[j] = altLookSets[j].subtract(altLookSets[i]); // alt look is now disjoint
+			}
+		}
+	}
+
 	/**
 	 * Compute set of tokens that can follow {@code s} in the ATN in the
 	 * specified {@code ctx}.
