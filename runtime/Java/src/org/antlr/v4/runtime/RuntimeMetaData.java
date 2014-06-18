@@ -64,6 +64,22 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class RuntimeMetaData {
 	/**
+	 * A compile-time constant containing the current version of the ANTLR 4
+	 * runtime library.
+	 *
+	 * <p>
+	 * This compile-time constant value allows generated parsers and other
+	 * libraries to include a literal reference to the version of the ANTLR 4
+	 * runtime library the code was compiled against.</p>
+	 *
+	 * <p>
+	 * During development (between releases), this value contains the
+	 * <em>expected</em> next release version. For official releases, the value
+	 * will be the actual published version of the library.</p>
+	 */
+	public static final String VERSION = "4.3";
+
+	/**
 	 * This class provides detailed information about a mismatch between the
 	 * version of the tool a parser was generated with, the version of the
 	 * runtime a parser was compiled against, and/or the currently executing
@@ -211,22 +227,6 @@ public class RuntimeMetaData {
 	}
 
 	/**
-	 * A compile-time constant containing the current version of the ANTLR 4
-	 * runtime library.
-	 *
-	 * <p>
-	 * This compile-time constant value allows generated parsers and other
-	 * libraries to include a literal reference to the version of the ANTLR 4
-	 * runtime library the code was compiled against.</p>
-	 *
-	 * <p>
-	 * During development (between releases), this value contains the
-	 * <em>expected</em> next release version. For official releases, the value
-	 * will be the actual published version of the library.</p>
-	 */
-	public static final String VERSION = "4.3";
-
-	/**
 	 * Gets the currently executing version of the ANTLR 4 runtime library.
 	 *
 	 * <p>
@@ -291,7 +291,13 @@ public class RuntimeMetaData {
 	 * of that target's known execution environment, which may or may not
 	 * resemble the design provided for the Java target.</p>
 	 *
-	 * @param toolVersion The version of the tool used to generate a parser.
+	 * <p>
+	 * Version strings x.y and x.y.z are considered compatible. Tool version suffixes
+	 * starting with '-', such as "-dev" are ignored and do not
+	 * affect compatibility.
+	 * </p>
+	 *
+	 *  * @param toolVersion The version of the tool used to generate a parser.
 	 * This value may be null when called from user code that was not generated
 	 * by, and does not reference, the ANTLR 4 Tool itself.
 	 * @param compileTimeVersion The version of the runtime the parser was
@@ -299,22 +305,33 @@ public class RuntimeMetaData {
 	 * to {@link #VERSION}.
 	 */
 	public static void checkVersion(@Nullable String toolVersion, @NotNull String compileTimeVersion) {
-		boolean report = false;
-		String message = null;
-		if (toolVersion != null && !VERSION.equals(toolVersion)) {
-			report = true;
-			message = String.format("ANTLR Tool version %s used for code generation does not match the current runtime version %s", toolVersion, VERSION);
-		}
-		else if (!VERSION.equals(compileTimeVersion)) {
-			report = true;
-			message = String.format("ANTLR Runtime version %s used for parser compilation does not match the current runtime version %s", compileTimeVersion, VERSION);
-		}
-
-		if (report) {
-			VersionMismatchException ex = new VersionMismatchException(message, toolVersion, compileTimeVersion);
-			for (Listener listener : listeners) {
-				listener.reportVersionMismatch(ex);
+		// check generated code (tool) version against runtime version
+		if (toolVersion != null ) {
+			int suffix = toolVersion.indexOf('-');
+			toolVersion = toolVersion.substring(0,suffix);
+			if ( !isCompatible(toolVersion) ) {
+				String message = String.format("ANTLR Tool version %s used for code generation does not match the current runtime version %s", toolVersion, VERSION);
+				VersionMismatchException ex =
+					new VersionMismatchException(message, toolVersion, compileTimeVersion);
+				notifyListeners(ex);
 			}
+		}
+		// check compile time version against runtime version
+		if ( !isCompatible(compileTimeVersion) ) {
+			String message = String.format("ANTLR Runtime version %s used for parser compilation does not match the current runtime version %s", compileTimeVersion, VERSION);
+			VersionMismatchException ex =
+				new VersionMismatchException(message, toolVersion, compileTimeVersion);
+			notifyListeners(ex);
+		}
+	}
+
+	public static boolean isCompatible(String toolVersion) {
+		return VERSION.startsWith(toolVersion)||toolVersion.startsWith(VERSION);
+	}
+
+	public static void notifyListeners(VersionMismatchException ex) {
+		for (Listener listener : listeners) {
+			listener.reportVersionMismatch(ex);
 		}
 	}
 }
