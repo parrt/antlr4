@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.antlr</groupId>
     <artifactId>antlr4-master</artifactId>
-    <version>4.5-SNAPSHOT</version>
+    <version>4.5</version>
     <packaging>pom</packaging>
 
     <name>ANTLR 4</name>
@@ -33,7 +33,7 @@
 
         <developer>
             <name>Terence Parr</name>
-            <url>http://antlr.org/wiki/display/~admin/Home</url>
+            <url>http://parrt.cs.usfca.edu</url>
             <roles>
                 <role>Project lead - ANTLR</role>
             </roles>
@@ -43,7 +43,14 @@
             <name>Sam Harwell</name>
             <url>http://tunnelvisionlabs.com</url>
             <roles>
-                <role>Developer</role>
+                <role>Developer - Coauthor of tool, C# target</role>
+            </roles>
+        </developer>
+
+        <developer>
+            <name>Eric Vergnaud</name>
+            <roles>
+                <role>Developer - JavaScript, C#, Python 2, Python 3</role>
             </roles>
         </developer>
 
@@ -68,9 +75,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java5.home>${env.JAVA5_HOME}</java5.home>
         <java6.home>${env.JAVA6_HOME}</java6.home>
-        <bootclasspath.java5>${java5.home}/lib/rt.jar</bootclasspath.java5>
         <bootclasspath.java6>${java6.home}/lib/rt.jar</bootclasspath.java6>
         <bootclasspath.compile>${bootclasspath.java6}</bootclasspath.compile>
         <bootclasspath.testCompile>${bootclasspath.java6}</bootclasspath.testCompile>
