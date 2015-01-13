@@ -9,7 +9,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.antlr</groupId>
     <artifactId>antlr4-master</artifactId>
-    <version>4.5</version>
+    <version>4.5-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>ANTLR 4</name>
@@ -208,6 +208,18 @@
                 <configuration>
                     <arguments>-Psonatype-oss-release ${release.arguments}</arguments>
                 </configuration>
+            </plugin>
+
+            <plugin>
+              <groupId>org.sonatype.plugins</groupId>
+              <artifactId>nexus-staging-maven-plugin</artifactId>
+              <version>1.6.3</version>
+              <extensions>true</extensions>
+              <configuration>
+                 <serverId>ossrh</serverId>
+                 <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                 <autoReleaseAfterClose>true</autoReleaseAfterClose>
+              </configuration>
             </plugin>
         </plugins>
     </build>
