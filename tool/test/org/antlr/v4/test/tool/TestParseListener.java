@@ -194,17 +194,15 @@ public class TestParseListener extends BaseTest {
 		String found = execParser("T.g4", grammar, "TParser", "TLexer", "s", input, false);
 		assertEquals("enter   s\n" +
 					 "enter   e\n" +
-					 "enter   e\n" +
 					 "consume [@0,0:2='abc',<3>,1:0] rule e\n" +
 					 "exit    e\n" +
-					 "consume [@1,3:2='<3EOF>',<-1>,1:3] rule s\n" +
+					 "consume [@1,3:2='<EOF>',<-1>,1:3] rule s\n" +
 					 "exit    s\n", found);
 		assertNull(stderrDuringParse);
 
 		input = "34";
 		found = execParser("T.g4", grammar, "TParser", "TLexer", "s", input, false);
 		assertEquals("enter   s\n" +
-					 "enter   e\n" +
 					 "enter   e\n" +
 					 "consume [@0,0:1='34',<4>,1:0] rule e\n" +
 					 "exit    e\n" +
@@ -216,18 +214,15 @@ public class TestParseListener extends BaseTest {
 		found = execParser("T.g4", grammar, "TParser", "TLexer", "s", input, false);
 		assertEquals("enter   s\n" +
 					 "enter   e\n" +
-					 "enter   e\n" +
 					 "consume [@0,0:0='1',<4>,1:0] rule e\n" +
 					 "exit    e\n" +
 					 "enter   e\n" +
 					 "consume [@1,1:1='+',<2>,1:1] rule e\n" +
 					 "enter   e\n" +
-					 "enter   e\n" +
 					 "consume [@2,2:2='2',<4>,1:2] rule e\n" +
 					 "exit    e\n" +
 					 "enter   e\n" +
 					 "consume [@3,3:3='*',<1>,1:3] rule e\n" +
-					 "enter   e\n" +
 					 "enter   e\n" +
 					 "consume [@4,4:4='3',<4>,1:4] rule e\n" +
 					 "exit    e\n" +
@@ -237,4 +232,84 @@ public class TestParseListener extends BaseTest {
 					 "exit    s\n", found);
 		assertNull(stderrDuringParse);
 	}
+
+	@Test public void testLeftRecursiveRuleWithAltLabels() throws Exception {
+			String grammar =
+				"grammar T;\n" +
+				"@parser::members {\n" +
+				"    public class MyListener extends TBaseListener {\n" +
+				baseListenerImpl+
+				"        @Override public void enterIval(TParser.IvalContext ctx) { System.out.println(\"enter ival\"); }\n" +
+				"        @Override public void exitIval(TParser.IvalContext ctx)  { System.out.println(\"exit ival\"); }\n" +
+				"        @Override public void enterIdval(TParser.IdvalContext ctx) { System.out.println(\"enter idval\"); }\n" +
+				"        @Override public void exitIdval(TParser.IdvalContext ctx)  { System.out.println(\"exit idval\"); }\n" +
+				"        @Override public void enterAdd(TParser.AddContext ctx)   { System.out.println(\"enter add\"); }\n" +
+				"        @Override public void exitAdd(TParser.AddContext ctx)    { System.out.println(\"exit add\"); }\n" +
+				"        @Override public void enterMul(TParser.MulContext ctx)   { System.out.println(\"enter mul\"); }\n" +
+				"        @Override public void exitMul(TParser.MulContext ctx)    { System.out.println(\"exit mul\"); }\n" +
+				"    }\n" +
+				"}\n" +
+				"" +
+				"s\n" +
+				"@init { addParseListener(new MyListener()); }\n" +
+				" : e EOF ;\n" +
+				"" +
+				"e : e '*' e # mul\n" +
+				"  | e '+' e # add\n" +
+				"  | INT     # ival\n" +
+				"  | ID      # idval\n" +
+				"  ;\n"+
+				lexerRules;
+
+			String input = "abc";
+			String found = execParser("T.g4", grammar, "TParser", "TLexer", "s", input, false);
+			assertEquals("enter   s\n" +
+						 "enter   e\n" +
+						 "consume [@0,0:2='abc',<3>,1:0] rule e\n" +
+						 "exit idval\n" +
+						 "exit    e\n" +
+						 "consume [@1,3:2='<EOF>',<-1>,1:3] rule s\n" +
+						 "exit    s\n", found);
+			assertNull(stderrDuringParse);
+
+			input = "34";
+			found = execParser("T.g4", grammar, "TParser", "TLexer", "s", input, false);
+			assertEquals("enter   s\n" +
+						 "enter   e\n" +
+						 "consume [@0,0:1='34',<4>,1:0] rule e\n" +
+						 "exit ival\n" +
+						 "exit    e\n" +
+						 "consume [@1,2:1='<EOF>',<-1>,1:2] rule s\n" +
+						 "exit    s\n", found);
+			assertNull(stderrDuringParse);
+
+			input = "1+2*3";
+			found = execParser("T.g4", grammar, "TParser", "TLexer", "s", input, false);
+			assertEquals("enter   s\n" +
+						 "enter   e\n" +
+						 "consume [@0,0:0='1',<4>,1:0] rule e\n" +
+						 "exit ival\n" +
+						 "exit    e\n" +
+						 "enter   e\n" +
+						 "enter add\n" +
+						 "consume [@1,1:1='+',<2>,1:1] rule e\n" +
+						 "enter   e\n" +
+						 "consume [@2,2:2='2',<4>,1:2] rule e\n" +
+						 "exit ival\n" +
+						 "exit    e\n" +
+						 "enter   e\n" +
+						 "enter mul\n" +
+						 "consume [@3,3:3='*',<1>,1:3] rule e\n" +
+						 "enter   e\n" +
+						 "consume [@4,4:4='3',<4>,1:4] rule e\n" +
+						 "exit ival\n" +
+						 "exit    e\n" +
+						 "exit mul\n" +
+						 "exit    e\n" +
+						 "exit add\n" +
+						 "exit    e\n" +
+						 "consume [@5,5:4='<EOF>',<-1>,1:5] rule s\n" +
+						 "exit    s\n", found);
+			assertNull(stderrDuringParse);
+		}
 }
