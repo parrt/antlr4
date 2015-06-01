@@ -43,10 +43,56 @@ import static org.junit.Assert.assertEquals;
 
 
 public class TestParserInterpreter extends BaseTest {
+	String g =
+		"grammar T;\n" +
+		"\n" +
+		"s : ID  # foo\n" +
+		"  | INT # bar\n" +
+		"  ;\n" +
+		"\n" +
+		"q : ID\n" +
+		"  | INT{;}\n" +
+		"  ;\n" +
+		"\n" +
+		"s2 : e EOF ;\n" +
+		"\n" +
+		"e : e '*' e # mult\n" +
+		"  | e '+' e # plus\n" +
+		"  | INT     # intprimary\n" +
+		"  | ID      # idprimary\n" +
+		"  ;\n" +
+		"\n" +
+		"f : f '*' f # fmult\n" +
+		"  | INT     # fintprimary\n" +
+		"  | f '+' f # fplus\n" +
+		"  | ID      # fidprimary\n" +
+		"  ;\n" +
+		"\n" +
+		"g : g '*' g\n" +
+		"  | g '+' g\n" +
+		"  | INT\n" +
+		"  | ID\n" +
+		"  ;\n" +
+		"\n" +
+		"h : h '*' h\n" +
+		"  | INT\n" +
+		"  | h '+' h\n" +
+		"  | ID\n" +
+		"  ;\n" +
+		"\n" +
+		"\n" +
+		"ID : [a-z]+ ;\n" +
+		"INT : [0-9]+ ;\n" +
+		"WS : [ \\r\\t\\n]+ ;\n";
+
+	String lexer =
+		"lexer grammar L;\n" +
+		"ID : [a-z]+ ;\n" +
+		"INT : [0-9]+ ;\n" +
+		"WS : [ \\r\\t\\n]+ ;\n";
+
 	@Test public void testEmptyStartRule() throws Exception {
-		LexerGrammar lg = new LexerGrammar(
-			"lexer grammar L;\n" +
-			"A : 'a' ;\n");
+		LexerGrammar lg = new LexerGrammar(lexer);
 		Grammar g = new Grammar(
 			"parser grammar T;\n" +
 			"s :  ;",
@@ -233,6 +279,19 @@ public class TestParserInterpreter extends BaseTest {
 		testInterp(lg, g, "e", "a*a+a", "(e (e (e a) * (e a)) + (e a))");
 		testInterp(lg, g, "e", "a+a*a", "(e (e a) + (e (e a) * (e a)))");
 	}
+
+	@Test public void testAltLabels() throws Exception {
+		LexerGrammar lg = new LexerGrammar(lexer);
+		Grammar g = new Grammar(
+			"parser grammar T;\n" +
+			"s : ID  # foo\n" +
+			"  | INT # bar\n" +
+			"  ;\n",
+			lg);
+
+		testInterp(lg, g, "s", "34", "(s a)");
+	}
+
 
 	void testInterp(LexerGrammar lg, Grammar g,
 					String startRule, String input,

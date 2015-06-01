@@ -4,40 +4,22 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 public class Main
 {
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         TParser parser = new TParser(new CommonTokenStream(new TLexer(new ANTLRInputStream("b"))));
         parser.addParseListener(new MyTBaseListener());
 
-		parser.a();
+		parser.s();
 
-		System.out.println("######################");
-		parser = new TParser(new CommonTokenStream(new TLexer(new ANTLRInputStream("x"))));
-		parser.addParseListener(new MyTBaseListener());
-		parser.b();
+//		System.out.println("######################");
+//		parser = new TParser(new CommonTokenStream(new TLexer(new ANTLRInputStream("x"))));
+//		parser.addParseListener(new MyTBaseListener());
+//		parser.q();
     }
 
 	private static class MyTBaseListener extends TBaseListener {
 		@Override
-		public void enterAlt1(TParser.Alt1Context ctx)
-		{
-			System.out.println("entering alt1");
-		}
-
-		@Override
-		public void exitAlt1(TParser.Alt1Context ctx)
-		{
-			System.out.println("exiting alt1");
-		}
-
-		@Override
-		public void enterB(TParser.BContext ctx) {
-			System.out.println("enter b");
-		}
-
-		@Override
-		public void exitB(TParser.BContext ctx) {
-			System.out.println("exiting b");
+		public void exitEveryRule(ParserRuleContext ctx) {
+			System.out.println("exitEveryRule");
 		}
 
 		@Override
