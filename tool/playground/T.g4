@@ -10,10 +10,10 @@ q : ID
 
 s2 : e EOF ;
 
-e : e '*' e # mult
-  | e '+' e # plus
-  | INT     # intprimary
-  | ID      # idprimary
+e : e '*' e # mul
+  | e '+' e # add
+  | INT     # ival
+  | ID      # idval
   ;
 
 f : f '*' f # fmult
