@@ -180,11 +180,14 @@ def build():
         compile_goal(name)
         if m.post: m.post(m)
 
+
 def all():
     download_libs()
     build()
 
+
 def mkjar_runtime():
+    # todo: add requirements
     # out/... dir is full of tool-related stuff, make special dir out/runtime
     # unjar required library
     unjar("runtime/Java/lib/org.abego.treelayout.core.jar", trgdir=os.path.join(BUILD,"runtime"))
@@ -215,6 +218,39 @@ def mkjar_runtime():
     os.remove(jarfile)              # delete target for Windows compatibility
     os.rename(osgijarfile, jarfile) # copy back onto old jar
     print_and_log("Made jar OSGi-ready " + jarfile)
+
+
+def mkjar_complete():
+    # todo: add requirements
+    copytree(src="tool/resources", trg="out")  # messages, Java code gen, etc...
+    manifest = \
+        "Main-Class: org.antlr.v4.Tool\n" +\
+        "Implementation-Title: ANTLR 4 Tool\n" +\
+        "Implementation-Version: %s\n" +\
+        "Implementation-Vendor: ANTLR\n" +\
+        "Implementation-Vendor-Id: org.antlr\n" +\
+        "Built-By: %s\n" +\
+        "Build-Jdk: 1.6\n" +\
+        "Created-By: http://www.bildtool.org\n" +\
+        "\n"
+    manifest = manifest % (VERSION, os.getlogin())
+    # unjar required libraries
+    runtimejarfile = "dist/antlr4-" + VERSION + ".jar"
+    unjar("runtime/Java/lib/org.abego.treelayout.core.jar", trgdir="out")
+    download("http://www.antlr3.org/download/antlr-3.5.2-runtime.jar", JARCACHE)
+    unjar(os.path.join(JARCACHE, "antlr-3.5.2-runtime.jar"), trgdir="out")
+    download("http://www.stringtemplate.org/download/ST-4.0.8.jar", JARCACHE)
+    unjar(os.path.join(JARCACHE, "ST-4.0.8.jar"), trgdir="out")
+    # pull in target templates
+    for t in TARGETS:
+        trgdir = "out/org/antlr/v4/tool/templates/codegen/" + t
+        mkdir(trgdir)
+        copyfile(TARGETS[t] + "/tool/resources/org/antlr/v4/tool/templates/codegen/" + t + "/" + t + ".stg",
+                 trgdir)
+    jarfile = "dist/antlr4-" + VERSION + "-complete.jar"
+    jar(jarfile, srcdir="out", manifest=manifest)
+    print_and_log("Generated " + jarfile)
+
 
 module(name="runtime",
        srcdirs=["runtime/Java/src","gen4"],
