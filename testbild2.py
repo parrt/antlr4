@@ -45,8 +45,8 @@ BUILD = "build"
 
 JUNIT = ["junit-4.11.jar", "hamcrest-core-1.3.jar"]
 
-class Goal:
-    def __init__(self,name,srcdirs=[],requires=[],dependencies=[],usesmods=[],resources=[],skip=[],tasks=[]):
+class Module:
+    def __init__(self,name,srcdirs=[],requires=[],dependencies=[],usesmods=[],resources=[],skip=[],pre=None,post=None):
         self.name = name
         self.srcdirs = srcdirs
         self.requires = requires
@@ -54,10 +54,10 @@ class Goal:
         self.usesmods = usesmods
         self.resources = resources
         self.skip = skip
-        self.tasks = tasks
+        self.pre = pre
+        self.post = post
 
-
-goals = {}
+modules = {}
 
 RUNTIME_TEST_SKIP = [
     'org/antlr/v4/test/runtime/javascript/firefox',
@@ -66,41 +66,10 @@ RUNTIME_TEST_SKIP = [
     'org/antlr/v4/test/runtime/javascript/safari',
 ]
 
-def module(name,srcdirs=[],requires=[],dependencies=[],usesmods=[],resources=[],skip=[],tasks=[]):
-    global goals
-    goals[name] = Goal(name,srcdirs,requires,dependencies,usesmods,resources,skip,tasks)
+def module(name,srcdirs=[],requires=[],dependencies=[],usesmods=[],resources=[],skip=[],pre=None,post=None):
+    global modules
+    modules[name] = Module(name,srcdirs,requires,dependencies,usesmods,resources,skip,pre,post)
 
-
-def parsers():
-    antlr3("tool/src/org/antlr/v4/parse", "gen3", version="3.5.2", package="org.antlr.v4.parse")
-    antlr3("tool/src/org/antlr/v4/codegen", "gen3", version="3.5.2", package="org.antlr.v4.codegen",
-           args=["-lib", uniformpath("gen3/org/antlr/v4/parse")])
-    antlr4("runtime/Java/src/org/antlr/v4/runtime/tree/xpath", "gen4",
-           version=BOOTSTRAP_VERSION, package="org.antlr.v4.runtime.tree.xpath")
-
-module(name="runtime",
-       srcdirs=["runtime/Java/src","gen4"],
-       requires=parsers,
-       dependencies=["antlr-"+BOOTSTRAP_VERSION+"-complete.jar"])
-
-module(name="runtime-tests",
-     srcdirs=["runtime-testsuite/test"],
-     dependencies=["antlr-"+BOOTSTRAP_VERSION+"-complete.jar"]+JUNIT,
-     usesmods=["runtime", "tool"],
-     resources=["runtime/CSharp/Antlr4.Runtime/Antlr4.Runtime.mono.csproj",
-                "runtime/JavaScript/src",
-                "runtime/Python2/src",
-                "runtime/Python3/src",
-                "runtime/Java/src"
-                ],
-     skip=RUNTIME_TEST_SKIP)
-
-module(name="tool",
-     srcdirs=["gen3", "tool/src"],
-     requires=["parsers"],
-     dependencies=["antlr-3.5.2-runtime.jar", "ST-4.0.8.jar"],
-     usesmods=["runtime"],
-     resources=["tool/resources"])
 
 def download_libs():
     global junit_jar, hamcrest_jar
@@ -110,8 +79,16 @@ def download_libs():
     copyfile(src="runtime/Java/lib/org.abego.treelayout.core.jar", trg=JARCACHE)
 
 
+def parsers():
+    antlr3("tool/src/org/antlr/v4/parse", "gen3", version="3.5.2", package="org.antlr.v4.parse")
+    antlr3("tool/src/org/antlr/v4/codegen", "gen3", version="3.5.2", package="org.antlr.v4.codegen",
+           args=["-lib", uniformpath("gen3/org/antlr/v4/parse")])
+    antlr4("runtime/Java/src/org/antlr/v4/runtime/tree/xpath", "gen4",
+           version=BOOTSTRAP_VERSION, package="org.antlr.v4.runtime.tree.xpath")
+
+
 def compile_goal(goal_name):
-    goal = goals[goal_name]
+    goal = modules[goal_name]
     print "compile "+goal.name
     mycompile(goal.name,
               goal.srcdirs,
@@ -122,40 +99,29 @@ def compile_goal(goal_name):
 def mycompile(goal,srcpaths,dependencies,skip=[]):
     args = ["-Xlint", "-Xlint:-serial", "-g"]
     jars=None
-    trgdir = os.path.join(BUILD, goal)
+    trgdir = uniformpath(os.path.join(BUILD, goal))
     if len(dependencies)>0:
         dependencies = [uniformpath(d) for d in dependencies] # need absolute paths for CLASSPATH
         jars = string.join(dependencies, os.pathsep)
     jars += os.pathsep+trgdir # we can also see the code we're generating
+    srcpaths = [uniformpath(p) for p in srcpaths]
     args += ["-sourcepath", string.join(srcpaths, ":")] # javac says always ':'
     for src in srcpaths:
         javac(srcdir=src, trgdir=trgdir, version="1.6", cp=jars, args=args, skip=skip)
 
-for g in goals:
-    for mod in goals[g].usesmods:
-        compile_goal(mod)
-    compile_goal(g)
-
 def srcdirs(*dirs):
     caller = inspect.currentframe().f_back.f_code.co_name
     print caller+" srcdirs "+str(dirs)
-    if caller not in goals:
-        goals[caller] = Goal(caller)
-    goals[caller].srcdirs=dirs
+    if caller not in modules:
+        modules[caller] = Module(caller)
+    modules[caller].srcdirs=dirs
 
 def dependencies(*jars):
     caller = inspect.currentframe().f_back.f_code.co_name
     print caller+" dependencies "+str(jars)
-    if caller not in goals:
-        goals[caller] = Goal(caller)
-    goals[caller].dependencies=jars
-
-
-# def runtime():
-#     require(parsers)
-#     srcdirs("runtime/Java/src","gen4")
-#     dependencies("antlr-"+BOOTSTRAP_VERSION+"-complete.jar")
-#     compile_goal("runtime")
+    if caller not in modules:
+        modules[caller] = Module(caller)
+    modules[caller].dependencies=jars
 
 
 def tool():
@@ -164,15 +130,12 @@ def tool():
     compile_goal("tool")
 
 
-def runtime_tests():
-    require(runtime)
-    compile_goal("runtime-tests")
-    g = goals["runtime-tests"]
-    cp = [os.path.join(JARCACHE,d) for d in g.dependencies] +\
-         g.resources +\
-         [os.path.join(BUILD,d) for d in g.usesmods]
+def tests(module):
+    cp = [os.path.join(JARCACHE,d) for d in module.dependencies] +\
+         module.resources +\
+         [os.path.join(BUILD,d) for d in module.usesmods]
     cp = [uniformpath(p) for p in cp]
-    junit(os.path.join(BUILD,"runtime-tests"), cp=string.join(cp,os.pathsep), verbose=False)
+    junit(os.path.join(BUILD,module.name), cp=string.join(cp,os.pathsep), verbose=False)
 
 
 def tool_tests():
@@ -187,6 +150,7 @@ def tool_tests():
          [os.path.join(BUILD,d) for d in TOOLTEST_MOD_DEP]
     cp = [uniformpath(p) for p in cp]
     junit(os.path.join(BUILD,"tool-tests"), cp=string.join(cp,os.pathsep), verbose=False)
+
 
 def regen_tests():
     """
@@ -203,14 +167,47 @@ def clean(dist=True):
     rmdir("gen4")
     rmdir("doc")
 
+def build():
+    for name in modules:
+        m = modules[name]
+        if not isinstance(m.requires, list):
+            m.requires = [m.requires]
+        for f in m.requires:
+            require(f)
+        if m.pre: m.pre(m)
+        for mod in m.usesmods:
+            compile_goal(mod)
+        compile_goal(name)
+        if m.post: m.post(m)
 
 def all():
     download_libs()
-    runtime()
-    tool()
-
+    build()
 
 def depends(url):
     download(url, JARCACHE)
 
+module(name="runtime",
+       srcdirs=["runtime/Java/src","gen4"],
+       requires=parsers,
+       dependencies=["antlr-"+BOOTSTRAP_VERSION+"-complete.jar"])
+
+module(name="runtime-tests",
+       srcdirs=["runtime-testsuite/test"],
+       dependencies=["antlr-3.5.2-runtime.jar", "ST-4.0.8.jar"] + JUNIT,
+       usesmods=["runtime", "tool"],
+       resources=["runtime",             # all the runtime/* foreign code
+                  "tool/resources"       # code gen, error templates
+                  ],
+       skip=RUNTIME_TEST_SKIP,
+       post=tests)
+
+module(name="tool",
+       srcdirs=["gen3", "tool/src"],
+       requires=parsers,
+       dependencies=["antlr-3.5.2-runtime.jar", "ST-4.0.8.jar"],
+       usesmods=["runtime"],
+       resources=["tool/resources"])
+
 processargs(globals())  # E.g., "python bild.py all"
+
