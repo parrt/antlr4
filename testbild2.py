@@ -184,6 +184,38 @@ def all():
     download_libs()
     build()
 
+def mkjar_runtime():
+    # out/... dir is full of tool-related stuff, make special dir out/runtime
+    # unjar required library
+    unjar("runtime/Java/lib/org.abego.treelayout.core.jar", trgdir=os.path.join(BUILD,"runtime"))
+    # Prefix of Bundle- is OSGi cruft; it's not everything so we wrap with make_osgi_ready()
+    # Declan Cox describes osgi ready jar https://github.com/antlr/antlr4/pull/689.
+    manifest = \
+        "Implementation-Vendor: ANTLR\n" +\
+        "Implementation-Vendor-Id: org.antlr\n" +\
+        "Implementation-Title: ANTLR 4 Runtime\n" +\
+        "Implementation-Version: %s\n" +\
+        "Built-By: %s\n" +\
+        "Build-Jdk: %s\n" +\
+        "Created-By: http://www.bildtool.org\n" +\
+        "Bundle-Description: The ANTLR 4 Runtime\n" +\
+        "Bundle-DocURL: http://www.antlr.org\n" +\
+        "Bundle-License: http://www.antlr.org/license.html\n" +\
+        "Bundle-Name: ANTLR 4 Runtime\n" +\
+        "Bundle-SymbolicName: org.antlr.antlr4-runtime-osgi\n" +\
+        "Bundle-Vendor: ANTLR\n" +\
+        "Bundle-Version: %s\n" +\
+        "\n"
+    manifest = manifest % (VERSION, os.getlogin(), get_java_version(), VERSION)
+    jarfile = "dist/antlr4-" + VERSION + ".jar"
+    jar(jarfile, srcdir=os.path.join(BUILD,"runtime"), manifest=manifest)
+    print "Generated " + jarfile
+    osgijarfile = "dist/antlr4-" + VERSION + "-osgi.jar"
+    make_osgi_ready(jarfile, osgijarfile)
+    os.remove(jarfile)              # delete target for Windows compatibility
+    os.rename(osgijarfile, jarfile) # copy back onto old jar
+    print_and_log("Made jar OSGi-ready " + jarfile)
+
 module(name="runtime",
        srcdirs=["runtime/Java/src","gen4"],
        requires=parsers,
