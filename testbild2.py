@@ -74,8 +74,8 @@ def module(name,srcdirs=[],requires=[],dependencies=[],usesmods=[],resources=[],
 def download_libs():
     global junit_jar, hamcrest_jar
     junit_jar, hamcrest_jar = load_junitjars()
-    depends("http://www.antlr3.org/download/antlr-3.5.2-runtime.jar")
-    depends("http://www.stringtemplate.org/download/ST-4.0.8.jar")
+    download("http://www.antlr3.org/download/antlr-3.5.2-runtime.jar", JARCACHE)
+    download("http://www.stringtemplate.org/download/ST-4.0.8.jar", JARCACHE)
     copyfile(src="runtime/Java/lib/org.abego.treelayout.core.jar", trg=JARCACHE)
 
 
@@ -184,9 +184,6 @@ def all():
     download_libs()
     build()
 
-def depends(url):
-    download(url, JARCACHE)
-
 module(name="runtime",
        srcdirs=["runtime/Java/src","gen4"],
        requires=parsers,
@@ -197,8 +194,8 @@ module(name="runtime-tests",
        dependencies=["antlr-3.5.2-runtime.jar", "ST-4.0.8.jar"] + JUNIT,
        usesmods=["runtime", "tool"],
        resources=["runtime",             # all the runtime/* foreign code
-                  "tool/resources"       # code gen, error templates
-                  ],
+                  "runtime-testsuite/resources", # some C# stuff is in the resources area
+                  "tool/resources"],     # code gen, error templates
        skip=RUNTIME_TEST_SKIP,
        post=tests)
 
@@ -208,6 +205,14 @@ module(name="tool",
        dependencies=["antlr-3.5.2-runtime.jar", "ST-4.0.8.jar"],
        usesmods=["runtime"],
        resources=["tool/resources"])
+
+module(name="tool-tests",
+       srcdirs=["tool-testsuite/test"],
+       requires=parsers,
+       dependencies=["antlr-3.5.2-runtime.jar", "ST-4.0.8.jar"],
+       usesmods=["runtime", "tool"],
+       resources=["tool/resources"],
+       post=tests)
 
 processargs(globals())  # E.g., "python bild.py all"
 
