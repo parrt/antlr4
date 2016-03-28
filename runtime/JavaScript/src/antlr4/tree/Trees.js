@@ -34,6 +34,8 @@ var RuleNode = require('./Tree').RuleNode;
 var ErrorNode = require('./Tree').ErrorNode;
 var TerminalNode = require('./Tree').TerminalNode;
 var ParserRuleContext = require('./../ParserRuleContext').ParserRuleContext;
+var RuleContext = require('./../RuleContext').RuleContext;
+var INVALID_ALT_NUMBER = require('./../atn/ATN').INVALID_ALT_NUMBER;
 
 
 /** A set of utility routines useful for all kinds of ANTLR trees. */
@@ -76,8 +78,8 @@ Trees.getNodeText = function(t, ruleNames, recog) {
     }
     if(ruleNames!==null) {
        if (t instanceof RuleContext) {
-           int altNumber = t.getAltNumber();
-           if ( altNumber!=ATN.INVALID_ALT_NUMBER ) {
+           var altNumber = t.getAltNumber();
+           if ( altNumber!=INVALID_ALT_NUMBER ) {
                return ruleNames[t.ruleIndex]+":"+altNumber;
            }
            return ruleNames[t.ruleIndex];

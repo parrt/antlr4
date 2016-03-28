@@ -51,6 +51,7 @@
 
 var RuleNode = require('./tree/Tree').RuleNode;
 var INVALID_INTERVAL = require('./tree/Tree').INVALID_INTERVAL;
+var INVALID_ALT_NUMBER = require('./atn/ATN').INVALID_ALT_NUMBER;
 
 function RuleContext(parent, invokingState) {
 	RuleNode.call(this);
@@ -119,7 +120,7 @@ RuleContext.prototype.getText = function() {
 // a subclass of ParserRuleContext with backing field and set
 // option contextSuperClass.
 // to set it.
-RuleContext.prototype.getAltNumber = function() { return ATN.INVALID_ALT_NUMBER; }
+RuleContext.prototype.getAltNumber = function() { return INVALID_ALT_NUMBER; }
 
 // Set the outer alternative number for this context node. Default
 // implementation does nothing to avoid backing field overhead for
