@@ -67,8 +67,10 @@ class Trees(object):
         if recog is not None:
             ruleNames = recog.ruleNames
         if ruleNames is not None:
-            if isinstance(t, RuleNode):
-                return ruleNames[t.getRuleContext().getRuleIndex()]
+            if isinstance(t, RuleContext):
+				if t.getAltNumber()!=ATN.INVALID_ALT_NUMBER:
+					return ruleNames[t.getRuleIndex()]+":"+t.getAltNumber()
+                return ruleNames[t.getRuleIndex()]
             elif isinstance( t, ErrorNode):
                 return str(t)
             elif isinstance(t, TerminalNode):

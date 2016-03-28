@@ -75,8 +75,12 @@ Trees.getNodeText = function(t, ruleNames, recog) {
         ruleNames = recog.ruleNames;
     }
     if(ruleNames!==null) {
-       if (t instanceof RuleNode) {
-           return ruleNames[t.getRuleContext().ruleIndex];
+       if (t instanceof RuleContext) {
+           int altNumber = t.getAltNumber();
+           if ( altNumber!=ATN.INVALID_ALT_NUMBER ) {
+               return ruleNames[t.ruleIndex]+":"+altNumber;
+           }
+           return ruleNames[t.ruleIndex];
        } else if ( t instanceof ErrorNode) {
            return t.toString();
        } else if(t instanceof TerminalNode) {
@@ -115,7 +119,7 @@ Trees.getAncestors = function(t) {
     }
     return ancestors;
 };
-   
+
 Trees.findAllTokenNodes = function(t, ttype) {
     return Trees.findAllNodes(t, ttype, true);
 };
