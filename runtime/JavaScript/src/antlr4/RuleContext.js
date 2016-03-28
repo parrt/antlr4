@@ -126,7 +126,7 @@ RuleContext.prototype.getAltNumber = function() { return ATN.INVALID_ALT_NUMBER;
 // trees that don't need it.  Create
 // a subclass of ParserRuleContext with backing field and set
 // option contextSuperClass.
-RuleContext.prototype.setAltNumber = function(int altNumber) { }
+RuleContext.prototype.setAltNumber = function(altNumber) { }
 
 RuleContext.prototype.getChild = function(i) {
 	return null;
