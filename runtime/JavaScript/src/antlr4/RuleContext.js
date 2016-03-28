@@ -119,14 +119,14 @@ RuleContext.prototype.getText = function() {
 // a subclass of ParserRuleContext with backing field and set
 // option contextSuperClass.
 // to set it.
-public int getAltNumber() { return ATN.INVALID_ALT_NUMBER; }
+RuleContext.prototype.getAltNumber = function() { return ATN.INVALID_ALT_NUMBER; }
 
 // Set the outer alternative number for this context node. Default
 // implementation does nothing to avoid backing field overhead for
 // trees that don't need it.  Create
 // a subclass of ParserRuleContext with backing field and set
 // option contextSuperClass.
-public void setAltNumber(int altNumber) { }
+RuleContext.prototype.setAltNumber = function(int altNumber) { }
 
 RuleContext.prototype.getChild = function(i) {
 	return null;
