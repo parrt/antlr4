@@ -139,7 +139,7 @@ namespace Antlr4.Runtime
             {
                 return _parent;
             }
-			set 
+			set
 			{
 				_parent = value;
 			}
@@ -215,6 +215,23 @@ namespace Antlr4.Runtime
                 return -1;
             }
         }
+
+	/* For rule associated with this parse tree internal node, return
+	 * the outer alternative number used to match the input. Default
+	 * implementation does not compute nor store this alt num. Create
+	 * a subclass of ParserRuleContext with backing field and set
+	 * option contextSuperClass.
+	 * to set it.
+	 */
+	public virtual int getAltNumber() { return ATN.InvalidAltNumber; }
+
+	/* Set the outer alternative number for this context node. Default
+	 * implementation does nothing to avoid backing field overhead for
+	 * trees that don't need it.  Create
+     * a subclass of ParserRuleContext with backing field and set
+     * option contextSuperClass.
+	 */
+	public virtual void setAltNumber(int altNumber) { }
 
         public virtual IParseTree GetChild(int i)
         {

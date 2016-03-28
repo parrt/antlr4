@@ -113,6 +113,23 @@ class RuleContext(RuleNode):
     def getRuleIndex(self):
         return -1
 
+	# For rule associated with this parse tree internal node, return
+	# the outer alternative number used to match the input. Default
+	# implementation does not compute nor store this alt num. Create
+	# a subclass of ParserRuleContext with backing field and set
+	# option contextSuperClass.
+	# to set it.
+	def getAltNumber(self):
+	    return ATN.INVALID_ALT_NUMBER
+
+	# Set the outer alternative number for this context node. Default
+	# implementation does nothing to avoid backing field overhead for
+	# trees that don't need it.  Create
+	# a subclass of ParserRuleContext with backing field and set
+	# option contextSuperClass.
+	def setAltNumber(self, altNumber:int):
+	    pass
+
     def getChild(self, i:int):
         return None
 
