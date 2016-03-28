@@ -123,7 +123,7 @@ class RuleContext(RuleNode):
 	# trees that don't need it.  Create
 	# a subclass of ParserRuleContext with backing field and set
 	# option contextSuperClass.
-	def setAltNumber(self, altNumber:int):
+	def setAltNumber(self, altNumber):
 	    pass
 
     def getChild(self, i):
