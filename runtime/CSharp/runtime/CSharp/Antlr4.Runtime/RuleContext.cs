@@ -30,6 +30,7 @@
 using System.Collections.Generic;
 using System.Text;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Atn;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Sharpen;
 using Antlr4.Runtime.Tree;
@@ -223,7 +224,7 @@ namespace Antlr4.Runtime
 	 * option contextSuperClass.
 	 * to set it.
 	 */
-	public virtual int getAltNumber() { return ATN.InvalidAltNumber; }
+	public virtual int getAltNumber() { return Atn.InvalidAltNumber; }
 
 	/* Set the outer alternative number for this context node. Default
 	 * implementation does nothing to avoid backing field overhead for
