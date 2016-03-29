@@ -322,7 +322,7 @@ var walker = new antlr4.tree.ParseTreeWalker();
 walker.walk(new this.LeafListener(), <s>);
 >>
 
-TreeNodeWithAltNumField() ::= <<
+TreeNodeWithAltNumField(X) ::= <<
 // sorry I just can't figure this stupid javascript fake class shit out...
 this.MyRuleNode = function() {
 	function ParserRuleContext(parent, invokingStateNumber) {

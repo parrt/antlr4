@@ -70,14 +70,14 @@ public class TestParseTrees extends BasePython2Test {
 	public void testAltNum() throws Exception {
 		mkdir(tmpdir);
 
-		StringBuilder grammarBuilder = new StringBuilder(552);
+		StringBuilder grammarBuilder = new StringBuilder(560);
 		grammarBuilder.append("grammar T;\n");
 		grammarBuilder.append("\n");
 		grammarBuilder.append("options { contextSuperClass=MyRuleNode; }\n");
 		grammarBuilder.append("@parser::members {\n");
 		grammarBuilder.append("class MyRuleNode(ParserRuleContext):\n");
 		grammarBuilder.append("    def __init__(self, parent = None, invokingStateNumber = None ):\n");
-		grammarBuilder.append("        super(MyRuleNode, self).__init__(parent, invokingStateNumber)\n");
+		grammarBuilder.append("        super(TParser.MyRuleNode, self).__init__(parent, invokingStateNumber)\n");
 		grammarBuilder.append("        self.altNum = 0;\n");
 		grammarBuilder.append("    def getAltNumber(self):\n");
 		grammarBuilder.append("        return self.altNum\n");

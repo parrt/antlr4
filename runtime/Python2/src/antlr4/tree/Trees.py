@@ -68,7 +68,7 @@ class Trees(object):
         if ruleNames is not None:
             if isinstance(t, RuleNode):
                 if t.getAltNumber()!=ATN.INVALID_ALT_NUMBER:
-                    return ruleNames[t.getRuleIndex()]+":"+t.getAltNumber()
+                    return ruleNames[t.getRuleIndex()]+":"+str(t.getAltNumber())
                 return ruleNames[t.getRuleIndex()]
             elif isinstance( t, ErrorNode):
                 return unicode(t)

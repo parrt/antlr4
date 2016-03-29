@@ -335,7 +335,7 @@ ParseTreeWalker walker = new ParseTreeWalker();
 walker.walk(new LeafListener(), <s>);
 >>
 
-TreeNodeWithAltNumField() ::= <<
+TreeNodeWithAltNumField(X) ::= <<
 public static class MyRuleNode extends ParserRuleContext {
 	public int altNum;
 	public MyRuleNode(ParserRuleContext parent, int invokingStateNumber) {

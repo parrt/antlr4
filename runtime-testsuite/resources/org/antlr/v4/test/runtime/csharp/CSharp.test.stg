@@ -327,7 +327,7 @@ ParseTreeWalker walker = new ParseTreeWalker();
 walker.Walk(new LeafListener(), <s>);
 >>
 
-TreeNodeWithAltNumField() ::= <<
+TreeNodeWithAltNumField(X) ::= <<
 public class MyRuleNode : ParserRuleContext {
 	public int altNum;
 	public MyRuleNode(ParserRuleContext parent, int invokingStateNumber): base(parent, invokingStateNumber)

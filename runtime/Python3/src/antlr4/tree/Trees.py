@@ -69,7 +69,7 @@ class Trees(object):
         if ruleNames is not None:
             if isinstance(t, RuleNode):
                 if t.getAltNumber()!=0: # should use ATN.INVALID_ALT_NUMBER but won't compile
-                    return ruleNames[t.getRuleIndex()]+":"+t.getAltNumber()
+                    return ruleNames[t.getRuleIndex()]+":"+str(t.getAltNumber())
                 return ruleNames[t.getRuleIndex()]
             elif isinstance( t, ErrorNode):
                 return str(t)

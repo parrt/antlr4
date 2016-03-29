@@ -110,6 +110,16 @@ class RuleContext(RuleNode):
     def getRuleIndex(self):
         return -1
 
+    def __setattr__(self, name, value):
+        if name!="altNumber":
+        	RuleNode.__setattr__(name, value)
+
+    def __getattr__(self, name, value):
+        if name=="altNumber":
+            return 0
+        else:
+        	self.__setattr__(self, name, value)
+
 	# For rule associated with this parse tree internal node, return
 	# the outer alternative number used to match the input. Default
 	# implementation does not compute nor store this alt num. Create
