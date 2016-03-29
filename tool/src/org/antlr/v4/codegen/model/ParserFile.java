@@ -33,6 +33,7 @@ package org.antlr.v4.codegen.model;
 import org.antlr.v4.codegen.OutputModelFactory;
 import org.antlr.v4.codegen.model.chunk.ActionChunk;
 import org.antlr.v4.codegen.model.chunk.ActionText;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.tool.Grammar;
 import org.antlr.v4.tool.ast.ActionAST;
 
@@ -49,6 +50,16 @@ public class ParserFile extends OutputFile {
 	public Boolean genVisitor = false;
 	public String grammarName;
 
+	public static class MyRuleNode extends ParserRuleContext {
+		public MyRuleNode(ParserRuleContext parent, int invokingStateNumber) {
+			super(parent, invokingStateNumber);
+		}
+
+		public int altNum;
+         @Override public int getAltNumber() { return altNum; }
+         @Override public void setAltNumber(int altNum) { this.altNum = altNum; }
+ }
+
 	public ParserFile(OutputModelFactory factory, String fileName) {
 		super(factory, fileName);
 		Grammar g = factory.getGrammar();
@@ -63,8 +74,8 @@ public class ParserFile extends OutputFile {
 		genVisitor = g.tool.gen_visitor;
 		grammarName = g.name;
 
-		if (g.getOptionString("superClass") != null) {
-			contextSuperClass = new ActionText(null, g.getOptionString("superClass"));
+		if (g.getOptionString("contextSuperClass") != null) {
+			contextSuperClass = new ActionText(null, g.getOptionString("contextSuperClass"));
 		}
 	}
 }

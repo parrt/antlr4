@@ -322,6 +322,23 @@ var walker = new antlr4.tree.ParseTreeWalker();
 walker.walk(new this.LeafListener(), <s>);
 >>
 
+TreeNodeWithAltNumField() ::= <<
+// sorry I just can't figure this stupid javascript fake class shit out...
+this.MyRuleNode = function() {
+	function ParserRuleContext(parent, invokingStateNumber) {
+		ParserRuleContext.call(this, parent, invokingStateNumber);
+		this.altNum = 0;
+	}
+
+	public int altNum;
+	public int getAltNumber() { return altNum; }
+	@Override public void setAltNumber(int altNum) { this.altNum = altNum; }
+}
+
+MyRuleNode.prototype = Object.create(ParserRuleContext.prototype);
+MyRuleNode.prototype.constructor = RuleContext;
+>>
+
 TokenGetterListener(X) ::= <<
 this.LeafListener = function() {
     this.exitA = function(ctx) {

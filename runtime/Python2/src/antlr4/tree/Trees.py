@@ -32,6 +32,8 @@
 
 # A set of utility routines useful for all kinds of ANTLR trees.#
 from io import StringIO
+import antlr4
+from antlr4.atn.ATN import ATN
 from antlr4.Token import Token
 from antlr4.Utils import escapeWhitespace
 from antlr4.tree.Tree import RuleNode, ErrorNode, TerminalNode
@@ -64,9 +66,9 @@ class Trees(object):
         if recog is not None:
             ruleNames = recog.ruleNames
         if ruleNames is not None:
-            if isinstance(t, RuleContext):
-				if t.getAltNumber()!=ATN.INVALID_ALT_NUMBER:
-					return ruleNames[t.getRuleIndex()]+":"+t.getAltNumber()
+            if isinstance(t, RuleNode):
+                if t.getAltNumber()!=ATN.INVALID_ALT_NUMBER:
+                    return ruleNames[t.getRuleIndex()]+":"+t.getAltNumber()
                 return ruleNames[t.getRuleIndex()]
             elif isinstance( t, ErrorNode):
                 return unicode(t)
