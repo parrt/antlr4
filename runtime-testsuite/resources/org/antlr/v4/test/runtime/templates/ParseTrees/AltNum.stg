@@ -18,9 +18,9 @@ grammar(grammarName) ::= <<
 grammar <grammarName>;
 
 options { contextSuperClass=MyRuleNode; }
-@parser::members {
+
 <TreeNodeWithAltNumField(X=grammarName)>
-}
+
 
 s
 @init {
