@@ -56,6 +56,9 @@ import org.antlr.v4.runtime.tree.*;
 import java.util.List;
 import java.util.Iterator;
 import java.util.ArrayList;
+<if(contextSuperClass)>
+import <contextSuperClass>;
+<endif>
 
 <parser>
 >>
@@ -107,6 +110,9 @@ package <file.genPackage>;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
+<if(contextSuperClass)>
+import <contextSuperClass>;
+<endif>
 
 /**
  * This class provides an empty implementation of {@link <file.grammarName>Listener},
@@ -133,13 +139,13 @@ public class <file.grammarName>BaseListener implements <file.grammarName>Listene
 	 *
 	 * \<p>The default implementation does nothing.\</p>
 	 */
-	@Override public void enterEveryRule(ParserRuleContext ctx) { }
+	@Override public void enterEveryRule(<if(contextSuperClass)><contextSuperClass><else>ParserRuleContext<endif> ctx) { }
 	/**
 	 * {@inheritDoc\}
 	 *
 	 * \<p>The default implementation does nothing.\</p>
 	 */
-	@Override public void exitEveryRule(ParserRuleContext ctx) { }
+	@Override public void exitEveryRule(<if(contextSuperClass)><contextSuperClass><else>ParserRuleContext<endif> ctx) { }
 	/**
 	 * {@inheritDoc\}
 	 *
