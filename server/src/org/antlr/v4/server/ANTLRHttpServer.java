@@ -28,15 +28,17 @@ public class ANTLRHttpServer {
 				throws IOException {
 			response.setContentType("text/plain;charset=utf-8");
 			response.setContentType("text/html;");
-			response.getWriter().println("<h1>Hello world!</h1>");
+
+//			response.getWriter().println("<h1>Hello world!</h1>");
 
 			System.out.println(request.getParameterMap());
-
 //			JsonReader jsonReader = Json.createReader(request.getReader());
 			String data = request.getParameter("data");
 			JsonReader jsonReader = Json.createReader(new StringReader(data));
 			JsonObject jobj = jsonReader.readObject();
 			System.out.println(jobj);
+
+			response.setStatus(HttpServletResponse.SC_OK);
 		}
 	}
 
