@@ -93,7 +93,6 @@
 		<module>antlr4-maven-plugin</module>
         <module>tool-testsuite</module>
 		<module>runtime-testsuite</module>
-        <module>tool/antlr4-tool</module>
     </modules>
 
 	<properties>
